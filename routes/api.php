@@ -9,6 +9,8 @@ use App\Http\Controllers\API\TransactionController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\RewardController;
 use App\Http\Controllers\API\CustomerProfileController;
+use App\Http\Controllers\API\WishlistController;
+use App\Http\Controllers\API\ReviewController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -16,6 +18,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
+
 
 // Public Routes
 Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(function () {
@@ -69,6 +72,22 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::put('/location', [CustomerProfileController::class, 'updateLocation']);
     //API Update Language
     Route::put('/language-update', [CustomerProfileController::class, 'updateCustomerLanguage']);
+    // Home API (Include Frequently Visited // Highest Reward Points // Near You)
+    Route::get('/home-list', [CustomerController::class, 'getHomeBusinesses']);
+    // Get wishlist
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    // Add to wishlist
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    // Remove from wishlist
+    Route::delete('/wishlist/{business_id}', [WishlistController::class, 'destroy']);
+    // Submit or update review
+    Route::post('/post-review', [ReviewController::class, 'store']);
+    // Get reviews of a business
+    Route::get('/reviews/business/{business_id}', [ReviewController::class, 'getBusinessReviews']);
+    // Delete review
+    Route::delete('/review/{id}', [ReviewController::class, 'destroy']);
+    // Get customer's reviews
+    Route::get('/reviews', [ReviewController::class, 'getCustomerReviews']);
 });
 
 

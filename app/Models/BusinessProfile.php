@@ -30,6 +30,7 @@ class BusinessProfile extends Model
         'child_category_id',
         'description',
         'website',
+        'points_per_checkin',
     ];
     
     protected $casts = [

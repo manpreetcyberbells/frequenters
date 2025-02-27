@@ -67,6 +67,7 @@ class AdminBusinessController extends Controller
             'website' => $request->website,
             'category_id' => $request->category,
             'child_category_id' => $request->child_category,
+            'points_per_checkin' => $request->points_per_checkin,
         ]);
 
         // Create the Business address
@@ -166,6 +167,7 @@ class AdminBusinessController extends Controller
                 'website' => $request->website,
                 'category_id' => $request->category,
                 'child_category_id' => $request->child_category,
+                'points_per_checkin' => $request->points_per_checkin,
             ]
         );
 

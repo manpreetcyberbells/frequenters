@@ -42,7 +42,14 @@ class AdminCustomerController extends Controller
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'nullable|string|max:15|unique:users,phone,' . Auth::id(),
-            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max size 2MB
+            'profilei_mage' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max size 2MB
+            'address1' => 'required',
+            'zip_code' => 'required',
+            'city' => 'required',
+            'state' => 'required',
+            'country' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
         ]);
 
         // Handle profile image upload
@@ -127,6 +134,13 @@ class AdminCustomerController extends Controller
                 'birthday'      => 'nullable|date|before:today',
                 'anniversary'   => 'nullable|date|after:birthday',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max size 2MB
+                'address1' => 'required',
+                'zip_code' => 'required',
+                'city' => 'required',
+                'state' => 'required',
+                'country' => 'required',
+                'latitude' => 'required',
+                'longitude' => 'required',
             ]);
 
             // Handle profile image upload

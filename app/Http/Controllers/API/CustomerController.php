@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\API;
 
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Models\CustomerProfile;
+use App\Models\CustomerAddress;
+use App\Models\BusinessAddress;
+use App\Models\Review;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Illuminate\Support\Facades\DB; // Import DB Facade
+use Illuminate\Support\Facades\DB;
+
 
 class CustomerController extends Controller
 {
@@ -253,4 +256,102 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Failed to fetch dashboard data', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function getHomeBusinesses(Request $request)
+    {
+        $customerId = auth()->id();
+
+        // Fetch customer address
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
+        if (!$customerAddress) {
+            return response()->json(['error' => 'Customer address not found'], 404);
+        }
+
+        $customerLat = $customerAddress->latitude;
+        $customerLong = $customerAddress->longitude;
+
+        // Fetch nearby businesses
+        // $nearbyBusinesses = BusinessAddress::selectRaw(
+        //     "business_addresses.*, 
+        //     users.name AS business_name,
+        //     business_profiles.*,  
+        //     parent_category.name AS category_name,
+        //     child_category.name AS child_category_name,
+        //     (SELECT GROUP_CONCAT(business_images.photo) 
+        //         FROM business_images 
+        //         WHERE business_images.business_id = users.id) AS images,
+        //     (SELECT GROUP_CONCAT(
+        //         CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
+        //     ) FROM business_hours 
+        //     WHERE business_hours.business_id = users.id) AS business_hours,
+        //     ROUND((6371 * acos(
+        //         cos(radians(?)) * cos(radians(latitude)) 
+        //         * cos(radians(longitude) - radians(?)) 
+        //         + sin(radians(?)) * sin(radians(latitude))
+        //     )), 2) AS distance",
+        //     [$customerLat, $customerLong, $customerLat]
+        // )
+        // ->join('users', 'users.id', '=', 'business_addresses.business_id')
+        // ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id') 
+        // ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
+        // ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
+        // ->having('distance', '<=', 10000)
+        // ->orderBy('distance', 'asc')
+        // ->get();
+
+        $nearbyBusinesses = BusinessAddress::selectRaw(
+            "business_addresses.*, 
+            users.name AS business_name,
+            business_profiles.*,  
+            parent_category.name AS category_name,
+            child_category.name AS child_category_name,
+            (SELECT GROUP_CONCAT(business_images.photo) 
+                FROM business_images 
+                WHERE business_images.business_id = users.id) AS images,
+            (SELECT GROUP_CONCAT(
+                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
+            ) FROM business_hours 
+            WHERE business_hours.business_id = users.id) AS business_hours,
+            EXISTS (
+                SELECT 1 FROM wishlists 
+                WHERE wishlists.business_id = users.id 
+                AND wishlists.customer_id = ?
+            ) AS is_wishlist,
+            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
+            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
+            ROUND((6371 * acos(
+                cos(radians(?)) * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians(?)) 
+                + sin(radians(?)) * sin(radians(latitude))
+            )), 2) AS distance",
+            [$customerId, $customerLat, $customerLong, $customerLat]
+        )
+        ->join('users', 'users.id', '=', 'business_addresses.business_id')
+        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
+        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
+        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
+        ->having('distance', '<=', 10000) // Filter businesses within 10,000 km
+        ->orderBy('distance', 'asc') // Sort by nearest first
+        ->get();
+        
+        // Get Reviews Based on Business_Ids
+        $businessIds = $nearbyBusinesses->pluck('business_id')->toArray();
+        $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderBy('created_at', 'desc')->get();
+
+        
+        // Fetch frequently visited businesses
+        $frequentBusinesses = array();
+
+        // Fetch businesses with highest reward points
+        $highestRewardBusinesses = array();
+
+        return response()->json([
+            'nearby' => $nearbyBusinesses,
+            'frequent' => $frequentBusinesses,
+            'highest_rewards' => $highestRewardBusinesses,
+            'reviews' => $reviews
+        ]);
+    }
+
+
 }

@@ -63,7 +63,6 @@
                     value=""
                     required
                   />
-                  <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
@@ -113,7 +112,6 @@
                         placeholder="Enter your mobile number"
                         required 
                     />
-                    <div class="valid-feedback">Looks good!</div>
                     <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
                 </div>
 
@@ -130,12 +128,11 @@
                   @error('website')
                     <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
-                  <div class="valid-feedback">Looks good!</div>
                 </div>
 
                 <div class="col-md-4 form-group">
                   <label for="status" class="form-label">Change Status</label>
-                    <select id="status" name="status" class="form-control">
+                    <select id="status" name="status" class="form-control" required>
                       <option value="">Select status</option>
                       <option value="active">Active</option>
                       <option value="pending">Pending</option>
@@ -145,16 +142,29 @@
 
                 <div class="col-md-4 form-group">
                   <label for="category" class="form-label">Category</label>
-                  <select id="parent-category" name="category" class="form-control">
+                  <select id="parent-category" name="category" class="form-control" required>
                     <option value="">Select Parent Category</option>
                   </select>
                 </div>
 
                 <div class="col-md-4 form-group">
-                  <label for="category" class="form-label">Chil Category</label>
-                  <select id="child-category" name="child_category" class="form-control">
+                  <label for="category" class="form-label">Child Category</label>
+                  <select id="child-category" name="child_category" class="form-control" required>
                     <option value="">Select Child Category</option>
                   </select>
+                </div>
+
+                <div class="col-md-4 form-group">
+                  <label for="website" class="form-label">Points Per Checkin</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="points_per_checkin"
+                    name="points_per_checkin"
+                    required
+                    min="1"
+                    max="50"
+                  />
                 </div>
 
                 <!--end::Col-->
@@ -162,12 +172,13 @@
                 
                 <div class="col-md-4  mb-3">
                   <label for="images" class="form-label">Upload Images</label>
-                  <input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*">
+                  <input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*" required>
                 </div>
                 <!-- images upload -->
                 <div class="col-md-12 text-center">
                   <div id="image-preview" class="mt-3"></div>
                 </div>
+
 
                 <!--end::Col-->
                 <div class="col-md-12 mb-3">
@@ -176,7 +187,7 @@
                 </div>
                 <div class="col-12 form-group">
                     <label for="inputAddress" class="form-label">Address</label>
-                    <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St">
+                    <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" required>
                 </div>
                 <div class="col-12 form-group">
                     <label for="inputAddress2" class="form-label">Address 2</label>
@@ -185,34 +196,34 @@
 
                 <div class="col-md-3 form-group">
                   <label for="zip-code" class="form-label">Zip</label>
-                  <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code">
+                  <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" required>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="inputCity" class="form-label">City</label>
-                    <select id="city" name="city" class="form-control">
+                    <select id="city" name="city" class="form-control" required>
                       <option value="">Select City</option>
                     </select>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="state" class="form-label">State</label>
-                  <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly>
+                  <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly required>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="country" class="form-label">Country</label>
-                  <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly>
+                  <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly required>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="latitude" class="form-label">Latitude</label>
-                  <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly>
+                  <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly required>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="longitude" class="form-label">Longitude</label>
-                  <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly>
+                  <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly required>
                 </div>
                 <!--end::Col-->
               </div>
