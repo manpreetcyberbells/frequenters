@@ -43,20 +43,16 @@ class AdminController extends Controller
     public function update(Request $request)
     {
         $admin = Auth::user();
-        // Validate request data
+
         $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $admin->id,
             'phone' => 'nullable|string|max:15|unique:users,phone,' . $admin->id,
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'password' => 'nullable|min:6|confirmed',
         ]);
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
-            // if ($admin->profile_image) {
-            //     Storage::delete($admin->profile_image); // Delete old image
-            // }
             $imagePath = $request->file('profile_image')->store('profile_images', 'public');
             $admin->profile_image = 'storage/' . $imagePath;
         }
@@ -65,29 +61,7 @@ class AdminController extends Controller
         $admin->name  = $request->name;
         $admin->email = $request->email;
         $admin->phone = $request->phone;
-
-        // Update password only if provided
-        if ($request->filled('password')) {
-            $admin->password = Hash::make($request->password);
-        }
-
-        $admin->save(); // Save updated admin data
-
-        // $user = User::where('user_id', $id)->first();
-
-        // if (!$user) {
-        //     return redirect()->route('admin.dashboard')->with('error', 'User not found.');
-        // }
-
-        // // Validate input
-        // $validated = $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'email' => 'required|email|unique:users,email,' . $id . ',user_id',
-        //     'role' => 'required|in:customer,business,admin',
-        // ]);
-
-        // // Update user details
-        // $user->update($validated);
+        $admin->save();
 
         return redirect()->route('admin.dashboard')->with('success', 'User updated successfully.');
     }

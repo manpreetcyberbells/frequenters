@@ -4,3 +4,7 @@ img.preview-image{
 .cursor-pointer{
     cursor: pointer;
 }
+.profile-user-img {
+    width: 140px;
+    height: 140px;
+}

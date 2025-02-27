@@ -652,6 +652,16 @@
                 </a>
               </li>
             </ul>
+            <li class="nav-item">
+              <a href="pages/kanban.html" class="nav-link">
+                <p>
+                  <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-danger" style="width: 100%;">Sign Out</button>
+                  </form>
+                </p>
+              </a>
+            </li>
           </li>
         </ul>
       </nav>
