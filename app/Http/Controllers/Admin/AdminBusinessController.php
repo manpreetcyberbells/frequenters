@@ -21,7 +21,7 @@ class AdminBusinessController extends Controller
      */
     public function index()
     {
-        $businesses = User::where('role', 'business')->get();
+        $businesses = User::where('role', 'business')->orderBy('id', 'desc')->get();
         return view('admin.businesses.index', compact('businesses'));
     }
 

@@ -15,9 +15,13 @@ class ForgotPasswordController extends Controller
     */
     public function sendResetLink(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
-        ]);
+        try {
+            $request->validate([
+                'email' => 'required|email|exists:users,email',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json(['error' => 'This email does not exist in our records. Please enter a valid email.'], 400);
+        }
     
         $status = Password::sendResetLink(
             $request->only('email'),

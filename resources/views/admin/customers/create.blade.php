@@ -61,8 +61,8 @@
                             name="name"
                             value=""
                             required
+                            placeholder="Enter customer name"
                           />
-                          <div class="valid-feedback">Looks good!</div>
                         </div>
                         <!--end::Col-->
                         <!--begin::Col-->
@@ -77,6 +77,7 @@
                               id="validationCustomUsername"
                               aria-describedby="email"
                               required
+                              placeholder="Enter valid email address"
                             />
                             @error('email')
                               <div class="invalid-feedback">{{ $message }}</div>
@@ -109,10 +110,9 @@
                                 id="mobileNumber" 
                                 name="mobile" 
                                 pattern="^\d{10,15}$" 
-                                placeholder="Enter your mobile number"
+                                placeholder="Enter valid mobile number"
                                 required 
                             />
-                            <div class="valid-feedback">Looks good!</div>
                             <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
                         </div>
 
@@ -123,9 +123,9 @@
                                 class="form-control" 
                                 id="birthday" 
                                 name="birthday"
-                                value="{{ isset($user) ? \Carbon\Carbon::parse($user->anniversary)->format('Y-m-d') : '' }}"
+                                value="{{ isset($user) ? \Carbon\Carbon::parse($user->birthday)->format('Y-m-d') : '' }}"
+                                max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
-                            <div class="valid-feedback">Looks good!</div>
                         </div>
 
                         <div class="col-md-4 form-group">
@@ -136,8 +136,8 @@
                                 id="anniversary" 
                                 name="anniversary"
                                 value="{{ isset($user) ? \Carbon\Carbon::parse($user->anniversary)->format('Y-m-d') : '' }}"
+                                max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
-                            <div class="valid-feedback">Looks good!</div>
                         </div>
 
                         <div class="col-md-4 form-group">
@@ -168,7 +168,7 @@
                         
                         <div class="col-12 form-group">
                             <label for="inputAddress" class="form-label">Address</label>
-                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St">
+                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" required>
                         </div>
 
                         <div class="col-12 form-group">
@@ -176,51 +176,14 @@
                             <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
                         </div>
 
-                        <!-- <div class="col-md-3 form-group">
-                          <label for="inputState" class="form-label">State</label>
-                            <select id="inputState" name="state" class="form-control">
-                              <option value="">Select State</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                          <label for="inputCity" class="form-label">City</label>
-                            <select id="inputCity" name="city" class="form-control">
-                              <option value="">Select City</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                            <label for="inputZip" class="form-label">Zip</label>
-                            <input type="text" name="zip_code" class="form-control" id="inputZip">
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                          <label for="inputCountry" class="form-label">Country</label>
-                            <select id="inputCountry" name="country" class="form-control">
-                              <option value="">Select Country</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                            <label for="latitude" class="form-label">Latitude</label>
-                            <input type="text" name="latitude" class="form-control" id="latitude">
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                            <label for="longitude" class="form-label">Longitude</label>
-                            <input type="text" name="longitude" class="form-control" id="longitude">
-                        </div> -->
-
-
                         <div class="col-md-3 form-group">
                           <label for="zip-code" class="form-label">Zip</label>
-                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code">
+                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="inputCity" class="form-label">City</label>
-                            <select id="city" name="city" class="form-control">
+                            <select id="city" name="city" class="form-control" required>
                               <option value="">Select City</option>
                             </select>
                         </div>

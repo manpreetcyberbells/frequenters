@@ -54,7 +54,7 @@
               <div class="card-body box-profile">
                 <div class="text-center">
                   <img class="profile-user-img img-fluid img-circle"
-                       src="{{url('')}}/{{ $admin->profile_image }}"
+                       src="{{url('')}}/public/{{ $admin->profile_image }}"
                        alt="User profile picture"
                        id="image-preview" >
                 </div>
@@ -155,43 +155,39 @@
                     </form>
                   </div>
 
-                  <div class="tab-pane" id="password">
-                    <form method="POST" action="{{ route('admin.password.update') }}" class="form-horizontal">
-                      @csrf
-                      @method('PUT')
-                      <!-- Current Password -->
-                      <div class="form-group row">
-                          <label for="current_password" class="form-label">Current Password</label>
-                          <div class="col-sm-10">
-                            <input type="password" class="form-control" id="current_password" name="current_password" required>
-                          <div>
-                      </div>
-
-                      <!-- New Password -->
-                      <div class="form-group row">
-                          <label for="password" class="form-label">New Password</label>
-                          <div class="col-sm-10">
-                            <input type="password" class="form-control" id="password" name="password" required>
-                          <div>
-                      </div>
-
-                      <!-- Confirm Password -->
-                      <div class="form-group row">
-                          <label for="password_confirmation" class="form-label">Confirm Password</label>
-                          <div class="col-sm-10">
-                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-                          <div>
-                      </div>
-                      <button type="submit" class="btn btn-primary mt-3">Update Password</button>
-                    </form>
-                  </div>
-
-                </div>
-              </div>
+                 <div class="tab-pane" id="password">
+    <form method="POST" action="{{ route('admin.password.update') }}" class="form-horizontal">
+        @csrf
+        @method('PUT')
+        
+        <!-- Current Password -->
+        <div class="form-group row">
+            <label for="current_password" class="col-sm-2 col-form-label">Current Password</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="current_password" name="current_password" required>
             </div>
-          </div>
         </div>
-      </div>
+        
+        <!-- New Password -->
+        <div class="form-group row">
+            <label for="password" class="col-sm-2 col-form-label">New Password</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+        </div>
+        
+        <!-- Confirm Password -->
+        <div class="form-group row">
+            <label for="password_confirmation" class="col-sm-2 col-form-label">Confirm Password</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary mt-3">Update Password</button>
+    </form>
+</div>
+
     </section>
   </div>
 
@@ -243,72 +239,72 @@
                   
 
                   
-<div class="container mt-4">
-    <!-- <h2>Admin Profile</h2> -->
+                  <div class="container mt-4">
+                      <!-- <h2>Admin Profile</h2> -->
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+                      @if(session('success'))
+                          <div class="alert alert-success alert-dismissible fade show" role="alert">
+                              {{ session('success') }}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                          </div>
+                      @endif
 
-    <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+                      <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data">
+                          @csrf
 
-        <div class="row">
-            <!-- Profile Image -->
-            <div class="col-md-4">
-                <label for="profile_image" class="form-label">Profile Image</label>
-                <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*">
-                <div class="mt-2">
-                    @if($admin->profile_image)
-                        <img src="{{ asset($admin->profile_image) }}" id="image-preview" alt="Profile Image" class="img-thumbnail" width="120">
-                    @else
-                        <img src="{{ asset('default-avatar.png') }}" id="image-preview" alt="Default Profile" class="img-thumbnail" width="120">
-                    @endif
-                </div>
-            </div>
+                          <div class="row">
+                              <!-- Profile Image -->
+                              <div class="col-md-4">
+                                  <label for="profile_image" class="form-label">Profile Image</label>
+                                  <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*">
+                                  <div class="mt-2">
+                                      @if($admin->profile_image)
+                                          <img src="{{url('')}}/{{ asset($admin->profile_image) }}" id="image-preview" alt="Profile Image" class="img-thumbnail" width="120">
+                                      @else
+                                          <img src="{{ asset('default-avatar.png') }}" id="image-preview" alt="Default Profile" class="img-thumbnail" width="120">
+                                      @endif
+                                  </div>
+                              </div>
 
-            <!-- Name -->
-            <div class="col-md-4">
-                <label for="name" class="form-label">Full Name</label>
-                <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $admin->name) }}" required>
-            </div>
+                              <!-- Name -->
+                              <div class="col-md-4">
+                                  <label for="name" class="form-label">Full Name</label>
+                                  <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $admin->name) }}" required>
+                              </div>
 
-            <!-- Email -->
-            <div class="col-md-4">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $admin->email) }}" required>
-            </div>
-        </div>
+                              <!-- Email -->
+                              <div class="col-md-4">
+                                  <label for="email" class="form-label">Email</label>
+                                  <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $admin->email) }}" required>
+                              </div>
+                          </div>
 
-        <div class="row mt-3">
-            <!-- Phone -->
-            <div class="col-md-4">
-                <label for="phone" class="form-label">Phone</label>
-                <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone', $admin->phone) }}">
-            </div>
+                          <div class="row mt-3">
+                              <!-- Phone -->
+                              <div class="col-md-4">
+                                  <label for="phone" class="form-label">Phone</label>
+                                  <input type="text" class="form-control" id="phone" name="phone" value="{{ old('phone', $admin->phone) }}">
+                              </div>
 
-            <!-- Password -->
-            <div class="col-md-4">
-                <label for="password" class="form-label">New Password</label>
-                <input type="password" class="form-control" id="password" name="password">
-            </div>
+                              <!-- Password -->
+                              <div class="col-md-4">
+                                  <label for="password" class="form-label">New Password</label>
+                                  <input type="password" class="form-control" id="password" name="password">
+                              </div>
 
-            <!-- Confirm Password -->
-            <div class="col-md-4">
-                <label for="password_confirmation" class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
-            </div>
-        </div>
+                              <!-- Confirm Password -->
+                              <div class="col-md-4">
+                                  <label for="password_confirmation" class="form-label">Confirm Password</label>
+                                  <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                              </div>
+                          </div>
 
-        <!-- Submit Button -->
-        <div class="mt-4">
-            <button type="submit" class="btn btn-primary">Update Profile</button>
-        </div>
-    </form>
-</div>
+                          <!-- Submit Button -->
+                          <div class="mt-4">
+                              <button type="submit" class="btn btn-primary">Update Profile</button>
+                          </div>
+                      </form>
+                  </div>
 
       <!-- Image Preview Script -->
       <script>

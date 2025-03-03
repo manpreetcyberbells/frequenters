@@ -88,10 +88,12 @@
       if (zipCode) {
           $.get(`/api/zip/${zipCode}/cities`, function (data) {
               $('#city').append(data.map(city =>
-                  `<option value="${city.id}">${city.name}</option>`
+                `<option value="${city.id}">${city.name}</option>`
               ));
           }).fail(function () {
-              alert('No cities found for this zip code.');
+            //alert('No cities found for this zip code.');
+            $('#zip-code').addClass('is-invalid');
+            $('#zip-code').after('<div class="invalid-feedback">Invalid Zip-code, Failed to fetch cities. Please try again.</div>');
           });
       }
     });

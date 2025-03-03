@@ -20,7 +20,7 @@ class AdminCustomerController extends Controller
     */
     public function index()
     {
-        $customers = User::where('role', 'customer')->get();
+        $customers = User::where('role', 'customer')->orderBy('id', 'desc')->get();
         return view('admin.customers.index', compact('customers'));
     }
 
@@ -41,7 +41,7 @@ class AdminCustomerController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
-            'phone_number' => 'nullable|string|max:15|unique:users,phone,' . Auth::id(),
+            'mobile' => 'nullable|string|max:15|unique:users,phone',
             'profilei_mage' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max size 2MB
             'address1' => 'required',
             'zip_code' => 'required',
@@ -129,7 +129,7 @@ class AdminCustomerController extends Controller
             $request->validate([
                 'name'          => 'required|string|max:255',
                 'email'         => 'required|email|unique:users,email,' . $customer->id,
-                'phone_number'  => 'nullable|string|max:15|unique:users,phone,' . $customer->id,
+                'mobile'  => 'nullable|string|max:15|unique:users,phone,' . $customer->id,
                 'gender'        => 'nullable|in:male,female,other',
                 'birthday'      => 'nullable|date|before:today',
                 'anniversary'   => 'nullable|date|after:birthday',
@@ -163,7 +163,7 @@ class AdminCustomerController extends Controller
             $customer->update([
                 'name'  => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone_number,
+                'mobile' => $request->phone_number,
                 'gender' => $request->gender,
                 'status' => $request->status,
             ]);

@@ -140,7 +140,7 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Login successful.',
                 'token' => $token,
-                'user' => $user,
+                'user' => $user->load('customerProfile'),
                 'role' => $user->role, // Include the role in the response
             ], 200);
         }

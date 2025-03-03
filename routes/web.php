@@ -16,6 +16,7 @@ use App\Http\Controllers\API\RewardController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminBusinessController;
+use App\Http\Controllers\Admin\CategoryController;
 
 // Show Login Form
 Route::get('/login', [CustomerController::class, 'showLoginForm'])->name('customer.login');
@@ -99,6 +100,8 @@ Route::prefix('admin')->middleware(['auth', RoleMiddleware::class . ':admin'])->
     Route::resource('customers', AdminCustomerController::class);
     // Businesses
     Route::resource('businesses', AdminBusinessController::class);
+    // Categories
+    Route::resource('categories', CategoryController::class);
 });
 
 // Customer and Business QR Codes

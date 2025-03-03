@@ -75,8 +75,8 @@
                             name="name"
                             value="{{ $customer->name }}"
                             required
+                            placeholder="Enter customer name"
                           />
-                          <div class="valid-feedback">Looks good!</div>
                         </div>
                         <!--end::Col-->
                         <!--begin::Col-->
@@ -92,6 +92,7 @@
                               aria-describedby="email"
                               value="{{ $customer->email }}"
                               required
+                              placeholder="Enter valid email address"
                             />
                             @error('email')
                               <div class="invalid-feedback">{{ $message }}</div>
@@ -127,8 +128,8 @@
                                 placeholder="Enter your mobile number"
                                 value="{{ $customer->phone }}"
                                 required 
+                                placeholder="Enter valid mobile number"
                             />
-                            <div class="valid-feedback">Looks good!</div>
                             <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
                         </div>
 
@@ -139,9 +140,9 @@
                                 class="form-control" 
                                 id="birthday" 
                                 name="birthday"
-                                value="{{ isset($customer) ? \Carbon\Carbon::parse($customer->customerProfile->birthday)->format('Y-m-d') : '' }}"
+                                value="{{ isset($customer) && optional($customer->customerProfile)->birthday ? \Carbon\Carbon::parse($customer->customerProfile->birthday)->format('Y-m-d') : '' }}"
+                                max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
-                            <div class="valid-feedback">Looks good!</div>
                         </div>
 
                         <div class="col-md-4 form-group">
@@ -151,9 +152,9 @@
                                 class="form-control" 
                                 id="anniversary" 
                                 name="anniversary"
-                                value="{{ isset($customer) ? \Carbon\Carbon::parse($customer->customerProfile->anniversary)->format('Y-m-d') : '' }}"
+                                value="{{ isset($customer) && optional($customer->customerProfile)->anniversary ? \Carbon\Carbon::parse($customer->customerProfile->anniversary)->format('Y-m-d') : '' }}"
+                                max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
-                            <div class="valid-feedback">Looks good!</div>
                         </div>
 
                         <div class="col-md-4 form-group">
@@ -181,15 +182,10 @@
                               <option value="suspended" {{ $customer->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
                           </select>
                         </div>
-
-                        
-
-                        
-
                         
                         <div class="col-12 form-group">
                             <label for="inputAddress" class="form-label">Address</label>
-                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ $customer->customerAddress->address_line1 }}">
+                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ $customer->customerAddress->address_line1 }}" required>
                         </div>
 
                         <div class="col-12 form-group">
@@ -197,72 +193,36 @@
                             <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ $customer->customerAddress->address_line2 }}">
                         </div>
 
-                        <!-- <div class="col-md-3 form-group">
-                          <label for="inputState" class="form-label">State</label>
-                            <select id="inputState" name="state" class="form-control">
-                              <option value="">Select State</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3 form-group">
-                          <label for="inputCity" class="form-label">City</label>
-                            <select id="inputCity" name="city" class="form-control">
-                              <option value="">Select City</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="inputZip" class="form-label">Zip</label>
-                            <input type="text" name="zip_code" class="form-control" id="inputZip" value="{{ $customer->customerAddress->zip_code }}">
-                        </div>
-
-                        <div class="col-md-3">
-                          <label for="inputCountry" class="form-label">Country</label>
-                            <select id="inputCountry" name="country" class="form-control">
-                              <option value="">Select Country</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="latitude" class="form-label">Latitude</label>
-                            <input type="text" name="latitude" class="form-control" id="latitude" value="{{ $customer->customerAddress->latitude }}">
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="longitude" class="form-label">Longitude</label>
-                            <input type="text" name="longitude" class="form-control" id="longitude" value="{{ $customer->customerAddress->longitude }}">
-                        </div> -->
-
                         <div class="col-md-3 form-group">
                           <label for="zip-code" class="form-label">Zip</label>
-                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ $customer->customerAddress->zip_code }}">
+                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ $customer->customerAddress->zip_code }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="inputCity" class="form-label">City</label>
-                          <select id="city" name="city" class="form-control">
+                          <select id="city" name="city" class="form-control" required>
                             <option value="{{ $customer->customerAddress->city }}">{{ $cityName ?? 'Select City' }}</option>
                           </select>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="state" class="form-label">State</label>
-                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ $customer->customerAddress->state }}">
+                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ $customer->customerAddress->state }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="country" class="form-label">Country</label>
-                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ $customer->customerAddress->country }}">
+                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ $customer->customerAddress->country }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="latitude" class="form-label">Latitude</label>
-                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ $customer->customerAddress->latitude }}">
+                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ $customer->customerAddress->latitude }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="longitude" class="form-label">Longitude</label>
-                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ $customer->customerAddress->longitude }}">
+                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ $customer->customerAddress->longitude }}" required>
                         </div>
 
                         <!--end::Col-->
@@ -272,7 +232,7 @@
                     <!--end::Body-->
                     <!--begin::Footer-->
                     <div class="card-footer">
-                      <button class="btn btn-info" type="submit">Create Customer</button>
+                      <button class="btn btn-info" type="submit">Update Customer</button>
                     </div>
                     <!--end::Footer-->
                   </form>

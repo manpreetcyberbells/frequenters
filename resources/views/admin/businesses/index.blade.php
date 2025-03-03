@@ -42,6 +42,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Last Login</th>
+                    <th>Points Per Checkin</th>
                     <th style="width: 40px">Status</th>
                     <th>Action</th>
                   </tr>
@@ -59,6 +60,7 @@
                               <span class="text-muted">Never Logged In</span>
                           @endif
                         </td>
+                        <td>{{ $business->businessProfile->points_per_checkin }}</td>
                         <td>
                         @switch($business->status)
                             @case('active')
@@ -98,6 +100,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Last Login</th>
+                    <th>Points Per Checkin</th>
                     <th style="width: 40px">Status</th>
                     <th>Action</th>
                   </tr>

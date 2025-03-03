@@ -62,6 +62,7 @@
                     name="name"
                     value=""
                     required
+                    placeholder="Enter Business name"
                   />
                 </div>
                 <!--end::Col-->
@@ -77,6 +78,7 @@
                       id="validationCustomUsername"
                       aria-describedby="email"
                       required
+                      placeholder="Enter valid email address"
                     />
                     @error('email')
                       <div class="invalid-feedback">{{ $message }}</div>
@@ -109,7 +111,7 @@
                         id="mobileNumber" 
                         name="mobile" 
                         pattern="^\d{10,15}$" 
-                        placeholder="Enter your mobile number"
+                        placeholder="Enter valid mobile number"
                         required 
                     />
                     <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
@@ -164,6 +166,7 @@
                     required
                     min="1"
                     max="50"
+                    placeholder="Points Per Checkin"
                   />
                 </div>
 

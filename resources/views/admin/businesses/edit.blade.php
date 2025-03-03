@@ -63,6 +63,7 @@
                             name="name"
                             value="{{ $business->name }}"
                             required
+                            placeholder="Enter Business name"
                           />
                         </div>
                         <!--end::Col-->
@@ -79,6 +80,7 @@
                               aria-describedby="email"
                               value="{{ $business->email }}"
                               required
+                              placeholder="Enter valid email address"
                             />
                             @error('email')
                               <div class="invalid-feedback">{{ $message }}</div>
@@ -99,6 +101,7 @@
                                 placeholder="Enter your mobile number"
                                 value="{{ $business->phone }}"
                                 required 
+                                placeholder="Enter valid mobile number"
                             />
                             <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
                         </div>
@@ -166,6 +169,7 @@
                             min="1"
                             max="50"
                             value="{{ $business->businessProfile->points_per_checkin }}"
+                            placeholder="points Per Checkin"
                           />
                         </div>
 

@@ -94,6 +94,31 @@
                   </li>
                 </ul>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('categories.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
+                <i class="nav-icon fas fa-table"></i>
+                  <p>
+                    Categories
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="{{ route('categories.index') }}" class="nav-link {{ request()->routeIs('categories.index') ? 'active' : '' }}">
+                      <i class="fa fa-list-alt" aria-hidden="true"></i>
+                      <p>Listing</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{ route('categories.create') }}" class="nav-link {{ request()->routeIs('categories.create') ? 'active' : '' }}">
+                      <i class="fa fa-plus-square" aria-hidden="true"></i>
+                      <p>Create Category</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
               <li class="nav-item">
                 <a href="#" class="nav-link">
                 <i class="fa fa-bars" aria-hidden="true"></i>
