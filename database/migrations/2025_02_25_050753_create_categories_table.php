@@ -11,6 +11,10 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->foreignId('parent_id')->nullable()->constrained('categories')->onDelete('cascade');
+            $table->string('active_icon')->nullable();
+            $table->string('inactive_icon')->nullable();
+            $table->string('darkmode_active')->nullable();
+            $table->string('darkmode_inactive')->nullable();
             $table->timestamps();
         });
     }

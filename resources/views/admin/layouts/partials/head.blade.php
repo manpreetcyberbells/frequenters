@@ -29,5 +29,4 @@
   <link rel="stylesheet" href="{{ asset('admin_v1/plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('admin/css/custom_css.css') }}">
-  <script src="{{ asset('admin/js/business/edit.js') }}"></script>
 </head>

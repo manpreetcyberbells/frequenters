@@ -56,15 +56,38 @@ class CategoryController extends Controller
     */
     public function store(Request $request)
     {
+        // echo"<pre>"; print_r($request->all()); die;
         $request->validate([
-            'category_name' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:categories,id',
+            'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+            'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        Category::create([
-            'name' => $request->category_name,
-            'parent_id' => $request->parent_id,
-        ]);
+        $data = $request->only(['name', 'parent_id']);
+
+        if ($request->hasFile('active_icon')) {
+            $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
+        }
+        if ($request->hasFile('inactive_icon')) {
+            $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
+        }
+        if ($request->hasFile('darkmode_active')) {
+            $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
+        }
+        if ($request->hasFile('darkmode_inactive')) {
+            $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+        }
+        
+        // echo"<pre>"; print_r($data); die;
+    
+        Category::create($data);
+        // Category::create([
+        //     'name' => $request->name,
+        //     'parent_id' => $request->parent_id,
+        // ]);
 
         return redirect()->route('categories.index')->with('success', 'Category Added Successfully');
     }
@@ -100,5 +123,11 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')->with('success', 'Category Updated Successfully');
     }
 
+     // Delete Category
+    public function destroy(Category $category)
+    {
+        $category->delete();
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+    }
 
 }

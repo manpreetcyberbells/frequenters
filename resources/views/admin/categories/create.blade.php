@@ -35,7 +35,7 @@
             <div class="container-fluid">
               <div class="card card-info card-outline mb-4">
                 <div class="card-header"><div class="card-title">Category Form</div></div>
-                <form action="{{ route('categories.store') }}" method="POST" class="needs-validation" novalidate>
+                <form action="{{ route('categories.store') }}" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
                   @csrf
                   <div class="card-body">
                     <!--begin::Row-->
@@ -45,7 +45,7 @@
                         <div class="input-group has-validation">
                           <input
                             type="text"
-                            name="category_name"
+                            name="name"
                             class="form-control"
                             id="validationCategoryUsername"
                             required
@@ -63,6 +63,45 @@
                             @endforeach
                           </select>
                       </div>
+
+                      <div class="col-md-3 form-group">
+                        <label for="validationActive" class="form-label">Active Icon</label>
+                        <div class="input-group has-validation">
+                            <img id="active_icon_preview" src="" width="50">
+                            <input
+                              type="file"
+                              name="active_icon"
+                              class="form-control"
+                              id="active_icon"
+                              required
+                            />
+                        </div>
+                      </div>
+
+                      <div class="col-md-3 form-group">
+                        <label for="validationInactive" class="form-label">Inactive Icon</label>
+                        <div class="input-group has-validation">
+                          <img id="inactive_icon_preview" src="" width="50">
+                          <input type="file" name="inactive_icon" class="form-control" id="inactive_icon">
+                        </div>
+                      </div>
+
+                      <div class="col-md-3 form-group">
+                          <label for="validationdark" class="form-label">Dark Mode Icon</label>
+                          <div class="input-group has-validation">
+                            <img id="darkmode_active_preview" src="" width="50">
+                            <input type="file" name="darkmode_active" class="form-control" id="validationdark">
+                          </div>
+                      </div>
+
+                      <div class="col-md-3 form-group">
+                          <label for="validationdarkin" class="form-label">Dark Mode Icon</label>
+                          <div class="input-group has-validation">
+                            <img id="darkmode_inactive_preview" src="" width="50">
+                            <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
+                          </div>
+                      </div>
+
                     </div>
                   </div>
 

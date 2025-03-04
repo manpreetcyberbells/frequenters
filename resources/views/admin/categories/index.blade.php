@@ -42,6 +42,10 @@
                     <th style="width: 10px">#</th>
                     <th>Name</th>
                     <th>Parent</th>
+                    <th>Active</th>
+                    <th>Inactive</th>
+                    <th>Darkmode Active</th>
+                    <th>Darkmode Inactive</th>
                     <th>Action</th>
                   </tr>
                   </thead>
@@ -62,6 +66,26 @@
                                 @endif
                             </td>
                             <td>
+                                @if ($category->active_icon)
+                                    <img src="{{ asset('storage/' . $category->active_icon) }}" width="50">
+                                @endif
+                            </td>
+                            <td>
+                                @if ($category->inactive_icon)
+                                    <img src="{{ asset('storage/' . $category->inactive_icon) }}" width="50">
+                                @endif
+                            </td>
+                            <td>
+                                @if ($category->darkmode_active)
+                                    <img src="{{ asset('storage/' . $category->darkmode_active) }}" width="50">
+                                @endif
+                            </td>
+                            <td>
+                                @if ($category->darkmode_inactive)
+                                    <img src="{{ asset('storage/' . $category->darkmode_inactive) }}" width="50">
+                                @endif
+                            </td>
+                            <td>
                                 <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-primary">Edit</a>
                                 <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="d-inline">
                                     @csrf
@@ -77,6 +101,10 @@
                   <th style="width: 10px">#</th>
                     <th>Name</th>
                     <th>Parent</th>
+                    <th>Active</th>
+                    <th>Inactive</th>
+                    <th>Darkmode Active</th>
+                    <th>Darkmode Inactive</th>
                     <th>Action</th>
                   </tr>
                   </tfoot>

@@ -29,7 +29,7 @@
 <!-- AdminLTE App -->
 <script src="{{ asset('admin_v1/dist/js/adminlte.js') }}"></script>
 <!-- AdminLTE for demo purposes -->
-<script src="{{ asset('admin_v1/dist/js/demo.js') }}"></script>
+<!-- <script src="{{ asset('admin_v1/dist/js/demo.js') }}"></script> -->
 <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
 <script src="{{ asset('admin_v1/dist/js/pages/dashboard.js') }}"></script>
 
@@ -50,8 +50,10 @@
 <script src="{{ asset('admin_v1/dist/js/adminlte.min.js') }}"></script>
 <!-- AdminLTE for demo purposes -->
 <!-- <script src="{{ asset('admin_v1/dist/js/demo.js') }}"></script> -->
- <script src="{{ asset('admin/js/business/create.js') }}"></script>
- <script src="{{ asset('admin/js/business/edit.js') }}"></script>
+<script src="{{ asset('admin/js/business/create.js') }}"></script>
+<script src="{{ asset('admin/js/business/edit.js') }}"></script>
+<!-- Common jQuery -->
+<script src="{{ asset('admin/js/common.js') }}"></script>
 <!-- Page specific script -->
 <script>
   $(function () {

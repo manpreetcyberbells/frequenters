@@ -35,7 +35,7 @@
             <div class="container-fluid">
               <div class="card card-info card-outline mb-4">
                 <div class="card-header"><div class="card-title">Category Edit</div></div>
-                <form action="{{ route('categories.update', $category->id) }}" method="POST">
+                <form action="{{ route('categories.update', $category->id) }}" method="POST" enctype="multipart/form-data">
                   @csrf
                   @method('PUT')
                   <div class="card-body">
@@ -57,7 +57,54 @@
                           @endforeach
                         </select>
                       </div>
+                    
+
+                    <div class="col-md-3 form-group">
+                      <label for="validationActive" class="form-label">Active Icon</label>
+                        <div class="input-group has-validation">
+                          @if ($category->active_icon)
+                            <img id="active_icon_preview" src="{{ asset('storage/' . $category->active_icon) }}" width="50">
+                          @endif
+                          <input
+                            type="file"
+                            name="active_icon"
+                            class="form-control"
+                            id="active_icon"
+                            required
+                          />
+                        </div>
                     </div>
+
+                    <div class="col-md-3 form-group">
+                        <label for="validationInactive" class="form-label">Inactive Icon</label>
+                        <div class="input-group has-validation">
+                          @if ($category->inactive_icon)
+                            <img id="inactive_icon_preview" src="{{ asset('storage/' . $category->inactive_icon) }}" width="50">
+                          @endif
+                          <input type="file" name="inactive_icon" class="form-control" id="inactive_icon">
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 form-group">
+                      <label for="validationdark" class="form-label">Dark Mode Icon</label>
+                        <div class="input-group has-validation">
+                          @if ($category->darkmode_active)
+                            <img id="darkmode_active_preview"  src="{{ asset('storage/' . $category->darkmode_active) }}" width="50">
+                          @endif
+                          <input type="file" name="darkmode_active" class="form-control" id="validationdark">
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 form-group">
+                      <label for="validationdarkin" class="form-label">Dark Mode Icon</label>
+                        <div class="input-group has-validation">
+                          @if ($category->darkmode_inactive)
+                            <img id="darkmode_inactive_preview" src="{{ asset('storage/' . $category->darkmode_inactive) }}" width="50">
+                          @endif
+                          <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
+                        </div>
+                    </div>
+
                   </div>
                   <div class="card-footer">
                     <button type="submit" class="btn btn-info">Update</button>
