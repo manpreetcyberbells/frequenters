@@ -61,7 +61,7 @@
                         <div class="col-md-12 form-group">
                           <label for="pimage" class="form-label">Profile Image</label>
                           <div class="">
-                            <img src="{{ $customer->profile_image }}" alt="Business Image" width="100" height="100" class="preview-image profile-user-img img-fluid img-circle profileHgt" data-src="{{ $customer->profile_image }}" style="cursor: pointer;">
+                            <img src="{{ isset($customer->profile_image) && $customer->profile_image ? $customer->profile_image : '/media/dummy.png' }}" alt="Business Image" width="100" height="100" class="preview-image profile-user-img img-fluid img-circle" data-src="{{ $customer->profile_image }}" style="cursor: pointer;">
                           </div>
                         </div>
                         <!-- profile image -->

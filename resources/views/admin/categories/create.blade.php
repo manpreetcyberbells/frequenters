@@ -67,7 +67,7 @@
                       <div class="col-md-3 form-group">
                         <label for="validationActive" class="form-label">Active Icon</label>
                         <div class="input-group has-validation">
-                            <img id="active_icon_preview" src="" width="50">
+                            <img id="active_icon_preview" src="/media/dummy.png" width="35">
                             <input
                               type="file"
                               name="active_icon"
@@ -81,7 +81,7 @@
                       <div class="col-md-3 form-group">
                         <label for="validationInactive" class="form-label">Inactive Icon</label>
                         <div class="input-group has-validation">
-                          <img id="inactive_icon_preview" src="" width="50">
+                          <img id="inactive_icon_preview" src="/media/dummy.png" width="35">
                           <input type="file" name="inactive_icon" class="form-control" id="inactive_icon">
                         </div>
                       </div>
@@ -89,7 +89,7 @@
                       <div class="col-md-3 form-group">
                           <label for="validationdark" class="form-label">Dark Mode Icon</label>
                           <div class="input-group has-validation">
-                            <img id="darkmode_active_preview" src="" width="50">
+                            <img id="darkmode_active_preview" src="/media/dummy.png" width="35">
                             <input type="file" name="darkmode_active" class="form-control" id="validationdark">
                           </div>
                       </div>
@@ -97,7 +97,7 @@
                       <div class="col-md-3 form-group">
                           <label for="validationdarkin" class="form-label">Dark Mode Icon</label>
                           <div class="input-group has-validation">
-                            <img id="darkmode_inactive_preview" src="" width="50">
+                            <img id="darkmode_inactive_preview" src="/media/dummy.png" width="35">
                             <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
                           </div>
                       </div>

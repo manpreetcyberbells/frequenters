@@ -1,0 +1,25 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect direct access to "/public" back to the main domain
+    RewriteCond %{THE_REQUEST} \s/public [NC]
+    RewriteRule ^public/(.*)$ /$1 [R=301,L]
+
+    # Ensure request is not for an existing file or directory
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+	
+	# Allow access to storage folder
+    RewriteCond %{REQUEST_URI} ^/storage/.*$ [NC]
+    RewriteRule .* - [L]
+
+    # Redirect all requests to the public folder internally
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+
+
+# Block access to .env and other sensitive files
+<FilesMatch "(\.env|\.git|\.htaccess|composer\.(json|lock)|package\.json|webpack\.mix\.js|server\.php|artisan)">
+    Require all denied
+</FilesMatch>

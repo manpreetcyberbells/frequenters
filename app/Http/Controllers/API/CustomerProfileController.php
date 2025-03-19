@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller; // Base controller
 use Illuminate\Support\Facades\Auth; // Import Auth Facade
 use App\Models\User;
 use App\Models\CustomerProfile;
+use App\Models\CustomerAddress;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
@@ -200,4 +201,126 @@ class CustomerProfileController extends Controller
             ], 500);
         }
     }
+
+    /**
+     *  API Function for Create Customer Address 
+    */
+    public function createCustomerAddress(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $validated = $request->validate([
+                'address_line1' => 'nullable|string|max:255',
+                'address_line2' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:255',
+                'state' => 'nullable|string|max:255',
+                'country' => 'nullable|string|max:255',
+                'zip_code' => 'nullable|string|max:20',
+                'radius' => 'nullable|numeric|min:1|max:100',
+                'latitude' => 'nullable|string|max:20',
+                'longitude' => 'nullable|string|max:20',
+            ]);
+
+            $customerAddress = CustomerAddress::create([
+                'customer_id' => $user->id,
+                'address_line1' => $validated['address_line1'] ?? null,
+                'address_line2' => $validated['address_line2'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'state' => $validated['state'] ?? null,
+                'country' => $validated['country'] ?? null,
+                'zip_code' => $validated['zip_code'] ?? null,
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
+                'radius' => $validated['radius'] ?? 5,
+            ]);
+
+            return response()->json([
+                'message' => 'Customer address saved successfully',
+                'address' => $customerAddress,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while saving address',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function for Update Customer Address 
+    */
+    public function updateCustomerAddress(Request $request, $id)
+    {
+        try {
+            $user = auth()->user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $customerAddress = CustomerAddress::where('id', $id)->where('customer_id', $user->id)->first();
+            if (!$customerAddress) {
+                return response()->json(['message' => 'Address not found'], 404);
+            }
+
+            $validated = $request->validate([
+                'address_line1' => 'nullable|string|max:255',
+                'address_line2' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:255',
+                'state' => 'nullable|string|max:255',
+                'country' => 'nullable|string|max:255',
+                'zip_code' => 'nullable|string|max:20',
+                'radius' => 'nullable|numeric|min:1|max:100',
+                'latitude' => 'nullable|string|max:20',
+                'longitude' => 'nullable|string|max:20',
+            ]);
+
+            $customerAddress->update($validated);
+            return response()->json([
+                'message' => 'Customer address updated successfully',
+                'address' => $customerAddress,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating address',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function for Delete Customer Address 
+    */
+    public function deleteCustomerAddress($id)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $customerAddress = CustomerAddress::where('id', $id)->where('customer_id', $user->id)->first();
+            if (!$customerAddress) {
+                return response()->json(['message' => 'Address not found'], 404);
+            }
+            $customerAddress->delete();
+
+            return response()->json(['message' => 'Customer address soft deleted successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while deleting address',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
 }

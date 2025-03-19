@@ -9,6 +9,8 @@ use App\Models\CustomerAddress;
 use App\Models\BusinessProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\RegisterCustomerRequest;
 use App\Http\Requests\RegisterBusinessRequest;
@@ -36,7 +38,7 @@ class AuthController extends Controller
 
             Log::info('Customer user created with ID:', ['user_id' => $user->user_id]);
             
-            CustomerProfile::create([
+            $customer = CustomerProfile::create([
                 'customer_id' => $user->id,
                 'birthday' => $request->dob,
             ]);
@@ -48,12 +50,29 @@ class AuthController extends Controller
 
             Log::info('Customer profile created for user_id:', ['user_id' => $user->user_id]);
 
+            // Generate QR Code if not exists
+            if (!$customer->qr_code || !Storage::disk('public')->exists($customer->qr_code)) {
+                // Generate QR code content (e.g., customer profile URL)
+                $qrData = $customer->id;
+
+                // Define storage path
+                $path = 'qrcodes/customers/customer_' . $customer->id . '.png';
+
+                // Generate and store QR code
+                Storage::disk('public')->put($path, QrCode::format('png')->size(300)->generate($qrData));
+
+                // Save QR code path in the database
+                $customer->qr_code = $path;
+                $customer->save();
+            }
+
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Customer registered successfully.',
                 'token' => $token,
                 'user' => $user,
+                'qr_code_url' => asset('storage/' . $customer->qr_code),
             ], 201);
         } catch (\Exception $e) {
             Log::error('Customer registration failed:', ['error' => $e->getMessage()]);
@@ -79,7 +98,7 @@ class AuthController extends Controller
             ]);
 
             // Create business profile
-            BusinessProfile::create([
+            $business = BusinessProfile::create([
                 'business_id' => $user->user_id, // Use `user_id` from the users table
                 'business_name' => $request->business_name,
                 'industry_type' => $request->industry_type,
@@ -93,6 +112,22 @@ class AuthController extends Controller
                 'country' => $request->country,
                 'zip_code' => $request->zip_code,
             ]);
+
+            // Generate QR Code if not exists
+            // if (!$business->qr_code || !Storage::disk('public')->exists($business->qr_code)) {
+            //     // Generate QR code content (e.g., business profile URL)
+            //     $qrData = $business->id;
+
+            //     // Define storage path
+            //     $path = 'qrcodes/business/business_' . $business->id . '.png';
+
+            //     // Generate and store QR code
+            //     Storage::disk('public')->put($path, QrCode::format('png')->size(300)->generate($qrData));
+
+            //     // Save QR code path in the database
+            //     $business->qr_code = $path;
+            //     $business->save();
+            // }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 

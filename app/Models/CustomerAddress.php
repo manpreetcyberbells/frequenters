@@ -11,19 +11,8 @@ class CustomerAddress extends Model
 
     protected $table = 'customer_addresses';
     protected $primaryKey = 'id';
-
-    protected $fillable = [
-        'customer_id',
-        'address_line1',
-        'address_line2',
-        'zip_code',
-        'city',
-        'state',
-        'country',
-        'radius',
-        'latitude',
-        'longitude',
-    ];
+    protected $fillable = ['customer_id','address_line1','address_line2','zip_code','city','state','country','radius','latitude','longitude'];
+    protected $dates = ['deleted_at'];
 
     // public function customer_profile()
     // {

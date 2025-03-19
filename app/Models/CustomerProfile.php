@@ -24,6 +24,7 @@ class CustomerProfile extends Model
         'total_rewards_redeemed',
         'preferred_notification_channel',
         'preferred_language',
+        'qr_code_url',
     ];
 
     public function user()
