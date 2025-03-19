@@ -78,7 +78,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::put('/update-address/{id}', [CustomerProfileController::class, 'updateCustomerAddress']);
     // Delete Address
     Route::delete('/delete-address/{id}', [CustomerProfileController::class, 'deleteCustomerAddress']);
-
+    // Lists address
+    Route::get('/address', [CustomerProfileController::class, 'getCustomerAddress']);
     // Home API (Include Frequently Visited // Highest Reward Points // Near You)
     Route::get('/home-list', [CustomerController::class, 'getHomeBusinesses']);
     // Get wishlist

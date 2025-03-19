@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('industry_type', 50)->nullable();
             $table->text('description')->nullable();
             $table->string('website', 255)->nullable();
-            $table->string('qr_code_hash', 255)->nullable();
+            $table->text('qr_code_hash')->nullable();
             $table->integer('points_given')->default(0);
             $table->enum('status', ['active', 'inactive', 'suspended'])->default('active');
             $table->integer('monthly_points_available')->default(0);

@@ -9,12 +9,13 @@ use App\Models\CustomerAddress;
 use App\Models\BusinessProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\RegisterCustomerRequest;
 use App\Http\Requests\RegisterBusinessRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Crypt;
 
 class AuthController extends Controller
 {
@@ -26,8 +27,11 @@ class AuthController extends Controller
     public function registerCustomer(RegisterCustomerRequest $request)
     {
         try {
+            // $encryptedId = 'eyJpdiI6ImNzSmpWTmEwdmZNV2pTYW8zZ1puMWc9PSIsInZhbHVlIjoiZFlYYlRBVEpmbEtQQ3ZqM1VvQmpWQT09IiwibWFjIjoiMTA3OTIzMTkwZjE1MjJmNDg5OTM4YTE3MzkxNThlNzkwNWI1ZjJiMjk2YmVjZWY2ZGE5MGZkYjAzNjRiYWMwMiIsInRhZyI6IiJ9';
+            // $decryptedId = Crypt::decryptString($encryptedId);
+            // echo $decryptedId; die;
             Log::info('Register Customer API called with:', $request->all());
-
+        
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
@@ -35,51 +39,44 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
                 'role' => 'customer',
             ]);
-
-            Log::info('Customer user created with ID:', ['user_id' => $user->user_id]);
+        
+            Log::info('Customer user created with ID:', ['user_id' => $user->id]);
             
             $customer = CustomerProfile::create([
                 'customer_id' => $user->id,
                 'birthday' => $request->dob,
             ]);
-
+        
             // Create the customer address
             CustomerAddress::create([
                 'customer_id' => $user->id,
             ]);
-
-            Log::info('Customer profile created for user_id:', ['user_id' => $user->user_id]);
-
+        
+            Log::info('Customer profile created for user_id:', ['user_id' => $user->id]);
+        
             // Generate QR Code if not exists
-            if (!$customer->qr_code || !Storage::disk('public')->exists($customer->qr_code)) {
-                // Generate QR code content (e.g., customer profile URL)
-                $qrData = $customer->id;
-
-                // Define storage path
-                $path = 'qrcodes/customers/customer_' . $customer->id . '.png';
-
-                // Generate and store QR code
-                Storage::disk('public')->put($path, QrCode::format('png')->size(300)->generate($qrData));
-
-                // Save QR code path in the database
-                $customer->qr_code = $path;
+            if (!$customer->qr_code_hash || !Storage::disk('public')->exists($customer->qr_code_hash)) {
+                $encryptedId = Crypt::encryptString($customer->id);
+                $qrData = $encryptedId;
+                $path = 'qrcodes/customers/customer_' . $encryptedId . '.svg';
+                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
+                $customer->qr_code_hash = asset('storage/' . $path);
                 $customer->save();
             }
-
+        
             $token = $user->createToken('auth_token')->plainTextToken;
-
+        
             return response()->json([
                 'message' => 'Customer registered successfully.',
                 'token' => $token,
                 'user' => $user,
-                'qr_code_url' => asset('storage/' . $customer->qr_code),
+                'qr_code_url' => $customer->qr_code_hash,
             ], 201);
         } catch (\Exception $e) {
             Log::error('Customer registration failed:', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'An error occurred during registration.'], 500);
         }
     }
-
 
     /**
      * Register a new business.
@@ -114,20 +111,13 @@ class AuthController extends Controller
             ]);
 
             // Generate QR Code if not exists
-            // if (!$business->qr_code || !Storage::disk('public')->exists($business->qr_code)) {
-            //     // Generate QR code content (e.g., business profile URL)
-            //     $qrData = $business->id;
-
-            //     // Define storage path
-            //     $path = 'qrcodes/business/business_' . $business->id . '.png';
-
-            //     // Generate and store QR code
-            //     Storage::disk('public')->put($path, QrCode::format('png')->size(300)->generate($qrData));
-
-            //     // Save QR code path in the database
-            //     $business->qr_code = $path;
-            //     $business->save();
-            // }
+            if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
+                $qrData = url('/business/' . $business->id);
+                $path = 'qrcodes/business/business_' . $business->id . '.svg';
+                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
+                $business->qr_code_hash = $path;
+                $business->save();
+            }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 

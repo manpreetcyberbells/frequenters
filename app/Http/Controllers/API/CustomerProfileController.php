@@ -321,6 +321,32 @@ class CustomerProfileController extends Controller
         }
     }
 
+    /**
+     *  API Function for Get Customer Address 
+    */
+    public function getCustomerAddress(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $customerAddress = CustomerAddress::where('customer_id', $user->id)->get();
+
+            return response()->json([
+                'message' => 'Customer address getting successfully',
+                'address' => $customerAddress,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while getting address',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
 
 }

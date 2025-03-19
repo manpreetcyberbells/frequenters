@@ -66,6 +66,7 @@ class CustomerController extends Controller
 
         return redirect()->route('customer.register')->with('success', 'Registration successful!');
     }
+
     // Handle login (supports both web and API)
     public function handleLogin(Request $request)
     {
@@ -257,10 +258,15 @@ class CustomerController extends Controller
         }
     }
 
+    /**
+     *  API Function for Customer dashboard 
+    */
     public function getHomeBusinesses(Request $request)
     {
         $customerId = auth()->id();
         $profile = auth()->user()->customerProfile;
+        $listType = $request->input('listType');
+
         // Fetch customer address
         $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
         if (!$customerAddress) {
@@ -270,6 +276,7 @@ class CustomerController extends Controller
         $customerLat = $customerAddress->latitude;
         $customerLong = $customerAddress->longitude;
 
+        // Fetch nearby businesses
         $nearbyBusinesses = BusinessAddress::selectRaw(
             "business_addresses.*, 
             users.name AS business_name,
@@ -302,16 +309,52 @@ class CustomerController extends Controller
         ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
         ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
         ->having('distance', '<=', 10000) // Filter businesses within 10,000 km
-        ->orderBy('distance', 'asc') // Sort by nearest first
+        ->orderByDesc('distance') // Sort by farthest first
+        ->limit(10) // Limit to 10 results
         ->get();
-        
+
         // Get Reviews Based on Business_Ids
         $businessIds = $nearbyBusinesses->pluck('business_id')->toArray();
-        $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderBy('created_at', 'desc')->get();
+        $reviews = Review::whereIn('business_id', $businessIds)
+            ->with(['customer:id,name,profile_image'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        
-        // Fetch frequently visited businesses
-        $frequentBusinesses = array();
+        // Fetch frequently visited businesses (Modify logic based on actual data)
+        $frequentBusinesses = BusinessAddress::selectRaw(
+            "business_addresses.*, 
+            users.name AS business_name,
+            business_profiles.*,  
+            parent_category.name AS category_name,
+            child_category.name AS child_category_name,
+            (SELECT GROUP_CONCAT(business_images.photo) 
+                FROM business_images 
+                WHERE business_images.business_id = users.id) AS images,
+            (SELECT GROUP_CONCAT(
+                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
+            ) FROM business_hours 
+            WHERE business_hours.business_id = users.id) AS business_hours,
+            EXISTS (
+                SELECT 1 FROM wishlists 
+                WHERE wishlists.business_id = users.id 
+                AND wishlists.customer_id = ?
+            ) AS is_wishlist,
+            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
+            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
+            ROUND((6371 * acos(
+                cos(radians(?)) * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians(?)) 
+                + sin(radians(?)) * sin(radians(latitude))
+            )), 2) AS distance",
+            [$customerId, $customerLat, $customerLong, $customerLat]
+        )
+        ->join('users', 'users.id', '=', 'business_addresses.business_id')
+        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
+        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
+        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
+        ->orderByDesc('distance')
+        ->limit(10)
+        ->get();
 
         // Fetch businesses with highest reward points
         $highestRewardBusinesses = BusinessAddress::selectRaw(
@@ -346,10 +389,12 @@ class CustomerController extends Controller
         ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
         ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
         ->orderByDesc('business_profiles.points_per_checkin') // Sorting by highest check-in points first
-        ->orderBy('distance', 'asc') // Sorting by nearest distance if points are the same
+        ->orderByDesc('distance') // Sorting by farthest distance if points are the same
+        ->limit(10) // Limit to 10 results
         ->get();
 
-        return response()->json([
+        // Return only the requested listType
+        $responseData = [
             'name' => auth()->user()->name,
             'title' => 'Good Morning Bestie',
             'subtitle' => 'Yo, you just snagged '.$profile->points_balance.' exclusive points for hitting up cafes and restaurants this month!',
@@ -359,8 +404,17 @@ class CustomerController extends Controller
             'nearby' => $nearbyBusinesses,
             'reviews' => $reviews,
             'address' => $customerAddress
-        ]);
-    }
+        ];
 
+        if ($listType) {
+            if (isset($responseData[$listType])) {
+                return response()->json([$listType => $responseData[$listType]]);
+            } else {
+                return response()->json(['error' => 'Invalid listType parameter'], 400);
+            }
+        }
+
+        return response()->json($responseData);
+    }
 
 }

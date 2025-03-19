@@ -50,6 +50,7 @@ class WishlistController extends Controller
                 business_addresses.*, 
                 business_profiles.*, 
                 businesses.name AS business_name,
+                businesses.id AS business_id, 
                 parent_category.id AS category_id,
                 child_category.id AS child_category_id,
                 parent_category.name AS category_name,
@@ -79,7 +80,6 @@ class WishlistController extends Controller
 
         return response()->json($wishlist);
     }
-
 
     // Remove Business from Wishlist
     public function destroy($id)
