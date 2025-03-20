@@ -136,12 +136,25 @@ class CheckInController extends Controller
     public function checkIn(Request $request)
     {
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customer_profiles,customer_id',
+            // 'customer_id' => 'required|exists:customer_profiles,customer_id',
             'business_id' => 'required|exists:business_profiles,business_id',
         ]);
 
-        $customerId = $validated['customer_id'];
+        try {
+            $encryptedId = $request->customer_id;
+            $decryptedId = Crypt::decryptString($encryptedId);
+        } catch (\Exception $e) {
+            Log::error('Invalid customer ID: ' . $e->getMessage());
+            return response()->json(['error' => 'The provided encrypted ID is not valid or has been tampered with.'], 500);
+        }
+
+        $customerId = $decryptedId;
         $businessId = $validated['business_id'];
+        
+        $customer = DB::table('customer_profiles')->where('customer_id', $customerId)->first();
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found!.'], 400);
+        }
 
         try {
             // Fetch business and validate points availability
@@ -171,7 +184,7 @@ class CheckInController extends Controller
             } else {
                 // Update existing relationship
                 DB::table('customer_business_relationships')
-                    ->where('relationship_id', $relationship->relationship_id)
+                    ->where('id', $relationship->id)
                     ->update([
                         'interaction_count' => $relationship->interaction_count + 1,
                         'last_interaction_date' => now(),
@@ -217,7 +230,7 @@ class CheckInController extends Controller
 
             if ($interaction) {
                 DB::table('customer_business_interactions')
-                    ->where('interaction_id', $interaction->interaction_id)
+                    ->where('id', $interaction->id)
                     ->update([
                         'interaction_count' => $interaction->interaction_count + 1,
                         'last_interaction_date' => now(),

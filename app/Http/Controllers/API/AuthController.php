@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\CustomerProfile;
 use App\Models\CustomerAddress;
+use App\Models\BusinessAddress;
 use App\Models\BusinessProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -88,36 +89,55 @@ class AuthController extends Controller
         try {
             // Create the user with role 'business'
             $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
+                'name' => $request->business_name,
+                'email' => $request->business_email,
                 'password' => Hash::make($request->password),
                 'role' => 'business',
             ]);
 
             // Create business profile
             $business = BusinessProfile::create([
-                'business_id' => $user->user_id, // Use `user_id` from the users table
+                'business_id' => $user->id,
                 'business_name' => $request->business_name,
-                'industry_type' => $request->industry_type,
-                'location' => $request->location ? json_decode($request->location, true) : null,
-                'points_per_checkin' => $request->points_per_checkin ?? 10,
-                'conversion_rate' => $request->conversion_rate ?? 1.0,
+                'category_id' => $request->category_id,
+                'child_category_id' => $request->child_category_id,
+                'owner_name' => $request->owner_name,
+                'owner_email' => $request->owner_email,
+                'owner_phone' => $request->owner_phone,
+                'website' => $request->website,
+            ]);
+
+            // Generate QR Code if not exists
+            if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
+                $encryptedId = Crypt::encryptString($business->id);
+                $qrData = $encryptedId;
+                $path = 'qrcodes/business/business_' . $encryptedId . '.svg';
+                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
+                $business->qr_code_hash = asset('storage/' . $path);
+                $business->save();
+            }
+
+            $logoPath = null;
+            if($request->hasFile('logo')) {
+                $businessLogoFolder = 'logos/business';
+                Storage::disk('public')->makeDirectory($businessLogoFolder);
+                $file = $request->file('logo');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $logoPath = $file->storeAs($businessLogoFolder, $fileName, 'public');
+            }
+
+            // Create the Business address
+            BusinessAddress::create([
+                'business_id' => $user->id,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'address_line1' => $request->address_line1,
-                'address_line2' => $request->address_line2,
+                'address_line2' => $request->address_line1,
                 'city' => $request->city,
                 'state' => $request->state,
                 'country' => $request->country,
                 'zip_code' => $request->zip_code,
             ]);
-
-            // Generate QR Code if not exists
-            if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
-                $qrData = url('/business/' . $business->id);
-                $path = 'qrcodes/business/business_' . $business->id . '.svg';
-                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
-                $business->qr_code_hash = $path;
-                $business->save();
-            }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -165,8 +185,8 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Login successful.',
                 'token' => $token,
-                'user' => $user->load('customerProfile'),
-                'role' => $user->role, // Include the role in the response
+                'user' => $user->role === 'customer' ? $user->load('customerProfile') : $user->load('businessProfile'),
+                'role' => $user->role,
             ], 200);
         }
 

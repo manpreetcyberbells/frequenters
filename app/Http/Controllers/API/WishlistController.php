@@ -32,13 +32,14 @@ class WishlistController extends Controller
     }
 
     // Get Wishlist for Authenticated Customer
-    public function index()
+    public function index(Request $request)
     {
         $customerId = Auth::id();
         $customerAddress = CustomerAddress::where('customer_id', $customerId)->select('latitude', 'longitude')->first();
         $customerLat = $customerAddress->latitude ?? 0;
         $customerLong = $customerAddress->longitude ?? 0;
-
+        $perPage = $request->query('per_page', 10);
+        
         $wishlist = Wishlist::where('wishlists.customer_id', $customerId)
             ->join('users as businesses', 'wishlists.business_id', '=', 'businesses.id')
             ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'businesses.id')
@@ -76,7 +77,7 @@ class WishlistController extends Controller
                 )), 2) AS distance
             ", [$customerId, $customerLat, $customerLong, $customerLat])
             ->orderBy('distance', 'asc')
-            ->get();
+            ->paginate($perPage);
 
         return response()->json($wishlist);
     }

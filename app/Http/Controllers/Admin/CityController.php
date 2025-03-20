@@ -92,4 +92,31 @@ class CityController extends Controller
         ]);
     }
 
+    // API Function provide list of zip_code
+    public function getZipCodes(Request $request): JsonResponse
+    {
+        try {
+            // Get the search query from request
+            $search = $request->query('zip_code');
+
+            // Query zip codes with LIKE condition & paginate
+            $zipCodes = Zip::when($search, function ($query, $search) {
+                return $query->where('zip_code', 'like', "$search%");
+            })->paginate(100);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Zip codes retrieved successfully',
+                'data' => $zipCodes
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error retrieving zip codes',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }

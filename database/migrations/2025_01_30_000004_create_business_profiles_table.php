@@ -29,6 +29,12 @@ return new class extends Migration
             $table->decimal('conversion_rate', 5, 2)->default(0.00);
             $table->integer('total_checkins')->default(0);
             $table->integer('total_rewards_redeemed')->default(0);
+            $table->integer('category_id')->nullable();
+            $table->integer('child_category_id')->nullable();
+            $table->string('logo', 55)->nullable();
+            $table->string('owner_name', 55)->notNullable();
+            $table->string('owner_email', 55)->nullable();
+            $table->string('owner_phone', 15)->notNullable();
             $table->timestamps();
 
             // Foreign key constraints

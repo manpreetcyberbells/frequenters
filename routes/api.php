@@ -31,6 +31,9 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     // Get all cities
     Route::get('/cities', [CityController::class, 'getCityDetails']);
 
+    // Get all Zip_code
+    Route::get('/zipcodes', [CityController::class, 'getZipCodes']);
+
     // Get unique states
     Route::get('/states', [CityController::class, 'getStates']);
 

@@ -32,6 +32,10 @@ class BusinessProfile extends Model
         'website',
         'points_per_checkin',
         'qr_code_url',
+        'owner_name',
+        'owner_email',
+        'owner_phone',
+        'logo',
     ];
     
     protected $casts = [
