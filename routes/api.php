@@ -11,6 +11,7 @@ use App\Http\Controllers\API\RewardController;
 use App\Http\Controllers\API\CustomerProfileController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\ReviewController;
+use App\Http\Controllers\API\SearchHistoryController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -99,6 +100,14 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::delete('/review/{id}', [ReviewController::class, 'destroy']);
     // Get customer's reviews
     Route::get('/reviews', [ReviewController::class, 'getCustomerReviews']);
+    // Post Seach History
+    Route::post('/search', [SearchHistoryController::class, 'store']);
+    // Get Seach History
+    Route::get('/search-history', [SearchHistoryController::class, 'getUserSearchHistory']);
+    // Delete Seach History
+    Route::delete('/search-history/{id}', [SearchHistoryController::class, 'deleteSingleSearchHistory']);
+    // Search API
+    Route::get('/search', [SearchHistoryController::class, 'searchLocal']);
 });
 
 
