@@ -58,10 +58,16 @@ class SearchHistoryController extends Controller
     {
         $customerId = auth()->id();
         $categoryId = $request->input('category_id');
-        // Fetch customer address (if needed for future distance filter)
+        $maxRewardPoints = $request->input('reward_point_range');
+        $maxDistance = $request->input('distance');
+        $frequenters = $request->input('customer_tier');
+        $customerReview = $request->input('customer_review');
+
+        // Fetch customer address
         $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
         $customerLat = $customerAddress->latitude ?? 0;
         $customerLong = $customerAddress->longitude ?? 0;
+
         $query = BusinessAddress::selectRaw(
             "business_addresses.id AS business_address_id, 
             business_addresses.business_id,
@@ -95,6 +101,7 @@ class SearchHistoryController extends Controller
             business_profiles.child_category_id,
             parent_category.name AS category_name,
             child_category.name AS child_category_name,
+            COALESCE(cbr.customer_tier, 'new') AS customer_tier,
             (SELECT GROUP_CONCAT(business_images.photo) 
                 FROM business_images 
                 WHERE business_images.business_id = users.id) AS images,
@@ -109,23 +116,50 @@ class SearchHistoryController extends Controller
             ) AS is_wishlist,
             (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
             (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
-            ROUND((6371 * acos(
-                cos(radians(?)) * cos(radians(latitude)) 
-                * cos(radians(longitude) - radians(?)) 
-                + sin(radians(?)) * sin(radians(latitude))
-            )), 2) AS distance",
+            (6371 * acos(least(1, 
+                cos(radians(?)) * cos(radians(business_addresses.latitude)) * 
+                cos(radians(business_addresses.longitude) - radians(?)) + 
+                sin(radians(?)) * sin(radians(business_addresses.latitude))
+            ))) AS distance",
             [$customerId, $customerLat, $customerLong, $customerLat]
         )
         ->join('users', 'users.id', '=', 'business_addresses.business_id')
         ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
         ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
-        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id');
+        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
+        ->leftJoin('customer_business_relationships AS cbr', 'cbr.business_id', '=', 'users.id');
 
-        // Apply category filter if provided
+        // Apply category filter
         if ($categoryId) {
             $query->where('business_profiles.category_id', $categoryId);
         }
 
+        // Apply Checkin filter
+        if ($maxRewardPoints) {
+            $query->where('business_profiles.points_per_checkin', '<=', (int) $maxRewardPoints);
+        }
+
+        // Apply customer_tier (frequenters) filter
+        if ($frequenters) {
+            $query->whereRaw("COALESCE(cbr.customer_tier, 'new') = ?", [$frequenters]);
+        }
+
+        // Apply customer_review (rating) filter
+        if ($customerReview) {
+            if (is_array($customerReview)) {
+                $query->havingRaw('average_rating IN (' . implode(',', $customerReview) . ')');
+            } else {
+                $query->having('average_rating', '<=', $customerReview);
+            }
+        }
+
+        // Apply distance filter
+        if ($maxDistance) {
+            $query->havingRaw("distance <= ?", [$maxDistance]);
+        }
+
+        // Order results by distance (nearest first)
+        $query->orderBy('distance', 'ASC');
         $searchResults = $query->paginate(10);
 
         return response()->json($searchResults);

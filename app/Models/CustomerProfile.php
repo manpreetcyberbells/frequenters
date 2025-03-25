@@ -25,6 +25,7 @@ class CustomerProfile extends Model
         'preferred_notification_channel',
         'preferred_language',
         'qr_code_url',
+        'textCode',
     ];
 
     public function user()

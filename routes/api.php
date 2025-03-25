@@ -12,6 +12,7 @@ use App\Http\Controllers\API\CustomerProfileController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\SearchHistoryController;
+use App\Http\Controllers\API\OfferController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
+
 
 
 // Public Routes
@@ -108,8 +110,15 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::delete('/search-history/{id}', [SearchHistoryController::class, 'deleteSingleSearchHistory']);
     // Search API
     Route::get('/search', [SearchHistoryController::class, 'searchLocal']);
+    // Get Single Business Detail
+    Route::get('/business-detail/{id}', [BusinessController::class, 'getBusinessDetails']);
 });
 
+// Business API's
+Route::middleware(['auth:api'])->prefix('business')->group(function () {
+    // Create Offers
+    Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
+});
 
 // Protected Routes (Require Authentication)
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -141,14 +150,12 @@ Route::get('/customer/qr-code', [CustomerController::class, 'generateEncryptedQr
 
 // Generate Business QR Code
 Route::get('/business/qr-code', [BusinessController::class, 'generateBusinessQrCode'])
-    ->middleware('auth'); // Only logged-in business admins can access
+->middleware('auth'); // Only logged-in business admins can access
 
 // Group QR code generation endpoints under /api/generate-qr
 Route::prefix('generate-qr')->middleware('auth:sanctum')->group(function () {
-    Route::get('/customer', [CustomerController::class, 'generateEncryptedQrCodeApi'])
-        ->name('api.qr.customer');
-    Route::get('/business', [BusinessController::class, 'generateBusinessQrCodeApi'])
-        ->name('api.qr.business');
+    Route::get('/customer', [CustomerController::class, 'generateEncryptedQrCodeApi'])->name('api.qr.customer');
+    Route::get('/business', [BusinessController::class, 'generateBusinessQrCodeApi'])->name('api.qr.business');
 });
 
 // Grant reward points to businesses manually or automatically

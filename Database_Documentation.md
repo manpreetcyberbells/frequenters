@@ -108,7 +108,7 @@ last_interaction_date: Timestamp of the last interaction.
 
 total_points_earned: Total points the customer has earned at this business.
 
-customer_tier: Tier level (e.g., new, repeat, regular).
+customer_tier: Tier level (e.g., new => Never Visited, regular => Repeat, daily => Frequenters).
 
 Use Case:
 

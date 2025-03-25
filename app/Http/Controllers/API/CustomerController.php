@@ -12,6 +12,7 @@ use App\Models\CustomerAddress;
 use App\Models\BusinessAddress;
 use App\Models\BusinessProfile;
 use App\Models\Review;
+use App\Models\Offer;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\DB;
@@ -258,7 +259,7 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Failed to fetch dashboard data', 'error' => $e->getMessage()], 500);
         }
     }
-
+    
     /**
      *  API Function for Customer dashboard 
     */
@@ -280,16 +281,14 @@ class CustomerController extends Controller
         // Call the separate functions
         $nearbyBusinesses = $this->nearbyBusinesses($customerId, $customerLat, $customerLong, $categoryId);
         $highestRewardBusinesses = $this->highestRewardBusinesses($customerId, $customerLat, $customerLong, $categoryId);
+        // Fetch frequently visited businesses
+        $frequentBusinesses = $this->frequentlyVisited($customerId, $customerLat, $customerLong, $categoryId);
+        // Fetch Business Offers
+        $businessOffers = Offer::where('is_active', true)->orderBy('discount_percentage', 'desc')->get();
 
         // Get Reviews Based on Business_Ids
         $businessIds = BusinessProfile::pluck('business_id')->toArray();
-        $reviews = Review::whereIn('business_id', $businessIds)
-            ->with(['customer:id,name,profile_image'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Fetch frequently visited businesses
-        $frequentBusinesses = $this->nearbyBusinesses($customerId, $customerLat, $customerLong, $categoryId);
+        $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderBy('created_at', 'desc')->get();
 
         // Prepare response
         $responseData = [
@@ -301,6 +300,7 @@ class CustomerController extends Controller
             'highest_rewards' => $highestRewardBusinesses,
             'nearby' => $nearbyBusinesses,
             'reviews' => $reviews,
+            'offers' => $businessOffers,
             'address' => $customerAddress
         ];
 
@@ -317,7 +317,7 @@ class CustomerController extends Controller
     }
 
     /**
-     *  Refactored Helper functions // getHomeBusinesses
+     *  Refactored Helper functions
     */
     public function nearbyBusinesses($customerId, $customerLat, $customerLong, $categoryId)
     {
@@ -390,7 +390,7 @@ class CustomerController extends Controller
     }
 
     /**
-     *  Refactored Helper functions // getHomeBusinesses
+     *  Refactored Helper functions
     */
     public function highestRewardBusinesses($customerId, $customerLat, $customerLong, $categoryId)
     {
@@ -460,6 +460,88 @@ class CustomerController extends Controller
         }
         $highestReward = $query->paginate(10);
         return $highestReward;
+    }
+
+    /**
+     *  Refactored Helper functions
+    */
+    public function frequentlyVisited($customerId, $customerLat, $customerLong, $categoryId)
+    {
+        $query = BusinessAddress::selectRaw(
+            "business_addresses.id AS business_address_id, 
+            business_addresses.business_id,
+            business_addresses.address_line1, 
+            business_addresses.address_line2, 
+            business_addresses.city, 
+            business_addresses.state, 
+            business_addresses.country, 
+            business_addresses.zip_code, 
+            business_addresses.latitude, 
+            business_addresses.longitude,
+            users.id AS user_id,
+            users.status AS business_status,
+            business_profiles.id AS business_profile_id,
+            business_profiles.business_name,
+            business_profiles.description,
+            business_profiles.website,
+            business_profiles.qr_code_hash,
+            business_profiles.points_given,
+            business_profiles.monthly_points_available,
+            business_profiles.points_redeemed,
+            business_profiles.points_per_checkin,
+            business_profiles.conversion_rate,
+            business_profiles.total_checkins,
+            business_profiles.total_rewards_redeemed,
+            business_profiles.logo,
+            business_profiles.owner_name,
+            business_profiles.owner_email,
+            business_profiles.owner_phone,
+            business_profiles.category_id,
+            business_profiles.child_category_id,
+            parent_category.name AS category_name,
+            child_category.name AS child_category_name,
+            cbr.customer_tier,
+            (SELECT GROUP_CONCAT(business_images.photo) 
+                FROM business_images 
+                WHERE business_images.business_id = users.id) AS images,
+            (SELECT GROUP_CONCAT(
+                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
+            ) FROM business_hours 
+            WHERE business_hours.business_id = users.id) AS business_hours,
+            EXISTS (
+                SELECT 1 FROM wishlists 
+                WHERE wishlists.business_id = users.id 
+                AND wishlists.customer_id = ?
+            ) AS is_wishlist,
+            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
+            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
+            ROUND((6371 * acos(
+                cos(radians(?)) * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians(?)) 
+                + sin(radians(?)) * sin(radians(latitude))
+            )), 2) AS distance",
+            [$customerId, $customerLat, $customerLong, $customerLat]
+        )
+        ->join('users', 'users.id', '=', 'business_addresses.business_id')
+        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
+        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
+        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
+        ->leftJoin('customer_business_relationships AS cbr', function ($join) use ($customerId) {
+            $join->on('cbr.business_id', '=', 'users.id')->where('cbr.customer_id', '=', $customerId);
+        });
+
+        // Only fetch 'Daily' visitors
+        $query->where('cbr.customer_tier', 'daily');
+
+        // Apply category filter if provided
+        if ($categoryId) {
+            $query->where('business_profiles.category_id', $categoryId);
+        }
+
+        // Sort by nearest distance
+        $query->orderBy('distance', 'ASC');
+
+        return $query->paginate(10);
     }
 
 }

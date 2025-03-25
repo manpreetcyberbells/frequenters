@@ -28,9 +28,6 @@ class AuthController extends Controller
     public function registerCustomer(RegisterCustomerRequest $request)
     {
         try {
-            // $encryptedId = 'eyJpdiI6ImNzSmpWTmEwdmZNV2pTYW8zZ1puMWc9PSIsInZhbHVlIjoiZFlYYlRBVEpmbEtQQ3ZqM1VvQmpWQT09IiwibWFjIjoiMTA3OTIzMTkwZjE1MjJmNDg5OTM4YTE3MzkxNThlNzkwNWI1ZjJiMjk2YmVjZWY2ZGE5MGZkYjAzNjRiYWMwMiIsInRhZyI6IiJ9';
-            // $decryptedId = Crypt::decryptString($encryptedId);
-            // echo $decryptedId; die;
             Log::info('Register Customer API called with:', $request->all());
         
             $user = User::create([
@@ -57,12 +54,26 @@ class AuthController extends Controller
         
             // Generate QR Code if not exists
             if (!$customer->qr_code_hash || !Storage::disk('public')->exists($customer->qr_code_hash)) {
-                $encryptedId = Crypt::encryptString($customer->id);
-                $qrData = $encryptedId;
-                $path = 'qrcodes/customers/customer_' . $encryptedId . '.svg';
-                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
+                $payload = [
+                    "type" => "customer_checkin",
+                    "customer_id" => $user->id
+                ];
+                $encryptedPayload = Crypt::encryptString(json_encode($payload));
+                
+                // Generate text code (Base64-encoded payload)
+                $textCode = base64_encode($encryptedPayload);
+
+                // Create a safe filename for the QR code
+                $safeFilename = hash('sha256', $encryptedPayload); 
+                $path = 'qrcodes/customers/' . $safeFilename . '.svg';
+
+                // Store QR Code
+                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($textCode));
+                // Save QR details to the customer
                 $customer->qr_code_hash = asset('storage/' . $path);
+                $customer->text_code = $textCode;
                 $customer->save();
+                Log::info('Customer QR created for user_id:', ['user_id' => $user->id]);
             }
         
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -72,7 +83,9 @@ class AuthController extends Controller
                 'token' => $token,
                 'user' => $user,
                 'qr_code_url' => $customer->qr_code_hash,
+                'text_code' => $customer->text_code
             ], 201);
+            
         } catch (\Exception $e) {
             Log::error('Customer registration failed:', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'An error occurred during registration.'], 500);
@@ -108,14 +121,14 @@ class AuthController extends Controller
             ]);
 
             // Generate QR Code if not exists
-            if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
-                $encryptedId = Crypt::encryptString($business->id);
-                $qrData = $encryptedId;
-                $path = 'qrcodes/business/business_' . $encryptedId . '.svg';
-                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
-                $business->qr_code_hash = asset('storage/' . $path);
-                $business->save();
-            }
+            // if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
+            //     $encryptedId = Crypt::encryptString($business->id);
+            //     $qrData = $encryptedId;
+            //     $path = 'qrcodes/business/business_' . $encryptedId . '.svg';
+            //     Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($qrData));
+            //     $business->qr_code_hash = asset('storage/' . $path);
+            //     $business->save();
+            // }
 
             $logoPath = null;
             if($request->hasFile('logo')) {

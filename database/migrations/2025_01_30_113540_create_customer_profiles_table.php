@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('customer_id'); // Foreign key to users table
             $table->integer('points_balance')->default(0);
             $table->text('qr_code_hash')->nullable();
+            $table->text('text_code')->nullable();
             $table->date('birthday')->nullable();
             $table->date('anniversary')->nullable();
             $table->longText('preferences')->nullable();

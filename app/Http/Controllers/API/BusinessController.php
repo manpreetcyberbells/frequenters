@@ -389,6 +389,22 @@ class BusinessController extends Controller
     }
 
 
-    
+    /**
+     *  API Function getting Business Detail
+    */
+    public function getBusinessDetails($id){
+        try {
+            $business = User::with(['businessProfile', 'businessAddress', 'businessImage', 'businessHours'])->where('id', $id)->first();
+            
+            if (!$business) {
+                return response()->json(['error' => 'Business not found'], 404);
+            }
+            
+            return response()->json(['business' => $business], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+        }
+    }
 
 }
