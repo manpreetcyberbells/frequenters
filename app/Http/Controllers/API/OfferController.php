@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreOfferRequest;
+use Carbon\Carbon;
 
 class OfferController extends Controller 
 {
@@ -18,6 +19,13 @@ class OfferController extends Controller
     public function businessCreateOffer(StoreOfferRequest $request) 
     {
         try {
+            $businessId = auth()->id();
+            $user = auth()->user();
+
+            if ($user->role !== 'business') {
+                return response()->json(['message' => 'Please login with a valid Business account'], 403);
+            }
+
             $bannerPath = null;
             if ($request->hasFile('banner')) {
                 $bannerPath = $request->file('banner')->store('offers/banners', 'public');
@@ -31,6 +39,54 @@ class OfferController extends Controller
             return response()->json(['message' => 'Offer created successfully', 'offer' => $offer], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Something went wrong', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     *  API Function to Fetch Offers. 
+    */
+    public function getOffersDetail(Request $request){
+        try {
+            $businessOffers = Offer::where('is_active', true)
+                ->orderBy('discount_percentage', 'desc')
+                ->get()
+                ->map(function ($offer) {
+                    $startDateTime = Carbon::parse($offer->campaign_start_date . ' ' . $offer->campaign_start_time);
+                    $endDateTime = Carbon::parse($offer->campaign_end_date . ' ' . $offer->campaign_end_time);
+                    $now = Carbon::now();
+
+                    // Calculate the offer duration
+                    $diffInHours = $now->diffInHours($endDateTime, false);
+                    $diffInDays = $now->diffInDays($endDateTime, false);
+                    $diffInMonths = $now->diffInMonths($endDateTime, false);
+
+                    // Determine the validity status
+                    if ($offer->campaign_start_date === $offer->campaign_end_date) {
+                        $validity = "Valid today only";
+                    } elseif ($diffInHours <= 24 && $diffInDays == 0) {
+                        $validity = "Valid for a few hours";
+                    } elseif ($diffInDays == 1) {
+                        $validity = "Valid today only";
+                    } elseif ($diffInDays <= 7) {
+                        $validity = "Valid this week";
+                    } elseif ($diffInMonths == 0) {
+                        $validity = "Valid this month";
+                    } else {
+                        $validity = "Valid until " . $endDateTime->format('M d, Y');
+                    }
+
+                    $offer->validity_status = $validity;
+                    return $offer;
+                });
+
+            if ($businessOffers->isEmpty()) {
+                return response()->json(['error' => 'No active offer available'], 404);
+            }
+
+            return response()->json(['status' => true, 'offers' => $businessOffers], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
         }
     }
 

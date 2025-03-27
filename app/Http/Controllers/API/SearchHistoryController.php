@@ -57,6 +57,7 @@ class SearchHistoryController extends Controller
     public function searchLocal(Request $request)
     {
         $customerId = auth()->id();
+        $search_query = $request->input('search_query');
         $categoryId = $request->input('category_id');
         $maxRewardPoints = $request->input('reward_point_range');
         $maxDistance = $request->input('distance');
@@ -128,6 +129,8 @@ class SearchHistoryController extends Controller
         ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
         ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
         ->leftJoin('customer_business_relationships AS cbr', 'cbr.business_id', '=', 'users.id');
+
+        $query->where('business_profiles.business_name', 'LIKE', '%' . $search_query . '%');
 
         // Apply category filter
         if ($categoryId) {

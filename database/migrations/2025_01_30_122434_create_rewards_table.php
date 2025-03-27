@@ -16,11 +16,12 @@ return new class extends Migration
             $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
             $table->string('reward_name', 255);
             $table->integer('points_required');
+            $table->text('qr_code')->nullable();
             $table->boolean('is_exclusive')->default(1);
-            $table->timestamp('valid_from')->default(now());
-            $table->dateTime('valid_until')->nullable();
+            $table->date('valid_from')->nullable();
+            $table->date('valid_until')->nullable();
             $table->integer('usage_limit')->nullable();
-            $table->dateTime('expiry_date')->nullable();
+            $table->date('expiry_date')->nullable();
             $table->timestamps();
         });
     }

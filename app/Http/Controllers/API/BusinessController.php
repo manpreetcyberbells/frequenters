@@ -147,6 +147,7 @@ class BusinessController extends Controller
         // Return view with QR code and text code
         return view('business.qr-code', compact('qrCode', 'textCode'));
     }
+
     public function generateEncryptedQrCodeApi()
     {
         // Get the authenticated user's ID (business admin ID)
@@ -261,40 +262,6 @@ class BusinessController extends Controller
             // Log error and redirect with failure message
             Log::error('Error creating reward: ' . $e->getMessage());
             return redirect()->route('business.dashboard')->with('error', 'Failed to create reward.');
-        }
-    }
-
-    public function storeRewardApi(Request $request)
-    {
-        $validated = $request->validate([
-            'reward_name' => 'required|string|max:255',
-            'points_required' => 'required|integer|min:1',
-            'valid_from' => 'nullable|date',
-            'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'usage_limit' => 'nullable|integer|min:0',
-        ]);
-
-        $businessId = Auth::user()->businessProfile->business_id;
-
-        try {
-            // Insert reward into the database
-            $rewardId = DB::table('rewards')->insertGetId([
-                'business_id' => $businessId,
-                'reward_name' => $validated['reward_name'],
-                'points_required' => $validated['points_required'],
-                'valid_from' => $validated['valid_from'],
-                'valid_until' => $validated['valid_until'],
-                'usage_limit' => $validated['usage_limit'],
-                'created_at' => now(),
-            ]);
-
-            return response()->json([
-                'message' => 'Reward created successfully.',
-                'reward_id' => $rewardId,
-            ], 201);
-        } catch (\Exception $e) {
-            Log::error('Error creating reward: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create reward.'], 500);
         }
     }
 

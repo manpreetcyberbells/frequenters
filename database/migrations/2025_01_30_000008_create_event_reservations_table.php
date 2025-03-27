@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // Primary key
             $table->unsignedBigInteger('event_id'); // Foreign key to events table
             $table->unsignedBigInteger('customer_id'); // Foreign key to users table
-            $table->enum('status', ['confirmed', 'cancelled', 'attended'])->default('confirmed');
+            $table->enum('status', ['confirmed', 'canceled', 'attended'])->default('confirmed');
             $table->timestamp('reserved_at')->useCurrent();
             $table->timestamps();
 

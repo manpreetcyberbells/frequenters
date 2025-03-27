@@ -13,6 +13,7 @@ use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\SearchHistoryController;
 use App\Http\Controllers\API\OfferController;
+use App\Http\Controllers\API\EventController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -112,12 +113,20 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/search', [SearchHistoryController::class, 'searchLocal']);
     // Get Single Business Detail
     Route::get('/business-detail/{id}', [BusinessController::class, 'getBusinessDetails']);
+    // Get Offers
+    Route::get('/get-offers', [OfferController::class, 'getOffersDetail']);
+    // Get Events
+    Route::get('/get-events', [EventController::class, 'getEventsDetail']);
+    // Join-Cancelled Event
+    Route::post('/join-cancel-event', [EventController::class, 'eventReservationStatus']);
 });
 
 // Business API's
 Route::middleware(['auth:api'])->prefix('business')->group(function () {
     // Create Offers
     Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
+    // Create Event
+    Route::post('/events', [EventController::class, 'createBusinessEvent']);
 });
 
 // Protected Routes (Require Authentication)
@@ -125,9 +134,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard']);
-    Route::get('/protected', function (Request $request) {
-        return response()->json(['message' => 'You are authenticated!', 'user' => $request->user()]);
-    });
+    Route::get('/protected', function (Request $request) { return response()->json(['message' => 'You are authenticated!', 'user' => $request->user()]);});
+
+    // Get information for Customer Dashboard on customer_app
+    Route::get('/customer/api-dashboard', [CustomerController::class, 'apiDashboard']);
 });
 
 // Resource Routes (Public/General APIs)
@@ -139,18 +149,14 @@ Route::apiResource('transactions', TransactionController::class);
 // Additional Utility Routes
 // Route::get('/cities-by-zip/{zip}', [CityController::class, 'getCitiesByZip']);
 
-// QR code generation
-Route::post('/checkin/customer', [CheckInController::class, 'customerCheckIn']);
-Route::post('/checkin/business', [CheckInController::class, 'businessCheckIn']);
-Route::post('/checkin/text-code', [CheckInController::class, 'checkInWithTextCode']);
-
 // Generate Customer QR Code
-Route::get('/customer/qr-code', [CustomerController::class, 'generateEncryptedQrCode'])
-    ->middleware('auth'); // Only logged-in customers can access
+Route::middleware('auth')->group(function () {
+    // Customer QR Code
+    Route::get('/customer/qr-code', [CustomerController::class, 'generateEncryptedQrCode'])->name('api.customer.qrCode');
 
-// Generate Business QR Code
-Route::get('/business/qr-code', [BusinessController::class, 'generateBusinessQrCode'])
-->middleware('auth'); // Only logged-in business admins can access
+    // Business QR Code
+    Route::get('/business/qr-code', [BusinessController::class, 'generateBusinessQrCode'])->name('api.business.qrCode');
+});
 
 // Group QR code generation endpoints under /api/generate-qr
 Route::prefix('generate-qr')->middleware('auth:sanctum')->group(function () {
@@ -159,36 +165,29 @@ Route::prefix('generate-qr')->middleware('auth:sanctum')->group(function () {
 });
 
 // Grant reward points to businesses manually or automatically
-Route::post('/business/{businessId}/grant-checkin-points', [BusinessController::class, 'grantCheckinPoints'])
-    ->middleware('auth:sanctum')
-    ->name('api.business.grantCheckinPoints');
+Route::post('/business/{businessId}/grant-checkin-points', [BusinessController::class, 'grantCheckinPoints'])->middleware('auth:sanctum')->name('api.business.grantCheckinPoints');
 
 // for businesses to add rewards
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/business/rewards', [BusinessController::class, 'storeRewardApi'])->name('api.business.storeReward');
-});
+    Route::post('/business/post-reward', [RewardController::class, 'storeRewardApi'])->name('api.business.storeReward');
+    // QR code generation
+    Route::post('/checkin/customer', [CheckInController::class, 'customerCheckIn']);
+    Route::post('/checkin/business', [CheckInController::class, 'businessCheckIn']);
+    Route::post('/checkin/by-uid', [CheckInController::class, 'checkInWithUID']);
 
-// for businesses to view reward point summary
-Route::middleware('auth:sanctum')->group(function () {
+    // for businesses to view reward point summary
     Route::get('/business/points-summary', [BusinessController::class, 'pointsSummaryApi'])->name('api.business.pointsSummary');
-});
 
-// for business to modify points per check-in
-Route::middleware('auth:sanctum')->group(function () {
+    // for business to modify points per check-in
     Route::post('/business/checkin-points', [BusinessController::class, 'updateCheckinPointsApi'])->name('api.business.updateCheckinPoints');
     Route::get('/business/checkin-points', [BusinessController::class, 'getCheckinPointsApi'])->name('api.business.getCheckinPoints');
-});
 
-// for check-in
-Route::middleware('auth:sanctum')->group(function () {
+    // for check-in
     Route::post('/business/checkin', [CheckinController::class, 'checkIn'])->name('api.business.checkin');
+
+    // Redeem reward
+    Route::get('/rewards/{reward_id}/redeem-qr', [RewardController::class, 'generateRedemptionQrCode'])->name('api.rewards.generateQr');
+
+    // Generate QR code for redeeming a reward
+    Route::post('/rewards/generate-qr', [RewardController::class, 'generateRedemptionQrCodeApi'])->name('api.rewards.generateQr');
 });
-
-// Redeem reward
-Route::middleware('auth:sanctum')->get('/rewards/{reward_id}/redeem-qr', [RewardController::class, 'generateRedemptionQrCode'])->name('api.rewards.generateQr');
-
-// Generate QR code for redeeming a reward
-Route::middleware('auth:sanctum')->post('/rewards/generate-qr', [RewardController::class, 'generateRedemptionQrCodeApi'])->name('api.rewards.generateQr');
-
-// Get information for Customer Dashboard on customer_app
-Route::middleware(['auth:sanctum'])->get('/customer/api-dashboard', [CustomerController::class, 'apiDashboard']);
