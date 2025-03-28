@@ -119,6 +119,10 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/get-events', [EventController::class, 'getEventsDetail']);
     // Join-Cancelled Event
     Route::post('/join-cancel-event', [EventController::class, 'eventReservationStatus']);
+    // Get Rewards
+    Route::get('/get-rewards', [RewardController::class, 'getBusinessRewards']);
+    // Get Reward Detail
+    Route::get('/get-reward-detail/{id}', [RewardController::class, 'fetchSingleReward']);
 });
 
 // Business API's
@@ -190,4 +194,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Generate QR code for redeeming a reward
     Route::post('/rewards/generate-qr', [RewardController::class, 'generateRedemptionQrCodeApi'])->name('api.rewards.generateQr');
+
+    // for check-in
+    Route::post('/reward/redemptions', [RewardController::class, 'rewardRedemptions']);
 });

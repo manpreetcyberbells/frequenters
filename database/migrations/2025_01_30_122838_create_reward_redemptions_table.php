@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('reward_redemptions', function (Blueprint $table) {
             $table->id(); // Primary key
-            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->unsignedBigInteger('reward_id'); // Foreign key to rewards table
             $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
             $table->integer('points_redeemed');

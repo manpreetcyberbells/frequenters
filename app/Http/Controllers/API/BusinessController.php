@@ -72,10 +72,10 @@ class BusinessController extends Controller
         }
 
        // Fetch business profile and rewards
-    $business = DB::table('business_profiles')->where('business_id', $user->user_id)->first();
-    $rewards = DB::table('rewards')->where('business_id', $user->user_id)->get();
+        $business = DB::table('business_profiles')->where('business_id', $user->user_id)->first();
+        $rewards = DB::table('rewards')->where('business_id', $user->user_id)->get();
 
-    return view('business.dashboard', compact('user', 'business', 'rewards'));
+        return view('business.dashboard', compact('user', 'business', 'rewards'));
     }
 
 
@@ -354,7 +354,6 @@ class BusinessController extends Controller
             return response()->json(['error' => 'Failed to update check-in points.'], 500);
         }
     }
-
 
     /**
      *  API Function getting Business Detail
