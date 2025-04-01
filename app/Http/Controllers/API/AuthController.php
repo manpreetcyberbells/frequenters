@@ -8,6 +8,7 @@ use App\Models\CustomerProfile;
 use App\Models\CustomerAddress;
 use App\Models\BusinessAddress;
 use App\Models\BusinessProfile;
+use App\Models\Invite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +93,17 @@ class AuthController extends Controller
                 $customer->save();
                 
                 Log::info('Customer QR created for user_id:', ['user_id' => $user->id]);
+            }
+
+            $invite = Invite::where('email', $request->email)->where('status', 'pending')->first();
+            if ($invite) {
+                $invite->update(['status' => 'accepted']);
+        
+                // Reward the inviter
+                $inviter = CustomerProfile::where('customer_id', $customer->customer_id)->first();
+                if ($inviter) {
+                    $inviter->increment('points_balance', 100);
+                }
             }
 
             $token = $user->createToken('auth_token')->plainTextToken;

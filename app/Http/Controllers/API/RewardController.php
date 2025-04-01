@@ -20,54 +20,36 @@ class RewardController extends Controller
      * Private Function for handle Rewad Redemptions
      * 
     */
-    private function processRewardRedemption($businessId, $rewardId)
+    private function processRewardRedemption($businessId, $rewardId, $customerTiers = [])
     {
-        // Fetch reward details
         $reward = DB::table('rewards')->where('id', $rewardId)->first();
         if (!$reward) {
             return response()->json(['error' => 'Reward not found'], 404);
         }
 
-        // Check for existing pending redemption
-        $existingRedemption = DB::table('reward_redemptions')
-            ->where('business_id', $businessId)
-            ->where('reward_id', $rewardId)
-            ->where('status', 'pending')
-            ->first();
+        // Store customer tiers in the QR code if provided
+        $qrPayload = [
+            'type' => 'reward_redemption',
+            'business_id' => $businessId,
+            'reward_id' => $rewardId,
+            'redemption_code' => Str::random(10),
+        ];
 
-        if ($existingRedemption) {
-            return $this->generateQrResponse($businessId, $rewardId, $existingRedemption->redemption_code, 'Existing redemption reused.');
+        if (!empty($customerTiers)) {
+            $qrPayload['customer_tiers'] = $customerTiers;
         }
 
-        // Create new redemption entry
-        $redemptionCode = Str::random(10);
-        DB::table('reward_redemptions')->insert([
-            // 'customer_id' => $customerId,
-            'reward_id' => $rewardId,
-            'business_id' => $businessId,
-            'points_redeemed' => $reward->points_required,
-            'status' => 'pending',
-            'redemption_code' => $redemptionCode,
-            'created_at' => now(),
-        ]);
-
-        return $this->generateQrResponse($businessId, $rewardId, $redemptionCode, 'New redemption created.');
+        return $this->generateQrResponse($businessId, $rewardId, $qrPayload, 'Reward created successfully.');
     }
+
 
     /**
      * Private Function to Gererate QR for Reward
      * 
     */
-    private function generateQrResponse($businessId, $rewardId, $redemptionCode, $message)
+    private function generateQrResponse($businessId, $rewardId, $qrPayload, $message)
     {
-        $encryptedPayload = Crypt::encryptString(json_encode([
-            'type' => 'reward_redemption',
-            'business_id' => $businessId,
-            'reward_id' => $rewardId,
-            'redemption_code' => $redemptionCode,
-        ]));
-
-        $qrCode = base64_encode(QrCode::size(300)->generate($encryptedPayload));
+        $encryptedPayload = Crypt::encryptString(json_encode($qrPayload));
         $rewardCheck = DB::table('rewards')->where('id', $rewardId)->first();
         // Generate QR Code if not exists
         if (!$rewardCheck->qr_code || !Storage::disk('public')->exists($rewardCheck->qr_code)) {
@@ -84,9 +66,11 @@ class RewardController extends Controller
             
             Log::info('Reward QR created for Business:', ['Business' => $rewardId]);
         }
-
+        
         // Get QR
         $qrCode = DB::table('rewards')->where('id', $rewardId)->pluck('qr_code')->first();
+        // Notification (Testing for all Users // Later allow for special user also)
+        createNotification($businessId, $rewardCheck->reward_name, "push", null, true);
 
         return response()->json([
             'qr_code' => $qrCode,
@@ -126,30 +110,13 @@ class RewardController extends Controller
             'points_required' => 'required|integer|min:1',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'customer_tiers' => 'nullable|array',
+            'customer_tiers.*' => 'in:new,regular,frequenter'
         ]);
 
         $businessId = Auth::user()->businessProfile->business_id;
-        
-        /*$activeReward = DB::table('rewards')
-        ->where('business_id', $businessId)
-        ->where(function ($query) {
-            $query->whereNull('valid_until')
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->whereDate('valid_from', '<=', Carbon::today())->whereDate('valid_until', '>=', Carbon::today());
-                    });
-
-        })
-        ->exists();
-
-        if ($activeReward) {
-            return response()->json([
-                'message' => 'You already have an active reward. Please wait until it expires before creating a new one.',
-                'active_reward' => $activeReward
-            ], 400);
-        }*/
 
         try {
-            // Insert reward into the database
             $rewardId = DB::table('rewards')->insertGetId([
                 'business_id' => $businessId,
                 'reward_name' => $validated['reward_name'],
@@ -159,9 +126,7 @@ class RewardController extends Controller
                 'created_at' => now(),
             ]);
 
-            $businessId = Auth::id();
-
-            return $this->processRewardRedemption($businessId, $rewardId);
+            return $this->processRewardRedemption($businessId, $rewardId, $validated['customer_tiers'] ?? []);
 
         } catch (\Exception $e) {
             Log::error('Error creating reward: ' . $e->getMessage());
@@ -184,46 +149,81 @@ class RewardController extends Controller
             'customer_id' => 'required|exists:customer_profiles,customer_id'
         ]);
 
-        try { 
+        try {
             $decryptedPayload = json_decode(Crypt::decryptString($validated['qr_code']), true);
-            $customer_id = $request->customer_id;
-            // Ensure the reward belongs to the logged-in business
+            // echo"<pre>"; print_r($decryptedPayload); die;
+            $customerId = $validated['customer_id'];
+
             if ($decryptedPayload['business_id'] !== $user->id) {
                 return response()->json(['message' => 'You can only redeem rewards created by your business'], 403);
             }
 
-            $customerBalance = CustomerProfile::where('customer_id',$customer_id)->pluck('points_balance')->first();
+            // Get customer tier from database
+            $customerTier = DB::table('customer_business_relationships')
+                ->where('business_id', $user->id)
+                ->where('customer_id', $customerId)
+                ->value('customer_tier');
+
+            // Check if the QR code has tier restrictions
+            if (!empty($decryptedPayload['customer_tiers']) && !in_array($customerTier, $decryptedPayload['customer_tiers'])) {
+                return response()->json(['message' => 'This reward is not available for your customer tier'], 403);
+            }
+
+            // Check customer's points balance
+            $customerBalance = DB::table('customer_profiles')
+                ->where('customer_id', $customerId)
+                ->value('points_balance');
+
             if (!$customerBalance) {
                 return response()->json(['message' => 'Customer not found or invalid balance'], 404);
             }
 
-            $reward = DB::table('reward_redemptions')
-                ->where('reward_id',$decryptedPayload['reward_id'])
-                ->where('business_id',$user->id)
-                ->where('redemption_code',$decryptedPayload['redemption_code'])
-                ->where('status','pending')
+            // Fetch reward details
+            $reward = DB::table('rewards')
+                ->where('id', $decryptedPayload['reward_id'])
+                ->where('business_id', $user->id)
                 ->first();
 
             if (!$reward) {
-                return response()->json(['message' => 'Invalid reward redemption details'], 400);
+                return response()->json(['message' => 'Invalid reward details'], 400);
             }
 
-            // Validate if customer has enough balance for redemption
-            if ($customerBalance < $reward->points_redeemed) {
+            if ($customerBalance < $reward->points_required) {
                 return response()->json(['message' => 'Insufficient points balance'], 400);
             }
 
-            // Process reward redemption
-            DB::table('customer_profiles')->where('customer_id', $customer_id)->decrement('points_balance', $reward->points_redeemed);
+            // Process redemption - deduct points and insert redemption record
+            DB::beginTransaction();
 
-            DB::table('reward_redemptions')->where('reward_id', $decryptedPayload['reward_id'])->update(['customer_id' => $customer_id, 'status' => 'success', 'updated_at' => now()]);
+            try {
+                DB::table('customer_profiles')
+                    ->where('customer_id', $customerId)
+                    ->decrement('points_balance', $reward->points_required);
 
-            return response()->json(['message' => 'Reward redeemed successfully'], 200);
+                DB::table('reward_redemptions')->insert([
+                    'customer_id' => $customerId,
+                    'reward_id' => $reward->id,
+                    'business_id' => $user->id,
+                    'points_redeemed' => $reward->points_required,
+                    'status' => 'success',
+                    'redemption_code' => $decryptedPayload['redemption_code'],
+                    'created_at' => now(),
+                ]);
+
+                DB::commit();
+
+                return response()->json(['message' => 'Reward redeemed successfully'], 200);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json(['message' => 'Something went wrong, please try again.'], 500);
+            }
 
         } catch (\Exception $e) {
             return response()->json(['message' => 'Invalid or tampered QR Code'], 400);
         }
     }
+
 
     /**
      * API Function for Get Rewards

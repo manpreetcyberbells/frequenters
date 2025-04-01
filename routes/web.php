@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminBusinessController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\API\InviteController;
 
 // Show Login Form
 Route::get('/login', [CustomerController::class, 'showLoginForm'])->name('customer.login');
@@ -29,6 +30,10 @@ Route::get('/reset-password', function () {
 })->name('password.reset');
 
 Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
+// Accept Invite
+Route::get('/accept-invite/{token}', [InviteController::class, 'acceptInvite']);
+// Check Invite Status
+Route::post('/check-invite', [InviteController::class, 'checkInvite']);
 
 // Dashboard (Protected Route)
 Route::middleware(['auth'])->group(function () {

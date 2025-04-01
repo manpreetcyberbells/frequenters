@@ -12,23 +12,23 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id(); // Primary key
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade'); // Nullable for broadcast
             $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
             $table->enum('type', ['email', 'SMS', 'push'])->nullable();
             $table->enum('status', ['pending', 'sent', 'delivered', 'failed'])->default('pending');
             $table->text('message');
-            $table->unsignedBigInteger('campaign_id')->nullable(); // Foreign key to campaigns table
+            $table->unsignedBigInteger('campaign_id')->nullable();
             $table->integer('retry_count')->default(0);
             $table->enum('priority', ['low', 'medium', 'high'])->default('medium');
-            $table->timestamp('scheduled_time')->nullable()->comment('Time for scheduled notification');
+            $table->timestamp('scheduled_time')->nullable();
+            $table->boolean('is_broadcast')->default(false); // New column for broadcast support
             $table->timestamps();
 
-            // Foreign key constraints
             $table->foreign('campaign_id')
-                  ->references('id')
-                  ->on('campaigns')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('campaigns')
+                ->onDelete('cascade');
         });
     }
 

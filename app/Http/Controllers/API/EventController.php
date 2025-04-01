@@ -74,6 +74,9 @@ class EventController extends Controller
                 'longitude' => $cityData->longitude
             ]);
 
+            // Notification
+            createNotification($businessId, $event->event_name, "push", null, true);
+
             return response()->json([
                 'message' => 'Event created successfully',
                 'event' => $event
@@ -93,10 +96,16 @@ class EventController extends Controller
     public function getEventsDetail(Request $request)
     {
         try {
-            $events = Event::where('status', 'published')->with('business')->orderBy('start_date', 'asc')->get()
-                ->map(function ($event) {
-                    $confirmedCount = EventReservation::where('event_id', $event->id)->where('status', 'confirmed')->count();
+            $events = Event::where('status', 'published')
+                ->with('business')
+                ->orderBy('start_date', 'asc')
+                ->paginate(10)
+                ->through(function ($event) {
+                    $confirmedCount = EventReservation::where('event_id', $event->id)
+                        ->where('status', 'confirmed')
+                        ->count();
                     $remainingSeats = max(0, $event->capacity - $confirmedCount);
+
                     return [
                         'id' => $event->id,
                         'business_id' => $event->business_id,
@@ -124,7 +133,6 @@ class EventController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong',
@@ -132,7 +140,6 @@ class EventController extends Controller
             ], 500);
         }
     }
-
 
     /**
      *  API Function to Confirmed // Cancelled Event. 
@@ -167,6 +174,9 @@ class EventController extends Controller
                     'reserved_at' => now(),
                 ]);
 
+                // Notification
+                createNotification($event->business_id, "You have successfully joined the event.", "push", $userId, true);
+
                 return response()->json(['message' => 'You have successfully joined the event.'], 200);
             }
 
@@ -176,6 +186,9 @@ class EventController extends Controller
 
             if ($reservation && $reservation->status === 'confirmed' && $status === 'cancelled') {
                 $reservation->update(['status' => 'cancelled']);
+
+                // Notification
+                createNotification($event->business_id, "You have successfully cancelled your event participation.", "push", $userId, true);
 
                 return response()->json(['message' => 'You have successfully cancelled your event participation.'], 200);
             }

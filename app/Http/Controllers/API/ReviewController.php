@@ -16,7 +16,7 @@ class ReviewController extends Controller
             'business_id' => 'required|exists:users,id',
             'rating' => 'required|integer|min:1|max:5',
             'review' => 'nullable|string|max:500',
-            'complaint' => 'nullable|string|max:500',
+            // 'complaint' => 'nullable|string|max:500',
         ]);
 
         $review = Review::updateOrCreate(
@@ -27,7 +27,7 @@ class ReviewController extends Controller
             [
                 'rating' => $request->rating,
                 'review' => $request->review,
-                'complaint' => $request->complaint,
+                // 'complaint' => $request->complaint,
             ]
         );
 

@@ -36,6 +36,9 @@ class OfferController extends Controller
                 'banner_image' => asset('storage/' . $bannerPath)
             ]));
 
+            // Notification
+            createNotification($businessId, $offer->title, "push", null, true);
+
             return response()->json(['message' => 'Offer created successfully', 'offer' => $offer], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Something went wrong', 'error' => $e->getMessage()], 500);

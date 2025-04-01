@@ -14,6 +14,9 @@ use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\SearchHistoryController;
 use App\Http\Controllers\API\OfferController;
 use App\Http\Controllers\API\EventController;
+use App\Http\Controllers\API\InviteController;
+use App\Http\Controllers\API\NotificationController;
+use App\Http\Controllers\API\ComplaintController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -97,6 +100,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::delete('/wishlist/{business_id}', [WishlistController::class, 'destroy']);
     // Submit or update review
     Route::post('/post-review', [ReviewController::class, 'store']);
+    // Submit Complaints
+    Route::post('/post-complaint', [ComplaintController::class, 'createComplaint']);
     // Get reviews of a business
     Route::get('/reviews/business/{business_id}', [ReviewController::class, 'getBusinessReviews']);
     // Delete review
@@ -131,6 +136,8 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
     // Create Event
     Route::post('/events', [EventController::class, 'createBusinessEvent']);
+    // Create Complaints
+    Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
 });
 
 // Protected Routes (Require Authentication)
@@ -197,4 +204,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // for check-in
     Route::post('/reward/redemptions', [RewardController::class, 'rewardRedemptions']);
+
+    // Send Invite
+    Route::post('/customer/invite', [InviteController::class, 'invite'])->name('api.invite');
+    // GET Notifications
+    Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('api.notifications');
 });
