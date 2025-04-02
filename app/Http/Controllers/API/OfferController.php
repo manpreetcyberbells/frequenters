@@ -52,8 +52,8 @@ class OfferController extends Controller
         try {
             $businessOffers = Offer::where('is_active', true)
                 ->orderBy('discount_percentage', 'desc')
-                ->get()
-                ->map(function ($offer) {
+                ->paginate(10)
+                ->through(function ($offer) {
                     $startDateTime = Carbon::parse($offer->campaign_start_date . ' ' . $offer->campaign_start_time);
                     $endDateTime = Carbon::parse($offer->campaign_end_date . ' ' . $offer->campaign_end_time);
                     $now = Carbon::now();

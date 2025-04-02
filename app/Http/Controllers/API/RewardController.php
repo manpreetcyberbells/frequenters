@@ -276,7 +276,7 @@ class RewardController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error creating reward: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create reward.'], 500);
+            return response()->json(['error' => 'Failed to get rewards.'], 500);
         }
     }
 
@@ -292,7 +292,7 @@ class RewardController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error creating reward: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create reward.'], 500);
+            return response()->json(['error' => 'Failed to get reward.'], 500);
         }
     }
 

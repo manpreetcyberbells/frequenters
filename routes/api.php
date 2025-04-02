@@ -17,6 +17,7 @@ use App\Http\Controllers\API\EventController;
 use App\Http\Controllers\API\InviteController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\ComplaintController;
+use App\Http\Controllers\API\ContestController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -128,6 +129,12 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/get-rewards', [RewardController::class, 'getBusinessRewards']);
     // Get Reward Detail
     Route::get('/get-reward-detail/{id}', [RewardController::class, 'fetchSingleReward']);
+    // Submit Answer
+    Route::post('/submit-answer', [ContestController::class, 'submitAnswer']);
+    // Create Contest Vote
+    Route::post('/contest-vote', [ContestController::class, 'vote']);
+    // Get Winners
+    Route::get('/contest/{contest_id}/winners', [ContestController::class, 'getWinners']);
 });
 
 // Business API's
@@ -138,6 +145,8 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::post('/events', [EventController::class, 'createBusinessEvent']);
     // Create Complaints
     Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
+    // Create Contest
+    Route::post('/contests', [ContestController::class, 'create']);
 });
 
 // Protected Routes (Require Authentication)
