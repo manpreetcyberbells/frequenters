@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('invites', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->unsignedBigInteger('business_id')->nullable();
             $table->string('email');
             $table->string('token', 191)->unique();
             $table->enum('status', ['pending', 'accepted', 'expired'])->default('pending');
+            $table->enum('role', ['customer', 'business'])->nullable();
             $table->timestamps();
 
             $table->foreign('customer_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('business_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

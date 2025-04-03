@@ -14,20 +14,30 @@ class InviteController extends Controller
     // Send Invitation
     public function invite(Request $request)
     {
+        // echo"<pre>"; print_r($request->all()); die;
         $request->validate([
             'email' => 'required|email|unique:users,email|unique:invites,email',
+            'role'  => 'required|in:customer,business'
         ]);
 
         $token = Str::random(32);
 
-        $invite = Invite::create([
-            'customer_id' => auth()->id(),
-            'email' => $request->email,
-            'token' => $token,
+        $inviteData = [
+            'email'  => $request->email,
+            'token'  => $token,
             'status' => 'pending',
-        ]);
+            'role'   => $request->role,
+        ];
 
-        // Send Email (You can customize this)
+        if ($request->role === 'customer') {
+            $inviteData['customer_id'] = auth()->id();
+        } elseif ($request->role === 'business') {
+            $inviteData['business_id'] = auth()->id();
+        }
+
+        $invite = Invite::create($inviteData);
+
+        // Send Email (Can be customized)
         Mail::raw("You're invited! Accept the invite: " . url('/accept-invite/' . $token), function ($message) use ($request) {
             $message->to($request->email)
                     ->subject('Invitation to Join');
@@ -48,7 +58,8 @@ class InviteController extends Controller
         // Here, you can redirect to the registration page with email prefilled
         return response()->json([
             'message' => 'Invite accepted. Please register.',
-            'email' => $invite->email
+            'email' => $invite->email,
+            'role' => $invite->role
         ]);
     }
 
@@ -65,6 +76,6 @@ class InviteController extends Controller
             return response()->json(['message' => 'No invitation found.'], 404);
         }
 
-        return response()->json(['status' => $invite->status]);
+        return response()->json(['status' => $invite->status, 'role' => $invite->role]);
     }
 }

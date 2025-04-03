@@ -39,6 +39,37 @@ class AuthController extends Controller
         return 'BUS' . $userId . strtoupper($hash);
     }
 
+    /**
+     * Handle Invitation in Registration (Customer & Business)
+    */
+    private function handleInviteReward($email, $role, $userId)
+    {
+        $invite = Invite::where('email', $email)->where('status', 'pending')->where('role', $role)->first();
+
+        if ($invite) {
+            $invite->update(['status' => 'accepted']);
+
+            if ($role === 'customer') {
+                // Reward inviter for customer
+                $inviter = CustomerProfile::where('customer_id', $invite->customer_id)->first();
+                if ($inviter) {
+                    $inviter->increment('points_balance', 100);
+                }
+            } elseif ($role === 'business') {
+                // Reward inviter (who sent the invite)
+                $inviter = BusinessProfile::where('business_id', $invite->business_id)->first();
+                if ($inviter) {
+                    $inviter->increment('monthly_points_available', 100);
+                }
+
+                // Reward invitee (who registered using the invite)
+                $invitee = BusinessProfile::where('business_id', $userId)->first();
+                if ($invitee) {
+                    $invitee->increment('monthly_points_available', 100);
+                }
+            }
+        }
+    }
 
     /**
      * Register a new customer.
@@ -95,16 +126,17 @@ class AuthController extends Controller
                 Log::info('Customer QR created for user_id:', ['user_id' => $user->id]);
             }
 
-            $invite = Invite::where('email', $request->email)->where('status', 'pending')->first();
-            if ($invite) {
-                $invite->update(['status' => 'accepted']);
+            $this->handleInviteReward($request->email, 'customer', $customer->customer_id);
+            // $invite = Invite::where('email', $request->email)->where('status', 'pending')->first();
+            // if ($invite) {
+            //     $invite->update(['status' => 'accepted']);
         
-                // Reward the inviter
-                $inviter = CustomerProfile::where('customer_id', $customer->customer_id)->first();
-                if ($inviter) {
-                    $inviter->increment('points_balance', 100);
-                }
-            }
+            //     // Reward the inviter
+            //     $inviter = CustomerProfile::where('customer_id', $customer->customer_id)->first();
+            //     if ($inviter) {
+            //         $inviter->increment('points_balance', 100);
+            //     }
+            // }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -195,6 +227,8 @@ class AuthController extends Controller
                 'country' => $request->country,
                 'zip_code' => $request->zip_code,
             ]);
+
+            $this->handleInviteReward($request->business_email, 'business', $user->id);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
