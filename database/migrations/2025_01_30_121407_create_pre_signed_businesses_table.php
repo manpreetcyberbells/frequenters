@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // Primary key
             $table->string('business_name', 255);
             $table->string('contact_person', 255);
-            $table->string('email')->unique();
+            $table->string('email',191)->unique();
             $table->string('phone', 15)->nullable();
             $table->string('industry', 100)->nullable();
             $table->string('city', 100)->nullable();

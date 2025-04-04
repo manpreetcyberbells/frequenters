@@ -64,13 +64,16 @@ class ContestController extends Controller
             $validatedData['business_id'] = $businessId;
             $validatedData['banner_image'] = asset('storage/' . $bannerPath);
 
+            // echo"<pre>"; print_r($validatedData); die;
+
+
             // Create Contest
             $contest = Contest::create($validatedData);
 
             // Create Question
             $question = ContestQuestion::create([
                 'contest_id' => $contest->id,
-                'type' => $validatedData['question_type'],
+                'question_type' => $validatedData['question_type'],
                 'question' => $validatedData['question_field'],
             ]);
 

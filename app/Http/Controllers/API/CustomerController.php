@@ -284,11 +284,14 @@ class CustomerController extends Controller
         // Fetch frequently visited businesses
         $frequentBusinesses = $this->frequentlyVisited($customerId, $customerLat, $customerLong, $categoryId);
         // Fetch Business Offers
-        $businessOffers = Offer::where('is_active', true)->orderBy('discount_percentage', 'desc')->get();
+        $businessOffers = Offer::where('is_active', true)->orderBy('discount_percentage', 'desc')->limit(3)->get();
 
         // Get Reviews Based on Business_Ids
         $businessIds = BusinessProfile::pluck('business_id')->toArray();
         $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderBy('created_at', 'desc')->get();
+
+        // Customer All Address
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)->get();
 
         // Prepare response
         $responseData = [

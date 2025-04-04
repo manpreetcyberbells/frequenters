@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\CustomerProfile;
+use App\Models\User;
 use Carbon\Carbon;
 
 class RewardController extends Controller
@@ -228,73 +229,180 @@ class RewardController extends Controller
     /**
      * API Function for Get Rewards
     */
+    // public function getBusinessRewards(Request $request)
+    // {
+    //     $user = auth()->user();
+    //     $customer = CustomerProfile::where('customer_id', $user->id)->first();
+    //     if (!$customer) {
+    //         return response()->json(['message' => 'Customer not found'], 404);
+    //     }
+
+    //     try{
+    //         $today = now();
+    //         $customerId = $user->id;
+    //         // Get total number of check-ins by the customer
+    //         $checkInCount = DB::table('checkins')->where('customer_id', $customerId)->count();
+    //         // Get unique businesses visited by the customer
+    //         $businessVisitedCount = DB::table('checkins')->where('customer_id', $customerId)->distinct('business_id')->count('business_id');
+
+    //         // Fetch active rewards for the business (only with pending redemptions)
+    //         $activeRewards = DB::table('rewards')
+    //             ->leftJoin('reward_redemptions', function ($join) {
+    //                 $join->on('rewards.id', '=', 'reward_redemptions.reward_id')
+    //                     ->where('reward_redemptions.status', '=', 'pending');
+    //             })
+    //             ->whereDate('rewards.valid_from', '<=', $today)
+    //             ->whereDate('rewards.valid_until', '>=', $today)
+    //             ->select('rewards.*', DB::raw('COUNT(CASE WHEN reward_redemptions.status = "pending" THEN 1 END) as pending_redemptions'))
+    //             ->groupBy('rewards.id')
+    //             ->having('pending_redemptions', '>', 0)
+    //             ->get();
+
+    //         // Fetch redeemed rewards of the logged-in customer (where status is "success")
+    //         $redeemedRewards = DB::table('rewards')
+    //             ->join('reward_redemptions', 'rewards.id', '=', 'reward_redemptions.reward_id')
+    //             ->where('reward_redemptions.customer_id', $customerId)
+    //             ->where('reward_redemptions.status', 'success')
+    //             ->select('rewards.*', 'reward_redemptions.redeemed_at')
+    //             ->get();
+            
+    //         return response()->json([
+    //             'business_visited' => $businessVisitedCount,
+    //             'check_ins' => $checkInCount,
+    //             'active_rewards' => $activeRewards,
+    //             'redeemed_rewards' => $redeemedRewards,
+    //         ], 200);
+
+    //     } catch (\Exception $e) {
+    //         Log::error('Error creating reward: ' . $e->getMessage());
+    //         return response()->json(['error' => 'Failed to get rewards.'], 500);
+    //     }
+    // }
+
     public function getBusinessRewards(Request $request)
     {
         $user = auth()->user();
         $customer = CustomerProfile::where('customer_id', $user->id)->first();
-
         if (!$customer) {
             return response()->json(['message' => 'Customer not found'], 404);
         }
 
-        try{
-
+        try {
             $today = now();
             $customerId = $user->id;
+
             // Get total number of check-ins by the customer
             $checkInCount = DB::table('checkins')->where('customer_id', $customerId)->count();
-            // Get unique businesses visited by the customer
-            $businessVisitedCount = DB::table('checkins')->where('customer_id', $customerId)->distinct('business_id')->count('business_id');
 
-            // Fetch active rewards for the business (only with pending redemptions)
-            $activeRewards = DB::table('rewards')
-                ->leftJoin('reward_redemptions', function ($join) {
-                    $join->on('rewards.id', '=', 'reward_redemptions.reward_id')
-                        ->where('reward_redemptions.status', '=', 'pending');
-                })
+            // Get unique businesses visited by the customer
+            $businessVisitedCount = DB::table('checkins')
+                ->where('customer_id', $customerId)
+                ->distinct('business_id')
+                ->count('business_id');
+
+            // Fetch businesses that have active reward
+            $activeBusinesses = DB::table('rewards')
+                ->join('users', 'rewards.business_id', '=', 'users.id')
                 ->whereDate('rewards.valid_from', '<=', $today)
                 ->whereDate('rewards.valid_until', '>=', $today)
-                ->select('rewards.*', DB::raw('COUNT(CASE WHEN reward_redemptions.status = "pending" THEN 1 END) as pending_redemptions'))
-                ->groupBy('rewards.id')
-                ->having('pending_redemptions', '>', 0)
+                ->whereNull('rewards.expiry_date')
+                ->select('users.id as business_id', 'users.name', DB::raw('COUNT(rewards.id) as total_rewards'))
+                ->groupBy('users.id', 'users.name')
                 ->get();
 
-            // Fetch redeemed rewards of the logged-in customer (where status is "success")
-            $redeemedRewards = DB::table('rewards')
-                ->join('reward_redemptions', 'rewards.id', '=', 'reward_redemptions.reward_id')
+            // Fetch redeemed rewards of Customer
+            $redeemedRewards = DB::table('reward_redemptions')
+                ->join('rewards', 'reward_redemptions.reward_id', '=', 'rewards.id')
+                ->join('users', 'rewards.business_id', '=', 'users.id')
                 ->where('reward_redemptions.customer_id', $customerId)
                 ->where('reward_redemptions.status', 'success')
-                ->select('rewards.*', 'reward_redemptions.redeemed_at')
+                ->select(
+                    'users.name as business_name',
+                    'users.profile_image',
+                    'reward_redemptions.points_redeemed',
+                    'reward_redemptions.redeemed_at'
+                )
+                ->orderBy('reward_redemptions.redeemed_at', 'desc')
                 ->get();
-            
+
+            $formattedRewards = $redeemedRewards->map(function ($reward) {
+                return [
+                    'business_name' => $reward->business_name,
+                    'business_logo' => $reward->profile_image ?? '',
+                    'message' => "You have earned {$reward->points_redeemed} points",
+                    'points' => "+{$reward->points_redeemed}"
+                ];
+            });
+
             return response()->json([
                 'business_visited' => $businessVisitedCount,
                 'check_ins' => $checkInCount,
-                'active_rewards' => $activeRewards,
-                'redeemed_rewards' => $redeemedRewards,
+                'active_businesses' => $activeBusinesses,
+                'redeemed_rewards' => $formattedRewards,
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Error creating reward: ' . $e->getMessage());
+            Log::error('Error fetching business rewards: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to get rewards.'], 500);
         }
     }
+
+    /**
+     * API Function Fetch all Rewards by BusinessID
+    */
+    public function getRewardByBusiness($id)
+    {
+        try {
+            $rewards = DB::table('rewards')->where('business_id', $id)->get();
+            if ($rewards->isEmpty()) {
+                return response()->json(['error' => 'No rewards found for this business'], 404);
+            }
+
+            $today = now()->startOfDay();
+            foreach ($rewards as $reward) {
+                $business = User::where('id', $reward->business_id)->first();
+                $reward->business_name = optional($business)->name;
+                if (!empty($reward->valid_until)) {
+                    $validUntil = \Carbon\Carbon::parse($reward->valid_until)->startOfDay();
+                    $daysLeft = max(0, $today->diffInDays($validUntil));
+                } else {
+                    $daysLeft = null;
+                }
+                $reward->days_left = $daysLeft;
+            }
+
+            return response()->json(['rewards' => $rewards], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching rewards: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch rewards.'], 500);
+        }
+    }
+
+    
 
     /**
      * API Function Fetch Reward Detail
     */
     public function fetchSingleReward($id)
     {
-        try{
-            $rewards = DB::table('rewards')->where('id',$id)->get();
+        try {
+            $reward = DB::table('rewards')->where('id', $id)->first();
+            if (!$reward) {
+                return response()->json(['error' => 'Reward not found'], 404);
+            }
 
-            return response()->json([ 'rewards' => $rewards ], 200);
+            $business = User::where('id', $reward->business_id)->first();
+            $rewardArray = (array) $reward;
+            $rewardArray['business_name'] = $business ? $business->name : null;
+            return response()->json(['reward' => $rewardArray], 200);
 
         } catch (\Exception $e) {
-            Log::error('Error creating reward: ' . $e->getMessage());
+            Log::error('Error fetching reward: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to get reward.'], 500);
         }
     }
+
 
     /**
      * Web

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
             $table->string('name', 100);
-            $table->string('email', 255)->unique();
+            $table->string('email', 191)->unique();
             $table->string('password_hash', 255);
             $table->enum('role', ['admin', 'staff'])->default('staff');
             $table->timestamps();

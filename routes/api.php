@@ -18,6 +18,7 @@ use App\Http\Controllers\API\InviteController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\ComplaintController;
 use App\Http\Controllers\API\ContestController;
+use App\Http\Controllers\API\MessageController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -129,12 +130,18 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/get-rewards', [RewardController::class, 'getBusinessRewards']);
     // Get Reward Detail
     Route::get('/get-reward-detail/{id}', [RewardController::class, 'fetchSingleReward']);
+    // Get Rewards list from BusinessID
+    Route::get('/get-reward-by-business/{id}', [RewardController::class, 'getRewardByBusiness']);
     // Submit Answer
     Route::post('/submit-answer', [ContestController::class, 'submitAnswer']);
     // Create Contest Vote
     Route::post('/contest-vote', [ContestController::class, 'vote']);
     // Get Winners
     Route::get('/contest/{contest_id}/winners', [ContestController::class, 'getWinners']);
+    // Customer Message List
+    Route::get('/customer-messages/{customer_id}', [MessageController::class, 'getCustomerMessages']);
+    // Customer respond to message
+    Route::post('/respond-message', [MessageController::class, 'respondToMessage']);
 });
 
 // Business API's
@@ -147,6 +154,8 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
     // Create Contest
     Route::post('/contests', [ContestController::class, 'create']);
+    // Messgae to Customer
+    Route::post('/send-message', [MessageController::class, 'sendBusinessMessage']);
 });
 
 // Protected Routes (Require Authentication)
@@ -218,4 +227,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/invite', [InviteController::class, 'invite'])->name('api.invite');
     // GET Notifications
     Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('api.notifications');
+    // One to One Message
+    Route::post('/business/chat/send', [MessageController::class, 'sendOneToOneMessage'])->name('api.chat');
+    // Get message
+    Route::get('/chat/messages/{receiver_id}', [MessageController::class, 'getChatMessages'])->name('api.message');
 });

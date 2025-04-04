@@ -82,10 +82,6 @@ class OfferController extends Controller
                     return $offer;
                 });
 
-            if ($businessOffers->isEmpty()) {
-                return response()->json(['error' => 'No active offer available'], 404);
-            }
-
             return response()->json(['status' => true, 'offers' => $businessOffers], 200);
 
         } catch (\Exception $e) {
