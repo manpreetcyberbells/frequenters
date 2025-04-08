@@ -82,4 +82,10 @@ class User extends Authenticatable
         return $this->hasOne(CustomerAddress::class, 'customer_id')->withDefault();
     }
 
+    // Relationship with CustomerBadges
+    public function customerBadges()
+    {
+        return $this->hasOne(CustomerBadge::class, 'customer_id');
+    }
+
 }

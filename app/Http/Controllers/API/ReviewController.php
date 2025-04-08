@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ReviewController extends Controller
 {
@@ -13,7 +14,12 @@ class ReviewController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'business_id' => 'required|exists:users,id',
+            'business_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->where('role', 'business');
+                }),
+            ],
             'rating' => 'required|integer|min:1|max:5',
             'review' => 'nullable|string|max:500',
             // 'complaint' => 'nullable|string|max:500',

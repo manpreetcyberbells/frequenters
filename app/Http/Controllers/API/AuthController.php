@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Crypt;
+use Laravolt\Avatar\Facade as Avatar;
 
 class AuthController extends Controller
 {
@@ -72,6 +73,44 @@ class AuthController extends Controller
     }
 
     /**
+     * Common Function : Generate AnonymousName for Customer
+    */
+    private function generateAnonymousName()
+    {
+        $adjectives = [
+            'Cool', 'Fast', 'Happy', 'Chill', 'Brave', 'Smart', 'Sneaky', 'Wild', 'Funky', 'Gentle',
+            'Zany', 'Quirky', 'Noble', 'Bouncy', 'Shiny', 'Clever', 'Bold', 'Goofy', 'Witty', 'Kind',
+            'Jolly', 'Lively', 'Calm', 'Swift', 'Witty', 'Mighty', 'Lazy', 'Curious', 'Peppy', 'Sunny'
+        ];
+
+        $animals = [
+            'Tiger', 'Lion', 'Panda', 'Eagle', 'Shark', 'Bear', 'Wolf', 'Otter', 'Falcon', 'Fox',
+            'Hawk', 'Cheetah', 'Panther', 'Whale', 'Dolphin', 'Rabbit', 'Koala', 'Turtle', 'Penguin', 'Giraffe',
+            'Moose', 'Horse', 'Badger', 'Lynx', 'Owl', 'Camel', 'Jaguar', 'Sloth', 'Raccoon', 'Buffalo'
+        ];
+
+        $name = $adjectives[array_rand($adjectives)] . $animals[array_rand($animals)] . rand(100, 999);
+        while (CustomerProfile::where('anonymous_name', $name)->exists()) {
+            $name = $adjectives[array_rand($adjectives)] . $animals[array_rand($animals)] . rand(100, 999);
+        }
+
+        return $name;
+    }
+
+    /**
+     * Common Function : Generate AnonymousImage for Customer
+    */
+    private function generateAnonymousImage($anonymousName)
+    {
+        // Generate SVG avatar and save to public storage
+        $avatarSvg = Avatar::create($anonymousName)->toSvg();
+        $avatarFileName = 'avatars/customers/' . $anonymousName . '.svg';
+        Storage::disk('public')->put($avatarFileName, $avatarSvg);
+        $avatarUrl = asset('storage/' . $avatarFileName);
+        return $avatarUrl;
+    }
+
+    /**
      * Register a new customer.
      * @param RegisterCustomerRequest $request
      * @return \Illuminate\Http\JsonResponse
@@ -87,13 +126,18 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
                 'role' => 'customer',
+                'providers' => 'email',
             ]);
 
             Log::info('Customer user created with ID:', ['user_id' => $user->id]);
 
+            $anonymousName = $this->generateAnonymousName();
+            $anonymousImage = $this->generateAnonymousImage($anonymousName);
             $customer = CustomerProfile::create([
                 'customer_id' => $user->id,
                 'birthday' => $request->dob,
+                'anonymous_name' => $anonymousName,
+                'anonymous_image' => $anonymousImage,
             ]);
 
             // Create the customer address
@@ -127,16 +171,6 @@ class AuthController extends Controller
             }
 
             $this->handleInviteReward($request->email, 'customer', $customer->customer_id);
-            // $invite = Invite::where('email', $request->email)->where('status', 'pending')->first();
-            // if ($invite) {
-            //     $invite->update(['status' => 'accepted']);
-        
-            //     // Reward the inviter
-            //     $inviter = CustomerProfile::where('customer_id', $customer->customer_id)->first();
-            //     if ($inviter) {
-            //         $inviter->increment('points_balance', 100);
-            //     }
-            // }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -169,6 +203,7 @@ class AuthController extends Controller
                 'email' => $request->business_email,
                 'password' => Hash::make($request->password),
                 'role' => 'business',
+                'providers' => 'email',
             ]);
 
             // Create business profile
@@ -260,28 +295,32 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-
-            // Check if user status is active
+        
             if ($user->status !== 'active') {
-                Auth::logout(); // Logout user if not active
+                Auth::logout();
                 return response()->json([
                     'message' => 'Your account is not active. Please contact support.'
                 ], 403);
             }
-
+        
             $token = $user->createToken('auth_token')->plainTextToken;
-
-            // Update last_login_at
+        
             $user->last_login_at = now();
             $user->save();
-
+        
+            // Load profile and nested badge relation
+            $user->load([
+                $user->role === 'customer' ? 'customerProfile' : 'businessProfile', 'customerBadges.badge',
+            ]);
+        
             return response()->json([
                 'message' => 'Login successful.',
                 'token' => $token,
-                'user' => $user->role === 'customer' ? $user->load('customerProfile') : $user->load('businessProfile'),
+                'user' => $user,
                 'role' => $user->role,
+                'badges' => $user->customerBadges,
             ], 200);
-        }
+        }        
 
         return response()->json(['message' => 'Invalid credentials.'], 401);
     }

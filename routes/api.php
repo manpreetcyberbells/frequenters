@@ -19,6 +19,10 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\ComplaintController;
 use App\Http\Controllers\API\ContestController;
 use App\Http\Controllers\API\MessageController;
+use App\Http\Controllers\API\FaqController;
+use App\Http\Controllers\API\AboutUsController;
+use App\Http\Controllers\API\PrivacyPolicyController;
+use App\Http\Controllers\API\SuggestionController;
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -63,6 +67,12 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     Route::get('/zip/{zip_code}/cities', [CityController::class, 'getCitiesByZip']);
     // Get country, state, latitude, and longitude by city_id
     Route::get('/city/{city_id}/details', [CityController::class, 'getStateAndCoordinates']);
+    // FAQ
+    Route::get('/faqs', [FaqController::class, 'index']);
+    // About Us
+    Route::get('/about-us', [AboutUsController::class, 'show']);
+    // Privacy Policy
+    Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show']);
 });
 // Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
@@ -84,6 +94,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::put('/location', [CustomerProfileController::class, 'updateLocation']);
     //API Update Language
     Route::put('/language-update', [CustomerProfileController::class, 'updateCustomerLanguage']);
+    //API Allow Personal Info
+    Route::put('/allow-personal-info', [CustomerProfileController::class, 'allowPersonalInformation']);
     // Create address
     Route::post('/create-address', [CustomerProfileController::class, 'createCustomerAddress']);
     // Edit Address
@@ -142,6 +154,9 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/customer-messages/{customer_id}', [MessageController::class, 'getCustomerMessages']);
     // Customer respond to message
     Route::post('/respond-message', [MessageController::class, 'respondToMessage']);
+    // Submit Suggestion
+    Route::post('/submit-suggestion', [SuggestionController::class, 'store']);
+
 });
 
 // Business API's

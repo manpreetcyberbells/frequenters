@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             DemographicsTableSeeder::class,
             TempZipsTableSeeder::class,
             ZipsTableSeeder::class,
+            BadgeSeeder::class,
         ]);
     }
 }

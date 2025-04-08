@@ -203,6 +203,39 @@ class CustomerProfileController extends Controller
     }
 
     /**
+     *  API Function Allow // Not Allow Show Personal Information 
+    */
+    public function allowPersonalInformation(Request $request)
+    {
+        $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $customerProfile = CustomerProfile::where('customer_id', $user->id)->first();
+            if (!$customerProfile) {
+                return response()->json([
+                    'error' => 'Customer profile not found',
+                ], 404);
+            }
+            $customerProfile->show_personal_info = $request->enabled ? '1' : '0';
+            $customerProfile->save();
+
+            return response()->json([
+                'message' => 'Personal information setting updated successfully',
+                'show_personal_info' => $customerProfile->show_personal_info,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update Personal information setting',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      *  API Function for Create Customer Address 
     */
     public function createCustomerAddress(Request $request)

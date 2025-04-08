@@ -90,15 +90,15 @@ class CheckInController extends Controller
                 ->where('business_id', $businessId)
                 ->where('interaction_type', 'check_in')
                 ->first();
-
-            if ($interaction) {
-                DB::table('customer_business_interactions')
-                    ->where('id', $interaction->id)
-                    ->update([
-                        'interaction_count' => $interaction->interaction_count + 1,
-                        'last_interaction_date' => now(),
-                    ]);
-            } else {
+            // Commented on 07-04-2025
+            // if ($interaction) {
+            //     DB::table('customer_business_interactions')
+            //         ->where('id', $interaction->id)
+            //         ->update([
+            //             'interaction_count' => $interaction->interaction_count + 1,
+            //             'last_interaction_date' => now(),
+            //         ]);
+            // } else {
                 DB::table('customer_business_interactions')->insert([
                     'customer_id' => $customerId,
                     'business_id' => $businessId,
@@ -108,7 +108,7 @@ class CheckInController extends Controller
                     'last_interaction_date' => now(),
                     'created_at' => now(),
                 ]);
-            }
+            // }
 
             return response()->json(['message' => 'Check-in successful.'], 200);
         } catch (\Exception $e) {

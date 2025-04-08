@@ -24,6 +24,9 @@ class CustomerProfile extends Model
         'total_rewards_redeemed',
         'preferred_notification_channel',
         'preferred_language',
+        'show_personal_info',
+        'anonymous_name',
+        'anonymous_image',
         'qr_code_url',
         'textCode',
     ];
