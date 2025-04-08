@@ -19,9 +19,9 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::table('customer_badges', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        // Schema::table('customer_badges', function (Blueprint $table) {
+        //     $table->softDeletes();
+        // });
     }
 
     /**
@@ -37,8 +37,8 @@ return new class extends Migration
             $table->dropSoftDeletes();
         });
 
-        Schema::table('customer_badges', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-        });
+        // Schema::table('customer_badges', function (Blueprint $table) {
+        //     $table->dropSoftDeletes();
+        // });
     }
 };
