@@ -101,10 +101,22 @@ class ContestController extends Controller
         }
     }
 
-    public function list()
+    public function fetchContests(Request $request)
     {
-        $contests = Contest::all();
-        return response()->json($contests);
+        $query = Contest::query();
+        // Optional filter: status=open|closed|completed
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Include relations
+        // $query->with(['questions.answers',]);
+        $contests = $query->orderBy('start_date', 'desc')->paginate(10);
+
+        return response()->json([
+            'message' => 'Contests fetched successfully',
+            'data' => $contests
+        ]);
     }
 
     public function updateStatus($id, Request $request)

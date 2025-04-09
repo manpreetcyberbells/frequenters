@@ -2,27 +2,13 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\CustomerController;
-use App\Http\Controllers\API\BusinessController;
-use App\Http\Controllers\API\UserController;
-use App\Http\Controllers\API\TransactionController;
-use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\RewardController;
-use App\Http\Controllers\API\CustomerProfileController;
-use App\Http\Controllers\API\WishlistController;
-use App\Http\Controllers\API\ReviewController;
-use App\Http\Controllers\API\SearchHistoryController;
-use App\Http\Controllers\API\OfferController;
-use App\Http\Controllers\API\EventController;
-use App\Http\Controllers\API\InviteController;
-use App\Http\Controllers\API\NotificationController;
-use App\Http\Controllers\API\ComplaintController;
-use App\Http\Controllers\API\ContestController;
-use App\Http\Controllers\API\MessageController;
-use App\Http\Controllers\API\FaqController;
-use App\Http\Controllers\API\AboutUsController;
-use App\Http\Controllers\API\PrivacyPolicyController;
-use App\Http\Controllers\API\SuggestionController;
+use App\Http\Controllers\API\{
+    AboutUsController, AuthController, BusinessController, ComplaintController, 
+    ContestController, CustomerController, CustomerProfileController, EventController, FaqController, 
+    InviteController, MessageController, NotificationController, OfferController, 
+    PrivacyPolicyController, ReviewController, RewardController, SearchHistoryController, 
+    SuggestionController, TermsAndConditionController, TransactionController, UserController, WishlistController
+};
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
@@ -30,8 +16,6 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
-
-
 
 // Public Routes
 Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(function () {
@@ -73,6 +57,8 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     Route::get('/about-us', [AboutUsController::class, 'show']);
     // Privacy Policy
     Route::get('/privacy-policy', [PrivacyPolicyController::class, 'show']);
+    // Term and Condition
+    Route::get('/terms-and-conditions', [TermsAndConditionController::class, 'show']);
 });
 // Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 
@@ -144,6 +130,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::get('/get-reward-detail/{id}', [RewardController::class, 'fetchSingleReward']);
     // Get Rewards list from BusinessID
     Route::get('/get-reward-by-business/{id}', [RewardController::class, 'getRewardByBusiness']);
+    // Contests Listing
+    Route::get('/contest-listing', [ContestController::class, 'fetchContests']);
     // Submit Answer
     Route::post('/submit-answer', [ContestController::class, 'submitAnswer']);
     // Create Contest Vote
@@ -156,7 +144,6 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::post('/respond-message', [MessageController::class, 'respondToMessage']);
     // Submit Suggestion
     Route::post('/submit-suggestion', [SuggestionController::class, 'store']);
-
 });
 
 // Business API's

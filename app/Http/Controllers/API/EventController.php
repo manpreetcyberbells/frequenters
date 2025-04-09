@@ -96,8 +96,18 @@ class EventController extends Controller
     public function getEventsDetail(Request $request)
     {
         try {
-            $events = Event::where('status', 'published')
-                ->with('business')
+            $search = $request->query('search');
+            $eventsQuery = Event::where('status', 'published')->with('business');
+            if (!empty($search)) {
+                $eventsQuery->where(function ($query) use ($search) {
+                    $query->where('event_name', 'like', "%$search%")
+                        ->orWhere('event_description', 'like', "%$search%")
+                        ->orWhere('venue_name', 'like', "%$search%")
+                        ->orWhere('venue_location', 'like', "%$search%");
+                });
+            }
+
+            $events = $eventsQuery
                 ->orderBy('start_date', 'asc')
                 ->paginate(10)
                 ->through(function ($event) {

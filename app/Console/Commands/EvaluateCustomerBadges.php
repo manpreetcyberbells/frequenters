@@ -34,87 +34,78 @@ class EvaluateCustomerBadges extends Command
         $now = Carbon::now();
         foreach ($customers as $customer) {
             // echo"<pre>"; print_r($customer->id); echo"</br>"; 
-            $interactions = DB::table('customer_business_interactions')
-                ->where('customer_id', $customer->id)
-                ->where('last_interaction_date', '>=', now()->subMonths(12)) // 12-month window
-                ->get();
-
-            // echo"<pre>"; print_r($interactions); die;
-            
+            $interactions = DB::table('customer_business_interactions')->where('customer_id', $customer->id)->where('last_interaction_date', '>=', now()->subMonths(12))->get();
+            $availablePoints = DB::table('customer_profiles')->where('customer_id', $customer->id)->pluck('points_balance')->first();
             $checkIns = $interactions->where('interaction_type', 'check_in')->count();
-            $points = $interactions->sum('points_allocated');
+            $lifetimePoints = $interactions->sum('points_allocated');
             $businessIds = $interactions->pluck('business_id')->unique()->toArray();
             $reviews = DB::table('reviews')->where('customer_id', $customer->id)->whereIn('business_id', $businessIds)->count();
             $cities = DB::table('business_addresses')->whereIn('business_id', $businessIds)->distinct('city')->count('city');
-
             $contestSubmissions = DB::table('contest_participants')->where('user_id', $customer->id)->sum('participation_count');;
             $participantIds = DB::table('contest_participants')->where('user_id', $customer->id)->pluck('id');
             $contestWins = DB::table('contest_answers')->whereIn('participant_id', $participantIds)->where('is_winner', 1)->count();
             $votes = DB::table('contest_voting_history')->whereIn('participant_id', $participantIds)->count();
-
-
-            // Later photo uploads, referred friends
-            $eligibleBadges = [];
-
+            $referredFriendsCount = DB::table('invites')->where('customer_id', $customer->id)->where('status','accepted')->where('role','customer')->get()->count();
+            $photoUploads = 0;
+            // echo"<pre>"; print_r($availablePoints); die;
+            
             // ENTRY-LEVEL BADGES
-            if ($points >= 100 && $checkIns >= 3) {
+            $eligibleBadges = ['frequenters_enthusiasts'];
+            if ($availablePoints >= 100 && $checkIns >= 3) {
                 $eligibleBadges[] = 'frequenters_pioneers';
             }
 
-            if ($points >= 500 && $checkIns >= 10 && $reviews >= 1 && $votes >= 1) {
+            if ($availablePoints >= 500 && $checkIns >= 10 && $reviews >= 1 && $votes >= 1) {
                 $eligibleBadges[] = 'frequenters_contributors';
             }
 
-            if ($points >= 1000 && $cities >= 5) {
+            if ($availablePoints >= 1000 && $cities >= 5) {
                 $eligibleBadges[] = 'frequenters_explorers';
             }
 
-            if ($points >= 5000 && $checkIns >= 100 && $reviews >= 5 && ( $contestSubmissions >= 1 || $votes >= 20) ) {
+            if ($availablePoints >= 5000 && $checkIns >= 100 && $reviews >= 5 && ( $contestSubmissions >= 1 || $votes >= 20) ) {
                 $eligibleBadges[] = 'frequenters_rising_stars';
             }
 
             // MID-TIER BADGES
-            if ($points >= 10000 || $checkIns >= 250) {
+            if ($availablePoints >= 10000 || $checkIns >= 250) {
                 $eligibleBadges[] = 'frequenters_insiders';
             }
 
-            if ($points >= 15000 || ($checkIns >= 350 && $contestSubmissions >= 5) ) {
+            if ($availablePoints >= 15000 || ($checkIns >= 350 && $contestSubmissions >= 5) ) {
                 $eligibleBadges[] = 'frequenters_trailblazers';
             }
 
-            if ($contestSubmissions >= 1) {
+            if ($availablePoints >= 15000 || ($checkIns >= 350 && $contestSubmissions >= 5) && $contestWins >= 1) {
                 $eligibleBadges[] = 'frequenters_a_listers';
             }
 
-            if ($points >= 25000) {
+            if ($lifetimePoints >= 25000 && $availablePoints >= 15000 || ($checkIns >= 350 && $contestSubmissions >= 5) && $contestWins >= 1) {
                 $eligibleBadges[] = 'frequenters_master';
             }
 
-            if ($points >= 25000 && $contestWins >= 5 && $reviews >= 20 && $votes >= 20) {
+            if ($availablePoints >= 25000 && $contestWins >= 5 && $reviews >= 20 && $votes >= 20) {
                 $eligibleBadges[] = 'frequenters_vip';
             }
 
             // TOP-TIER BADGES
-            if ($points >= 50000) {
-                $eligibleBadges[] = 'frequenters_icons';
-            }
-
-            if (
-                // Assume you track photo uploads, referrals, and wins
-                $points >= 25000 && $contestWins >= 10
-            ) {
+            if ($availablePoints >= 25000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0) {
                 $eligibleBadges[] = 'frequenters_all_stars';
             }
 
-            if ( $checkIns >= 500 && $cities >= 2) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0) {
+                $eligibleBadges[] = 'frequenters_icons';
+            }
+
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 500 && $cities > 1) {
                 $eligibleBadges[] = 'frequenters_legends';
             }
 
-            if ($checkIns >= 1000 && $cities >= 10) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 1000 && $cities > 10) {
                 $eligibleBadges[] = 'frequenters_royalty';
             }
 
-            if ($checkIns >= 10000 && $contestSubmissions >= 100 && $reviews >= 50) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $contestSubmissions >= 100 && $reviews >= 50 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 10000 && $cities > 10) {
                 $eligibleBadges[] = 'frequenters_elite';
             }
 
