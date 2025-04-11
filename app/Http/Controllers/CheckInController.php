@@ -167,10 +167,10 @@ class CheckInController extends Controller
     */
     public function businessCheckIn(Request $request)
     {
-        $businessRole = auth()->user();
-        if ($businessRole->role !== 'business') {
-            return response()->json(['message' => 'Please login with a valid Business account'], 403);
-        }
+        // $businessRole = auth()->user();
+        // if ($businessRole->role !== 'business') {
+        //     return response()->json(['message' => 'Please login with a valid Business account'], 403);
+        // }
 
         $validated = $request->validate([
             'qr_data' => 'required', // Encrypted QR code data

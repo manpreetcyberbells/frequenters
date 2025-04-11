@@ -97,7 +97,10 @@ class EventController extends Controller
     {
         try {
             $search = $request->query('search');
+            $customerId = auth()->id();
+
             $eventsQuery = Event::where('status', 'published')->with('business');
+
             if (!empty($search)) {
                 $eventsQuery->where(function ($query) use ($search) {
                     $query->where('event_name', 'like', "%$search%")
@@ -110,11 +113,19 @@ class EventController extends Controller
             $events = $eventsQuery
                 ->orderBy('start_date', 'asc')
                 ->paginate(10)
-                ->through(function ($event) {
+                ->through(function ($event) use ($customerId) {
                     $confirmedCount = EventReservation::where('event_id', $event->id)
                         ->where('status', 'confirmed')
                         ->count();
                     $remainingSeats = max(0, $event->capacity - $confirmedCount);
+
+                    $isJoined = false;
+                    if ($customerId) {
+                        $isJoined = EventReservation::where('event_id', $event->id)
+                            ->where('customer_id', $customerId)
+                            ->where('status', 'confirmed')
+                            ->exists();
+                    }
 
                     return [
                         'id' => $event->id,
@@ -125,7 +136,7 @@ class EventController extends Controller
                         'venue_location' => $event->venue_location,
                         'capacity' => $event->capacity,
                         'remaining_seats' => $remainingSeats,
-                        'event_banner' => $event->event_banner ? $event->event_banner : null,
+                        'event_banner' => $event->event_banner ?? null,
                         'start_date' => $event->start_date,
                         'end_date' => $event->end_date,
                         'start_time' => $event->start_time,
@@ -133,7 +144,8 @@ class EventController extends Controller
                         'status' => $event->status,
                         'created_at' => $event->created_at,
                         'updated_at' => $event->updated_at,
-                        'date_time' => Carbon::parse($event->start_date . ' ' . $event->start_time)->format('D, M d • h:i A')
+                        'date_time' => Carbon::parse($event->start_date . ' ' . $event->start_time)->format('D, M d • h:i A'),
+                        'is_joined' => $isJoined,
                     ];
                 });
 

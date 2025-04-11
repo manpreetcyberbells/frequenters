@@ -20,4 +20,10 @@ class ContestQuestion extends Model
     {
         return $this->hasMany(ContestAnswer::class);
     }
+
+    public function options()
+    {
+        return $this->hasMany(\App\Models\ContestQuestionOption::class);
+    }
+
 }

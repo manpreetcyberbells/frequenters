@@ -101,23 +101,68 @@ class ContestController extends Controller
         }
     }
 
+    // public function fetchContests(Request $request)
+    // {
+    //     $query = Contest::query();
+    //     // Optional filter: status=open|closed|completed
+    //     if ($request->has('status')) {
+    //         $query->where('status', $request->status);
+    //     }
+
+    //     // Include relations
+    //     $query->with(['questions.options','questions.answers.participant.user']);
+    //     $contests = $query->orderBy('start_date', 'desc')->paginate(10);
+
+    //     return response()->json([
+    //         'message' => 'Contests fetched successfully',
+    //         'data' => $contests
+    //     ]);
+    // }
+
     public function fetchContests(Request $request)
     {
         $query = Contest::query();
+
         // Optional filter: status=open|closed|completed
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Include relations
-        // $query->with(['questions.answers',]);
+        // Eager load necessary relations
+        $query->with(['questions.options', 'questions.answers.participant.user']);
+
         $contests = $query->orderBy('start_date', 'desc')->paginate(10);
+
+        // Transform to clean up the response
+        $contests->getCollection()->transform(function ($contest) {
+            $contest->questions->each(function ($question) {
+                $question->answers->transform(function ($answer) {
+                    $user = optional(optional($answer->participant)->user);
+
+                    return [
+                        'id' => $answer->id,
+                        'answer' => $answer->answer,
+                        'contest_question_option_id' => $answer->contest_question_option_id,
+                        'is_winner' => $answer->is_winner,
+                        'created_at' => $answer->created_at,
+                        'user' => $user ? [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'profile_image' => $user->profile_image,
+                        ] : null,
+                    ];
+                });
+            });
+
+            return $contest;
+        });
 
         return response()->json([
             'message' => 'Contests fetched successfully',
             'data' => $contests
         ]);
     }
+
 
     public function updateStatus($id, Request $request)
     {

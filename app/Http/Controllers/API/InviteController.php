@@ -14,13 +14,13 @@ class InviteController extends Controller
     // Send Invitation
     public function invite(Request $request)
     {
-        // echo"<pre>"; print_r($request->all()); die;
         $request->validate([
             'email' => 'required|email|unique:users,email|unique:invites,email',
             'role'  => 'required|in:customer,business'
         ]);
 
         $token = Str::random(32);
+        $sender = auth()->user();
 
         $inviteData = [
             'email'  => $request->email,
@@ -30,17 +30,21 @@ class InviteController extends Controller
         ];
 
         if ($request->role === 'customer') {
-            $inviteData['customer_id'] = auth()->id();
+            $inviteData['customer_id'] = $sender->id;
         } elseif ($request->role === 'business') {
-            $inviteData['business_id'] = auth()->id();
+            $inviteData['business_id'] = $sender->id;
         }
 
         $invite = Invite::create($inviteData);
 
-        // Send Email (Can be customized)
-        Mail::raw("You're invited! Accept the invite: " . url('/accept-invite/' . $token), function ($message) use ($request) {
-            $message->to($request->email)
-                    ->subject('Invitation to Join');
+        $url = url('/accept-invite/' . $token);
+        $role = $request->role;
+        $receiverName = $request->name ?? ucfirst(str_replace(['.', '_'], ' ', explode('@', $request->email)[0]));
+        $senderName = $sender->name ?? 'Your Friend';
+
+        Mail::send('emails.invite', compact('url', 'role', 'receiverName', 'senderName'), function ($message) use ($request, $senderName) {
+            $message->to($request->email, $request->name ?? null)
+                    ->subject("You're Invited by $senderName to Join Frequenters");
         });
 
         return response()->json(['message' => 'Invitation sent successfully.']);

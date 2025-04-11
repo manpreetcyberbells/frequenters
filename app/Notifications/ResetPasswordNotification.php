@@ -37,14 +37,20 @@ class ResetPasswordNotification extends Notification
     */
     public function toMail($notifiable)
     {
-        $frontendUrl = env('FRONTEND_URL', 'http://127.0.0.1:8000');
+        $frontendUrl = env('FRONTEND_URL', 'http://frequenters_app.local/');
         $resetLink = "{$frontendUrl}/reset-password?token={$this->token}&email={$this->email}";
-        return (new MailMessage)
-            ->subject('Reset Your Password')
-            ->line('Click the button below to reset your password.')
-            ->action('Reset Password', $resetLink)
-            ->line('If you did not request a password reset, no further action is required.');
+
+        $user = \App\Models\User::where('email', $this->email)->first();
+        $name = $user?->name ?? 'there';
+
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+        ->subject('Reset Your Password')
+        ->view('emails.reset-password', [
+            'resetLink' => $resetLink,
+            'name' => $name,
+        ]);
     }
+
 
     /**
      * Get the array representation of the notification.
