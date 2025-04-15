@@ -30,6 +30,7 @@ class BusinessProfile extends Model
         'child_category_id',
         'description',
         'website',
+        'social_links',
         'points_per_checkin',
         'qr_code_url',
         'owner_name',

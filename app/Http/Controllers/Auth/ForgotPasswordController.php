@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use App\Notifications\ResetPasswordNotification;
+use Illuminate\Validation\Rule;
 
 class ForgotPasswordController extends Controller
 {
@@ -17,7 +18,13 @@ class ForgotPasswordController extends Controller
     {
         try {
             $request->validate([
-                'email' => 'required|email|exists:users,email',
+                'email' => [
+                    'required',
+                    'email',
+                    Rule::exists('users', 'email')->where(function ($query) {
+                        $query->whereIn('role', ['customer', 'business']);
+                    }),
+                ],
             ]);
         } catch (ValidationException $e) {
             return response()->json(['error' => 'This email does not exist in our records. Please enter a valid email.'], 400);

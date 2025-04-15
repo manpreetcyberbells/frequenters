@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('industry_type', 50)->nullable();
             $table->text('description')->nullable();
             $table->string('website', 255)->nullable();
+            $table->json('social_links')->nullable();
             $table->text('qr_code_hash')->nullable();
             $table->string('business_uid',55)->nullable();
             $table->integer('points_given')->default(0);

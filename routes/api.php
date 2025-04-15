@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\{
-    AboutUsController, AuthController, BusinessController, ComplaintController, 
+    AboutUsController, AuthController, BusinessController, ComplaintController, CollaborationController,
     ContestController, CustomerController, CustomerProfileController, EventController, FaqController, 
     InviteController, MessageController, NotificationController, OfferController, 
     PrivacyPolicyController, ReviewController, RewardController, SearchHistoryController, 
@@ -60,11 +60,6 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     // Term and Condition
     Route::get('/terms-and-conditions', [TermsAndConditionController::class, 'show']);
 });
-// Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
-
-// Route::middleware(['auth:api'])->group(function () {
-//     Route::put('/customer/profile', [CustomerProfileController::class, 'updateProfile']);
-// });
 
 // Customer API's
 Route::middleware(['auth:api'])->prefix('customer')->group(function () {
@@ -158,6 +153,26 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::post('/contests', [ContestController::class, 'create']);
     // Messgae to Customer
     Route::post('/send-message', [MessageController::class, 'sendBusinessMessage']);
+    // Business Dashboard
+    Route::get('/dashboard', [BusinessController::class, 'dashboardBusinessData']);
+    // Business Update Profile
+    Route::post('/update-profile', [BusinessController::class, 'updateBusinessProfile']);
+    // Update Business Hours
+    Route::post('/hours-update', [BusinessController::class, 'updateBusinessHours']);
+    // Change Password
+    Route::post('/change-password', [BusinessController::class, 'changePassword']);
+    // Update Owner Details
+    Route::post('/update-owner', [BusinessController::class, 'updateOwnerDetail']);
+    // Create Staff
+    Route::post('/staff-create', [BusinessController::class, 'createStaff']);
+    // Create Staff
+    Route::get('/staff-listing', [BusinessController::class, 'listStaff']);
+    // De-active Staff
+    Route::delete('/staff/{id}', [BusinessController::class, 'deactivateStaff']);
+    // Create BTOB
+    Route::post('/collaboration-post', [CollaborationController::class, 'bTobCollaboration']);
+    // collaboration Listing By BID 
+    Route::get('/collaboration/{businessId}', [CollaborationController::class, 'getbTobListing']);
 });
 
 // Protected Routes (Require Authentication)

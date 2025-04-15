@@ -17,9 +17,13 @@ return new class extends Migration
             $table->foreignId('partner_business_id')->constrained('users')->onDelete('cascade');
             $table->string('target_business_type', 50)->nullable();
             $table->text('description');
-            $table->timestamp('start_time')->useCurrent(); // Defaults to current timestamp
-            $table->dateTime('end_time')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->string('contact_name')->nullable();
+            $table->string('contact_email')->nullable();
+            $table->string('contact_phone')->nullable();
+            $table->text('social_links')->nullable();
             $table->timestamps();
         });
     }

@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id(); // Primary key
+            $table->unsignedBigInteger('parent_business_id')->nullable()->after('id');
             $table->string('email', 191)->unique();
             $table->string('phone', 15)->nullable();
             $table->string('name')->nullable();
             $table->string('gender')->nullable();
             $table->string('profile_image',255)->nullable();
             $table->string('password');
-            $table->enum('role', ['customer', 'business', 'admin']);
+            $table->enum('role', ['customer', 'business', 'admin', 'manager', 'employee']);
             $table->enum('status', ['pending', 'active', 'suspended'])->default('pending');
             $table->enum('providers', ['facebook', 'google', 'apple', 'email']);
             $table->string('apple_id')->nullable();
@@ -29,6 +30,8 @@ return new class extends Migration
             $table->dateTime('last_login_at')->nullable();
             $table->longText('preferences')->nullable()->comment('User preferences');
             $table->timestamps(); // Includes created_at and updated_at
+
+            $table->foreign('parent_business_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

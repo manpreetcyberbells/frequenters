@@ -5,13 +5,18 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\BusinessProfile;
+use App\Models\BusinessAddress;
+use App\Models\BusinessImage;
+use App\Models\BusinessHour;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB; // Import DB Facade
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class BusinessController extends Controller
 {
@@ -335,18 +340,20 @@ class BusinessController extends Controller
         ], 200);
     }
 
+    /**
+     *  API Function Update CheckIn Points By Business
+    */
     public function updateCheckinPointsApi(Request $request)
     {
+        // echo"<pre>"; print_r($request->all()); die;
         $validated = $request->validate([
             'points_per_checkin' => 'required|integer|min:10', // Minimum 10 points
         ]);
-
-        $businessId = Auth::user()->businessProfile->business_id;
+        
+        $businessId = auth()->id();
 
         try {
-            DB::table('business_profiles')
-                ->where('business_id', $businessId)
-                ->update(['points_per_checkin' => $validated['points_per_checkin']]);
+            DB::table('business_profiles')->where('business_id', $businessId)->update(['points_per_checkin' => $validated['points_per_checkin']]);
 
             return response()->json(['message' => 'Check-in points updated successfully.'], 200);
         } catch (\Exception $e) {
@@ -372,5 +379,409 @@ class BusinessController extends Controller
             return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     *  API Function getting Business Detail
+    */
+    public function dashboardBusinessData(Request $request)
+    {
+        $businessId = auth()->id();
+        $user = auth()->user();
+
+        if ($user->role !== 'business') {
+            return response()->json(['message' => 'Please login with a valid Business account'], 403);
+        }
+
+        try {
+            $today = Carbon::today();
+            $now = Carbon::now();
+            $todayCheckin = DB::table('checkins')->where('business_id', $businessId)->whereDate('check_in_time', $today)->count();
+            $todayRewardClaims = DB::table('reward_redemptions')->where('business_id', $businessId)->where('status', 'success')->whereDate('redeemed_at', $today)->count();
+
+            // Active Customers - Weekly & Monthly Visits
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $weeklyVisits = DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$startOfWeek, $now])->distinct('customer_id')->count('customer_id');
+            $monthlyVisits = DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$startOfMonth, $now])->distinct('customer_id')->count('customer_id');
+
+            // Recent Active Customers (limit 5)
+            $recentCheckins = DB::table('checkins as c')
+                ->join('users as u', 'u.id', '=', 'c.customer_id')
+                ->select('u.id as customer_id', 'u.name', 'u.profile_image', 'c.check_in_time')
+                ->where('c.business_id', $businessId)
+                ->orderBy('c.check_in_time', 'desc')
+                ->limit(5)
+                ->get();
+
+            // Customer Complaints in last 30 days with status pending or in_progress
+            $startDate = Carbon::now()->subDays(30);
+            $openComplaints = DB::table('complaints')
+                ->where('business_id', $businessId)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->whereDate('created_at', '>=', $startDate)
+                ->count();
+
+            return response()->json([
+                'today_checkins' => $todayCheckin,
+                'today_reward_claims' => $todayRewardClaims,
+                'active_customers' => [
+                    'weekly' => $weeklyVisits,
+                    'monthly' => $monthlyVisits
+                ],
+                'recent_active_customers' => $recentCheckins,
+                'open_complaints_last_30_days' => $openComplaints,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     *  API Function : Update Business Profile
+    */
+    public function updateBusinessProfile(Request $request)
+    {
+        $id = auth()->id();
+        $checkRole = auth()->user();
+        if ($checkRole->role !== 'business') {
+            return response()->json(['message' => 'Please login with a valid Business account'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'address1' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:55',
+            'state' => 'nullable|string|max:55',
+            'country'    => 'nullable|string|max:55',
+            'zip_code'   => 'nullable|string|max:20',
+            'latitude'   => 'nullable|numeric|between:-90,90',
+            'longitude'  => 'nullable|numeric|between:-180,180',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            // 'website' => ['required', 'url'],
+            // 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            // 'business_hours' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+
+            $imageUrl = null;
+            if ($request->hasFile('profile_image')) {
+                $image = $request->file('profile_image');
+                $imageName = 'profile_' . time() . '.' . $image->getClientOriginalExtension();
+                $profileImagePath = $image->storeAs('profile_images', $imageName, 'public');
+                $imageUrl = asset('storage/profile_images/' . $imageName);
+                \Log::info('Profile Image Path: '. $imageUrl);
+            }
+
+            $socialLinksArray = array_map('trim', explode(',', $request->social_links));
+            $user = User::findOrFail($id);
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->mobile,
+                'profile_image' => $imageUrl,
+            ]);
+
+            // Update BusinessProfile
+            BusinessProfile::updateOrCreate(
+                ['business_id' => $user->id],
+                [
+                    'business_name' => $request->name,
+                    'website' => $request->website,
+                    'social_links' => $socialLinksJson = json_encode($socialLinksArray)
+                ]
+            );
+
+            // Update BusinessAddress
+            BusinessAddress::updateOrCreate(
+                ['business_id' => $user->id],
+                [
+                    'address_line1' => $request->address1,
+                    'address_line2' => $request->address1,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'country' => $request->country,
+                    'zip_code' => $request->zip_code,
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                ]
+            );
+
+            // Handle Image Upload
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $imageName = time() . '_' . $image->getClientOriginalName();
+                    $image->move(public_path('uploads/businesses'), $imageName);
+
+                    BusinessImage::create([
+                        'business_id' => $user->id,
+                        'photo' => 'uploads/businesses/' . $imageName,
+                    ]);
+                }
+            }
+
+            // Handle Business Hours
+            /*foreach ($request->business_hours as $hours) {
+                BusinessHour::updateOrCreate(
+                    ['business_id' => $user->id, 'day_of_week' => $hours['day_of_week']],
+                    [
+                        'open_time' => isset($hours['is_closed']) ? null : $hours['open_time'],
+                        'close_time' => isset($hours['is_closed']) ? null : $hours['close_time'],
+                        'is_closed' => isset($hours['is_closed']) ? 1 : 0,
+                    ]
+                );
+            }*/
+
+            Log::info('Business profile updated via API:', ['user_id' => $user->id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Business profile updated successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Business update failed:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+    
+    /**
+     *  API Function : Update Business Profile
+    */
+    public function updateBusinessHours(Request $request)
+    {
+        // echo"<pre>"; print_r($request->all()); die;
+        $user = auth()->user();
+        if ($user->role !== 'business') {
+            return response()->json(['message' => 'Unauthorized. Only businesses can update hours.'], 403);
+        }
+
+        $request->validate([
+            'business_hours' => 'required|array|min:1',
+            'business_hours.*.day_of_week' => 'required|string',
+            'business_hours.*.open_time' => 'nullable|date_format:H:i:s',
+            'business_hours.*.close_time' => 'nullable|date_format:H:i:s',
+            'business_hours.*.is_closed' => 'required|boolean',
+        ]);
+
+        foreach ($request->business_hours as $hours) {
+            BusinessHour::updateOrCreate(
+                ['business_id' => $user->id, 'day_of_week' => $hours['day_of_week']],
+                [
+                    'open_time' => $hours['is_closed'] ? null : $hours['open_time'],
+                    'close_time' => $hours['is_closed'] ? null : $hours['close_time'],
+                    'is_closed' => $hours['is_closed'],
+                ]
+            );
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Business hours updated successfully.',
+        ]);
+    }
+
+    /**
+     *  API Function : Change Business Password
+    */
+    public function changePassword(Request $request)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'business') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+    
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required',
+            'new_password' => ['required','min:8','regex:/[a-z]/','regex:/[A-Z]/','regex:/[0-9]/','regex:/[@$!%*#?&]/'],
+            'confirm_password' => 'required|same:new_password'
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        
+        try {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Current password is incorrect.'], 400);
+            }
+        
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json(['message' => 'Password changed successfully.']);
+
+        } catch (\Exception $e) {
+
+            Log::error('Business Change Password failed:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+
+        }
+    }
+
+    /**
+     *  API Function : Update Business Owner Detail
+    */
+    public function updateOwnerDetail(Request $request)
+    {
+        $id = auth()->id();
+        $checkRole = auth()->user();
+        if ($checkRole->role !== 'business') {
+            return response()->json(['message' => 'Please login with a valid Business account'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'owner_name' => 'required|string|max:255',
+            'owner_email' => 'required|email|unique:users,email',
+            'owner_phone' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // Update BusinessProfile
+            BusinessProfile::updateOrCreate(
+                ['business_id' => $id],
+                [
+                    'owner_name' => $request->owner_name,
+                    'owner_email' => $request->owner_email,
+                    'owner_phone' => $request->owner_phone
+                ]
+            );
+
+            Log::info('Owner Detail updated via API:', ['BID' => $id]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Owner details updated successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Business Owner Detail failed:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function : Create Staff
+    */
+    public function createStaff(Request $request)
+    {
+        $business = auth()->user();
+        if ($business->role !== 'business') {
+            return response()->json(['message' => 'Only businesses can add staff'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:manager,employee'
+        ]);
+
+        // Count existing staff under the business
+        $staffCount = User::where('parent_business_id', $business->id)
+        ->whereNull('deleted_at')
+        ->selectRaw('SUM(role = "manager") as managers, SUM(role = "employee") as employees')
+        ->first();
+
+        if ($validated['role'] === 'manager' && $staffCount->managers >= 1) {
+            return response()->json(['message' => 'You can only add 1 manager.'], 400);
+        }
+
+        if ($validated['role'] === 'employee' && $staffCount->employees >= 5) {
+            return response()->json(['message' => 'You can only add up to 5 employees.'], 400);
+        }
+
+        try{
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
+                'parent_business_id' => $business->id,
+                'providers' => 'email',
+                "status" => "active"
+            ]);
+
+            return response()->json(['message' => 'Staff created successfully', 'user' => $user]);
+        } catch (\Exception $e) {
+
+            Log::error('Staff failed:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function : Business Staff Listing
+    */
+    public function listStaff()
+    {
+        try{
+
+            $business = auth()->user();
+            $staff = User::select('id', 'name', 'email', 'role')->where('parent_business_id', $business->id)->whereIn('role', ['manager', 'employee'])->whereNull('deleted_at')->get();
+            return response()->json($staff);
+        
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    public function deactivateStaff($id)
+    {
+        try{
+
+            $business = auth()->user();
+            $staff = User::where('parent_business_id', $business->id)->whereIn('role', ['manager', 'employee'])->where('id', $id)->first();
+            if (!$staff) {
+                return response()->json(['message' => 'Staff member not found or unauthorized.'], 404);
+            }
+
+            $staff->delete(); // Soft delete
+
+            return response()->json(['message' => 'Staff member deactivated successfully.']);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
 
 }

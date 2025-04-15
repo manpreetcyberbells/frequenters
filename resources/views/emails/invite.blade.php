@@ -16,7 +16,7 @@
 		
        
           <tr>
-            <td align="center" style="padding: 20px;">
+            <td align="left" style="padding: 20px;">
               <img src="{{ asset('storage/email/images/logo.png') }}" alt="Frequenters Logo" width="150" style="display:block; margin-bottom: 10px;" />
             </td>
           </tr>
@@ -33,7 +33,7 @@
               <p style="margin: 0 0 25px 0;">
                 Why just visit places when you can get rewarded for it?
               </p>
-              <div style="text-align:center;">
+              <div style="text-align:left;">
                 <a href="{{ $url }}" style="background-color:#00A6A6; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; font-weight:bold; display:inline-block;">Join Frequenters</a>
               </div>
                 <div style="text-align:center;">
@@ -43,12 +43,12 @@
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding: 30px;">
+            <td align="left" style="padding: 30px;">
               <h3 style="margin: 0; color: #000; font-weight: 500;">Let your visits count. Be a Frequenter.</h3>
               <p style="margin: 5px 0 20px;">Cheers,<br/>Team Frequenters</p>
 
               <!-- Social Icons -->
-              <div style="display: flex; justify-content: center; gap: 15px;">
+              <div style="display: flex; justify-content: flex-start; gap: 15px;">
                 <a href="#"><img src="{{ asset('storage/email/images/instagram.png') }}" alt="Instagram" width="20" height="20" /></a>
                 <a href="#"><img src="{{ asset('storage/email/images/twitter.png') }}" alt="Twitter" width="20" height="20" /></a>
                 <a href="#"><img src="{{ asset('storage/email/images/youtube.png') }}" alt="YouTube" width="20" height="20" /></a>

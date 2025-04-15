@@ -15,7 +15,7 @@
         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
 			
           <tr>
-            <td align="center" style="padding: 20px;">
+            <td align="left" style="padding: 20px 30px 20px 30px;">
               <img src="{{ asset('storage/email/images/logo.png') }}" alt="Frequenters Logo" width="150" style="display:block; margin-bottom: 10px;" />
             </td>
           </tr>
@@ -39,7 +39,7 @@
               <p style="margin: 5px 0 20px;"><i>- Frequenters Bot</i>🧁</p>
 
               <!-- Social Icons -->
-              <div style="display: flex; justify-content: center; gap: 15px;">
+              <div style="display: flex; justify-content: flex-start; gap: 15px;">
                 <a href="#"><img src="{{ asset('storage/email/images/instagram.png') }}" alt="Instagram" width="20" height="20" /></a>
                 <a href="#"><img src="{{ asset('storage/email/images/twitter.png') }}" alt="Twitter" width="20" height="20" /></a>
                 <a href="#"><img src="{{ asset('storage/email/images/youtube.png') }}" alt="YouTube" width="20" height="20" /></a>

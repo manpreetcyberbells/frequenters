@@ -295,32 +295,48 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-        
+
             if ($user->status !== 'active') {
                 Auth::logout();
                 return response()->json([
                     'message' => 'Your account is not active. Please contact support.'
                 ], 403);
             }
-        
+
             $token = $user->createToken('auth_token')->plainTextToken;
-        
             $user->last_login_at = now();
             $user->save();
-        
-            // Load profile and nested badge relation
-            $user->load([
-                $user->role === 'customer' ? 'customerProfile' : 'businessProfile', 'customerBadges.badge',
-            ]);
-        
+
+            // Load profile and badges only for customer/business
+            switch ($user->role) {
+                case 'customer':
+                    $user->load(['customerProfile', 'customerBadges.badge']);
+                    $badges = $user->customerBadges;
+                    break;
+
+                case 'business':
+                    $user->load('businessProfile');
+                    $badges = null;
+                    break;
+
+                case 'manager':
+                case 'employee':
+                    $badges = null;
+                    break;
+
+                default:
+                    $badges = null;
+                    break;
+            }
+
             return response()->json([
                 'message' => 'Login successful.',
                 'token' => $token,
                 'user' => $user,
                 'role' => $user->role,
-                'badges' => $user->customerBadges,
+                'badges' => $badges,
             ], 200);
-        }        
+        }
 
         return response()->json(['message' => 'Invalid credentials.'], 401);
     }
