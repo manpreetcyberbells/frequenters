@@ -194,8 +194,11 @@ class ContestController extends Controller
         ]);
 
         try {
-            // Fetch question type
             $question = ContestQuestion::findOrFail($validated['contest_question_id']);
+            $contest = Contest::where('id', $question->contest_id)->where('status', 'open')->first();
+            if (!$contest) {
+                return response()->json(['message' => 'Contest is not open for submission'], 403);
+            }
 
             // Ensure either 'answer' OR 'contest_question_option_id' is provided (but not both)
             if ($question->question_type === 'multiple_choice') {
@@ -341,6 +344,7 @@ class ContestController extends Controller
     {
         try {
             $contest = Contest::findOrFail($contest_id);
+
             $voteResults = ContestVotingHistory::select(
                     'participant_id',
                     DB::raw('COUNT(id) as total_votes')
@@ -354,17 +358,13 @@ class ContestController extends Controller
                 return response()->json(['message' => 'No votes recorded for this contest'], 404);
             }
 
-            // Fetch all participant IDs
+            // Get all participant IDs from vote results
             $participantIds = $voteResults->pluck('participant_id')->toArray();
-
-            // Get participant details with user info using Eager Loading
             $participants = ContestParticipant::whereIn('id', $participantIds)->with('user:id,name,profile_image')->get()->keyBy('id');
-
-            // Determine the Winner (Top Voted Participant)
+            // Winner
             $topVote = $voteResults->first();
             $winner = $participants[$topVote->participant_id] ?? null;
             $winnerUser = $winner->user ?? null;
-
             $winnerData = [
                 'participant_id' => $winner->id ?? null,
                 'name' => $winnerUser->name ?? 'Unknown',
@@ -372,9 +372,11 @@ class ContestController extends Controller
                 'points' => $topVote->total_votes
             ];
 
-            // Get Voting Champs (Top 10 Participants Excluding Winner)
+            // Voting Champs (Top 10 excluding winner)
             $votingChamps = [];
-            foreach ($voteResults->slice(1, 10) as $champ) {
+            $top10Votes = $voteResults->slice(1, 10); // First is winner, next 9 are champs
+            $top10ParticipantIds = [$topVote->participant_id];
+            foreach ($top10Votes as $champ) {
                 $participant = $participants[$champ->participant_id] ?? null;
                 $participantUser = $participant->user ?? null;
 
@@ -384,11 +386,30 @@ class ContestController extends Controller
                     'thumbnail' => $participantUser->profile_image ?? null,
                     'points' => $champ->total_votes
                 ];
+
+                $top10ParticipantIds[] = $champ->participant_id; // Add to exclusion list
+            }
+
+            // Point Crew (All participants not in top 10)
+            $pointCrew = [];
+            foreach ($voteResults as $result) {
+                if (!in_array($result->participant_id, $top10ParticipantIds)) {
+                    $participant = $participants[$result->participant_id] ?? null;
+                    $participantUser = $participant->user ?? null;
+
+                    $pointCrew[] = [
+                        'participant_id' => $participant->id ?? null,
+                        'name' => $participantUser->name ?? 'Unknown',
+                        'thumbnail' => $participantUser->profile_image ?? null,
+                        'points' => $result->total_votes
+                    ];
+                }
             }
 
             return response()->json([
                 'winner' => $winnerData,
-                'voting_champs' => $votingChamps
+                'voting_champs' => $votingChamps,
+                'point_crew' => $pointCrew
             ], 200);
 
         } catch (\Exception $e) {
@@ -398,8 +419,5 @@ class ContestController extends Controller
             ], 500);
         }
     }
-
-
-
 
 }

@@ -783,5 +783,68 @@ class BusinessController extends Controller
         }
     }
 
+    /**
+     *  API Function for update Language 
+    */
+    public function updateBusinessLanguage(Request $request)
+    {
+        $request->validate([
+            'language' => 'required|in:en,es' //English is "en" and for Spanish is "es"
+        ]);
 
+        try {
+            $user = Auth::user();
+            $businessProfile = BusinessProfile::where('business_id', $user->id)->first();
+            if (!$businessProfile) {
+                return response()->json([
+                    'error' => 'business profile not found',
+                ], 404);
+            }
+            $businessProfile->preferred_language = $request->language;
+            $businessProfile->save();
+
+            return response()->json([
+                'message' => 'Language updated successfully',
+                'language' => $businessProfile->preferred_language,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update business location',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function for update Push Notification status of business
+    */
+    public function pushNotificationUpdate(Request $request)
+    {
+        $request->validate([
+            'enabled' => 'required|boolean',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $businessProfile = BusinessProfile::where('business_id', $user->id)->first();
+            if (!$businessProfile) {
+                return response()->json([
+                    'error' => 'business profile not found',
+                ], 404);
+            }
+            $businessProfile->push_notification = $request->enabled ? '1' : '0';
+            $businessProfile->save();
+
+            return response()->json([
+                'message' => 'Push notification setting updated successfully.',
+                'push_notification' => $businessProfile->push_notification,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update push notification setting',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

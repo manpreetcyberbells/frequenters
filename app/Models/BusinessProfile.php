@@ -53,4 +53,11 @@ class BusinessProfile extends Model
         return $this->hasManyThrough(Customer::class, Transaction::class);
     }
 
+    public function services() {
+        return $this->hasMany(Service::class);
+    }
+    
+    public function menus() {
+        return $this->hasMany(Menu::class);
+    }
 }

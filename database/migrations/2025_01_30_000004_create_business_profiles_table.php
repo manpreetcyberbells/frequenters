@@ -37,6 +37,8 @@ return new class extends Migration
             $table->string('owner_name', 55)->notNullable();
             $table->string('owner_email', 55)->nullable();
             $table->string('owner_phone', 15)->notNullable();
+            $table->string('preferred_language', 10)->default('en'); // en // spanish es
+            $table->enum('push_notification', ['0', '1'])->default('1'); // 1 = enabled
             $table->timestamps();
 
             // Foreign key constraints

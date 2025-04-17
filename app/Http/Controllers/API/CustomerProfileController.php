@@ -175,7 +175,7 @@ class CustomerProfileController extends Controller
     public function updateCustomerLanguage(Request $request)
     {
         $request->validate([
-            'language' => 'required',
+            'language' => 'required|in:en,es' //English is "en" and for Spanish is "es"
         ]);
 
         try {

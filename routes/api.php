@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\{
     AboutUsController, AuthController, BusinessController, ComplaintController, CollaborationController,
     ContestController, CustomerController, CustomerProfileController, EventController, FaqController, 
-    InviteController, MessageController, NotificationController, OfferController, 
-    PrivacyPolicyController, ReviewController, RewardController, SearchHistoryController, 
+    InviteController, MessageController, NotificationController, OfferController, MenuController,
+    PrivacyPolicyController, ReviewController, RewardController, SearchHistoryController, ServiceController,
     SuggestionController, TermsAndConditionController, TransactionController, UserController, WishlistController
 };
 // use App\Http\Controllers\CityController;
@@ -173,6 +173,14 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::post('/collaboration-post', [CollaborationController::class, 'bTobCollaboration']);
     // collaboration Listing By BID 
     Route::get('/collaboration/{businessId}', [CollaborationController::class, 'getbTobListing']);
+    //API Update Business Language
+    Route::put('/update-language', [BusinessController::class, 'updateBusinessLanguage']);
+    //API Update Push Notifications Business
+    Route::put('/push-notifications-update', [BusinessController::class, 'pushNotificationUpdate']);
+    // Create Service
+    Route::post('/service-post', [ServiceController::class, 'createServiceMenu']);
+    // Create Menu
+    Route::post('/create-menu', [MenuController::class, 'createMenu']);
 });
 
 // Protected Routes (Require Authentication)
