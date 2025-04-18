@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('reward_name', 255);
             $table->integer('points_required');
             $table->text('qr_code')->nullable();
+            $table->json('qr_code_payload')->nullable();
             $table->boolean('is_exclusive')->default(1);
             $table->date('valid_from')->nullable();
             $table->date('valid_until')->nullable();

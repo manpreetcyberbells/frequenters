@@ -372,11 +372,11 @@ class ContestController extends Controller
                 'points' => $topVote->total_votes
             ];
 
-            // Voting Champs (Top 10 excluding winner)
+            // Voting Champs (Top 6 excluding winner)
             $votingChamps = [];
-            $top10Votes = $voteResults->slice(1, 10); // First is winner, next 9 are champs
-            $top10ParticipantIds = [$topVote->participant_id];
-            foreach ($top10Votes as $champ) {
+            $top6Votes = $voteResults->slice(1, 6); // First is winner, next 9 are champs
+            $top6ParticipantIds = [$topVote->participant_id];
+            foreach ($top6Votes as $champ) {
                 $participant = $participants[$champ->participant_id] ?? null;
                 $participantUser = $participant->user ?? null;
 
@@ -387,13 +387,13 @@ class ContestController extends Controller
                     'points' => $champ->total_votes
                 ];
 
-                $top10ParticipantIds[] = $champ->participant_id; // Add to exclusion list
+                $top6ParticipantIds[] = $champ->participant_id; // Add to exclusion list
             }
 
-            // Point Crew (All participants not in top 10)
+            // Point Crew (All participants not in top 6)
             $pointCrew = [];
             foreach ($voteResults as $result) {
-                if (!in_array($result->participant_id, $top10ParticipantIds)) {
+                if (!in_array($result->participant_id, $top6ParticipantIds)) {
                     $participant = $participants[$result->participant_id] ?? null;
                     $participantUser = $participant->user ?? null;
 

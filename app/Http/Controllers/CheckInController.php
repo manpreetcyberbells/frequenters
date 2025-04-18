@@ -227,12 +227,13 @@ class CheckInController extends Controller
 
         try {
             if ($validated['type'] === 'customer_checkin') {
+                // die('HE');
                 $business = BusinessProfile::where('business_uid', $validated['business_uid'])->first();
                 if (!$business) {
                     return response()->json(['message' => 'Invalid business UID'], 400);
                 }
 
-                $businessId = $business->id;
+                $businessId = $business->business_id;
                 $customerId = auth()->id();
 
                 // Log Check-In
@@ -248,7 +249,7 @@ class CheckInController extends Controller
                     ['interaction_count' => DB::raw('interaction_count + 1')]
                 );
 
-            return $this->processCheckIn($customerId, $validated['business_id']);
+                return $this->processCheckIn($customerId, $businessId);
                 
 
             } elseif ($validated['type'] === 'business_checkin') {

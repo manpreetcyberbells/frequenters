@@ -52,29 +52,33 @@ class RewardController extends Controller
     {
         $encryptedPayload = Crypt::encryptString(json_encode($qrPayload));
         $rewardCheck = DB::table('rewards')->where('id', $rewardId)->first();
-        // Generate QR Code if not exists
-        if (!$rewardCheck->qr_code || !Storage::disk('public')->exists($rewardCheck->qr_code)) {
-            // Create a safe filename for the QR code
-            $safeFilename = hash('sha256', $encryptedPayload);
-            $path = 'qrcodes/rewards/' . $safeFilename . '.svg';
-            Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($encryptedPayload));
+        // // Generate QR Code if not exists
+        // if (!$rewardCheck->qr_code || !Storage::disk('public')->exists($rewardCheck->qr_code)) {
+        //     $safeFilename = hash('sha256', $encryptedPayload);
+        //     $path = 'qrcodes/rewards/' . $safeFilename . '.svg';
+        //     Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($encryptedPayload));
             
-            $updated = DB::table('rewards')->where('id', $rewardId)
-                        ->update([
-                            'qr_code' => asset('storage/' . $path),
-                            'updated_at' => now(),
-                        ]);
+        //     $updated = DB::table('rewards')->where('id', $rewardId)
+        //                 ->update([
+        //                     'qr_code' => asset('storage/' . $path),
+        //                     'updated_at' => now(),
+        //                 ]);
             
-            Log::info('Reward QR created for Business:', ['Business' => $rewardId]);
-        }
+        //     Log::info('Reward QR created for Business:', ['Business' => $rewardId]);
+        // }
         
+        // Insert value of QR payload // We will using on Customer app.
+        $updatePayload = DB::table('rewards')->where('id', $rewardId)->update([
+            'qr_code_payload' => json_encode($qrPayload)
+        ]);
+
         // Get QR
-        $qrCode = DB::table('rewards')->where('id', $rewardId)->pluck('qr_code')->first();
+        // $qrCode = DB::table('rewards')->where('id', $rewardId)->pluck('qr_code')->first();
         // Notification (Testing for all Users // Later allow for special user also)
         createNotification($businessId, $rewardCheck->reward_name, "push", null, true);
 
         return response()->json([
-            'qr_code' => $qrCode,
+            // 'qr_code' => $qrCode,
             'message' => $message,
         ], 200);
     }
@@ -147,13 +151,13 @@ class RewardController extends Controller
 
         $validated = $request->validate([
             'qr_code' => 'required',
-            'customer_id' => 'required|exists:customer_profiles,customer_id'
+            // 'customer_id' => 'required|exists:customer_profiles,customer_id'
         ]);
 
         try {
             $decryptedPayload = json_decode(Crypt::decryptString($validated['qr_code']), true);
             // echo"<pre>"; print_r($decryptedPayload); die;
-            $customerId = $validated['customer_id'];
+            $customerId = $decryptedPayload['customer_id'];
 
             if ($decryptedPayload['business_id'] !== $user->id) {
                 return response()->json(['message' => 'You can only redeem rewards created by your business'], 403);
@@ -329,8 +333,6 @@ class RewardController extends Controller
         }
     }
 
-    
-
     /**
      * API Function Fetch Reward Detail
     */
@@ -339,11 +341,47 @@ class RewardController extends Controller
         try {
             $reward = DB::table('rewards')->where('id', $id)->first();
             if (!$reward) {
-                return response()->json(['error' => 'Reward not found'], 404);
+                return response()->json(['error' => 'Invalid Reward or Reward not found'], 404);
             }
 
+            $originalPayload = json_decode($reward->qr_code_payload, true);
+            $originalPayload['customer_id'] = auth()->user()->id;
+            $encryptedPayload = Crypt::encryptString(json_encode($originalPayload));
+            // echo"<pre>"; print_r($originalPayload);  echo"</br>";
+            // echo"<pre>"; print_r($encryptedPayload);  die;
+
+            // Generate QR Code if not exists
+            // if (!$reward->qr_code || !Storage::disk('public')->exists($reward->qr_code)) {
+                $safeFilename = hash('sha256', $encryptedPayload);
+                $path = 'qrcodes/rewards/' . $safeFilename . '.svg';
+                Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($encryptedPayload));
+                
+                // $updated = DB::table('rewards')->where('id', $id)
+                //             ->update([
+                //                 'qr_code' => asset('storage/' . $path),
+                //                 'updated_at' => now(),
+                //             ]);
+                
+                // Log::info('Reward QR created for Business:', ['Business' => $id]);
+            // }
+
+            $customer_qr = [
+                'customer_id' => auth()->user()->id,
+                'reward_id' => $reward->id,
+                'encrypted_payload' => $encryptedPayload,
+                'qr_path' => $path,
+            ];
+
+            // QR code Log
+            Log::build([
+                'driver' => 'single',
+                'path' => storage_path('logs/customer_qr.log'),
+            ])->info('Customers QRCode:', ['CustomerQR' => $customer_qr]);
+
+            $rewardUpdatedInfo = DB::table('rewards')->where('id', $id)->first();
             $business = User::where('id', $reward->business_id)->first();
-            $rewardArray = (array) $reward;
+            $rewardArray = (array) $rewardUpdatedInfo;
+            $rewardArray['qr_code'] = asset('storage/' . @$path);
             $rewardArray['business_name'] = $business ? $business->name : null;
             return response()->json(['reward' => $rewardArray], 200);
 
