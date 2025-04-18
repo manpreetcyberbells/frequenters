@@ -139,6 +139,10 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::post('/respond-message', [MessageController::class, 'respondToMessage']);
     // Submit Suggestion
     Route::post('/submit-suggestion', [SuggestionController::class, 'store']);
+    // Menu Listing
+    Route::get('/menu-list', [MenuController::class, 'getMenuList']);
+    // Service Listing
+    Route::get('/service-list', [ServiceController::class, 'getServiceList']);
 });
 
 // Business API's

@@ -47,5 +47,27 @@ class MenuController extends Controller
             'data' => $menu
         ]);
     }
+
+    /**
+     *  API Function : MENU Listing
+    */
+    public function getMenuList(Request $request)
+    {
+        $businessId = $request->business_id;
+        if (!$businessId) {
+            return response()->json(['status' => false, 'message' => 'Business ID is required'], 400);
+        }
+
+        $menus = Menu::where('business_id', $businessId)->orderBy('created_at', 'desc')->get();
+        if ($menus->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'No menus found for this business'], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $menus
+        ]);
+    }
+
     
 }

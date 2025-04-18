@@ -690,9 +690,60 @@ class BusinessController extends Controller
     /**
      *  API Function : Create Staff
     */
+    // public function createStaff(Request $request)
+    // {
+    //     $business = auth()->user();
+    //     if ($business->role !== 'business') {
+    //         return response()->json(['message' => 'Only businesses can add staff'], 403);
+    //     }
+
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'email' => 'required|email|unique:users,email',
+    //         'password' => 'required|string|min:8|confirmed',
+    //         'role' => 'required|in:manager,employee'
+    //     ]);
+
+    //     // Count existing staff under the business
+    //     $staffCount = User::where('parent_business_id', $business->id)
+    //     ->whereNull('deleted_at')
+    //     ->selectRaw('SUM(role = "manager") as managers, SUM(role = "employee") as employees')
+    //     ->first();
+
+    //     if ($validated['role'] === 'manager' && $staffCount->managers >= 1) {
+    //         return response()->json(['message' => 'You can only add 1 manager.'], 400);
+    //     }
+
+    //     if ($validated['role'] === 'employee' && $staffCount->employees >= 5) {
+    //         return response()->json(['message' => 'You can only add up to 5 employees.'], 400);
+    //     }
+
+    //     try{
+    //         $user = User::create([
+    //             'name' => $validated['name'],
+    //             'email' => $validated['email'],
+    //             'password' => Hash::make($validated['password']),
+    //             'role' => $validated['role'],
+    //             'parent_business_id' => $business->id,
+    //             'providers' => 'email',
+    //             "status" => "active"
+    //         ]);
+
+    //         return response()->json(['message' => 'Staff created successfully', 'user' => $user]);
+    //     } catch (\Exception $e) {
+
+    //         Log::error('Staff failed:', ['error' => $e->getMessage()]);
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Something went wrong. Please try again.',
+    //         ], 500);
+    //     }
+    // }
+
     public function createStaff(Request $request)
     {
         $business = auth()->user();
+
         if ($business->role !== 'business') {
             return response()->json(['message' => 'Only businesses can add staff'], 403);
         }
@@ -704,21 +755,13 @@ class BusinessController extends Controller
             'role' => 'required|in:manager,employee'
         ]);
 
-        // Count existing staff under the business
-        $staffCount = User::where('parent_business_id', $business->id)
-        ->whereNull('deleted_at')
-        ->selectRaw('SUM(role = "manager") as managers, SUM(role = "employee") as employees')
-        ->first();
-
-        if ($validated['role'] === 'manager' && $staffCount->managers >= 1) {
-            return response()->json(['message' => 'You can only add 1 manager.'], 400);
+        // Count total staff under this business (excluding soft-deleted)
+        $totalStaff = User::where('parent_business_id', $business->id)->whereIn('role', ['manager', 'employee'])->whereNull('deleted_at')->count();
+        if ($totalStaff >= 5) {
+            return response()->json(['message' => 'You can only add up to 5 staff members.'], 400);
         }
 
-        if ($validated['role'] === 'employee' && $staffCount->employees >= 5) {
-            return response()->json(['message' => 'You can only add up to 5 employees.'], 400);
-        }
-
-        try{
+        try {
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -726,13 +769,12 @@ class BusinessController extends Controller
                 'role' => $validated['role'],
                 'parent_business_id' => $business->id,
                 'providers' => 'email',
-                "status" => "active"
+                'status' => 'active'
             ]);
 
             return response()->json(['message' => 'Staff created successfully', 'user' => $user]);
         } catch (\Exception $e) {
-
-            Log::error('Staff failed:', ['error' => $e->getMessage()]);
+            Log::error('Staff creation failed:', ['error' => $e->getMessage()]);
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong. Please try again.',

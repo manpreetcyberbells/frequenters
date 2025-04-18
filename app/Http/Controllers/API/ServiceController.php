@@ -63,4 +63,25 @@ class ServiceController extends Controller
         ]);
     }
 
+    /**
+     *  API Function : Service Listing
+    */
+    public function getServiceList(Request $request)
+    {
+        $businessId = $request->business_id;
+        if (!$businessId) {
+            return response()->json(['status' => false, 'message' => 'Business ID is required'], 400);
+        }
+
+        $services = Service::where('business_id', $businessId)->orderBy('created_at', 'desc')->get();
+        if ($services->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'No services found for this business'], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $services
+        ]);
+    }
+
 }
