@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Crypt;
 use Laravolt\Avatar\Facade as Avatar;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -398,5 +400,164 @@ class AuthController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * API Funcation : Social Login//Register
+    */
+    public function socialLoginRegister(Request $request)
+    {
+        // echo"<pre>"; print_r($request->all());  die;
+        $validator = Validator::make($request->all(), [
+            'provider' => 'required|in:google,facebook,apple',
+            'provider_id' => 'required',
+            'name' => 'required',
+            'email' => 'nullable|email',
+            'role' => 'required|in:customer,business',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $user = User::where('provider_id', $request->provider_id)->where('providers', $request->provider)->first();
+        // echo"<pre>"; print_r($user);  die;
+        if (!$user) {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email ?? Str::random(10) . '@example.com',
+                'providers' => $request->provider,
+                'provider_id' => $request->provider_id,
+                'phone' => $request->phone,
+                'profile_image' => $request->profile_image,
+                'role' => $request->role,
+                'status' => 'active',
+                'created_at' => now(),
+            ]);
+
+            if($request->role == "customer")
+            {
+                $anonymousName = $this->generateAnonymousName();
+                $anonymousImage = $this->generateAnonymousImage($anonymousName);
+                $customer = CustomerProfile::create([
+                    'customer_id' => $user->id,
+                    'anonymous_name' => $anonymousName,
+                    'anonymous_image' => $anonymousImage,
+                ]);
+
+                // Create the customer address
+                CustomerAddress::create([
+                    'customer_id' => $user->id,
+                ]);
+
+                Log::info('Customer coming from '.$request->provider.' :: created for user_id:', ['user_id' => $user->id]);
+
+                // Generate Unique Customer ID (Short UPI-style ID)
+                $customerId = $this->generateCustomerID($user->id, $user->email);
+                $customer->customer_uid = $customerId;
+            }
+
+            if($request->role == "business")
+            {
+                // Create business profile
+                $business = BusinessProfile::create([
+                    'business_id' => $user->id,
+                    // 'business_name' => $request->business_name,
+                    // 'category_id' => $request->category_id,
+                    // 'child_category_id' => $request->child_category_id,
+                    // 'owner_name' => $request->owner_name,
+                    // 'owner_email' => $request->owner_email,
+                    // 'owner_phone' => $request->owner_phone,
+                    // 'website' => $request->website,
+                ]);
+
+                // Generate Unique Business ID
+                $businessId = $this->generateBusinessID($user->id, $user->email);
+                $business->business_uid = $businessId;
+                $business->save();
+
+                // Generate QR Code if not exists
+                if (!$business->qr_code_hash || !Storage::disk('public')->exists($business->qr_code_hash)) {
+                    $payload = [
+                        "type" => "business_checkin",
+                        "business_uid" => $businessId
+                    ];
+                    $encryptedPayload = Crypt::encryptString(json_encode($payload));
+
+                    // Create a safe filename for the QR code
+                    $safeFilename = hash('sha256', $encryptedPayload);
+                    $path = 'qrcodes/business/' . $safeFilename . '.svg';
+                    Storage::disk('public')->put($path, QrCode::format('svg')->size(300)->generate($encryptedPayload));
+                    $business->qr_code_hash = asset('storage/' . $path);
+                    $business->save();
+                    
+                    Log::info('Business QR created for user_id:', ['user_id' => $user->id]);
+                }
+
+                // Create the Business address
+                BusinessAddress::create([
+                    'business_id' => $user->id,
+                    // 'latitude' => $request->latitude,
+                    // 'longitude' => $request->longitude,
+                    // 'address_line1' => $request->address_line1,
+                    // 'address_line2' => $request->address_line1,
+                    // 'city' => $request->city,
+                    // 'state' => $request->state,
+                    // 'country' => $request->country,
+                    // 'zip_code' => $request->zip_code,
+                ]);
+
+                Log::info('Business coming from '.$request->provider.' :: created for user_id:', ['user_id' => $user->id]);
+            }
+
+        }
+
+        // Generate token
+        $token = $user->createToken('authToken')->plainTextToken;
+
+        // Load profile and badges only for customer/business
+        switch ($request->role) {
+            case 'customer':
+                $user->load(['customerProfile', 'customerBadges.badge']);
+                $badges = $user->customerBadges;
+                break;
+
+            case 'business':
+                $user->load('businessProfile');
+                $badges = null;
+                break;
+
+            case 'manager':
+            case 'employee':
+                $badges = null;
+                break;
+
+            default:
+                $badges = null;
+                break;
+        }
+
+        if($request->role == "customer"){
+            $customerProfile = CustomerProfile::where('customer_id',$user->id)->first();
+            return response()->json([
+                'message' => 'Customer registered successfully.',
+                'token' => $token,
+                'user' => $user,
+                'customer_uid' => $customerProfile->customer_id,
+                'qr_code_url' => $customerProfile->qr_code_hash
+            ]);
+        }
+
+        if($request->role == "business"){
+            $businessProfile = BusinessProfile::where('business_id',$user->id)->first();
+            return response()->json([
+                'message' => 'Business registered successfully.',
+                'token' => $token,
+                'user' => $user,
+                'business_uid' => $businessProfile->business_id,
+                'qr_code_url' => $businessProfile->qr_code_hash
+            ], 201);
+        }
+        
     }
 }

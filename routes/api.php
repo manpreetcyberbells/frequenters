@@ -24,6 +24,8 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink']);
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    // Social Users
+    Route::post('/social-login-register', [AuthController::class, 'socialLoginRegister']);
 
     // Get all cities
     Route::get('/cities', [CityController::class, 'getCityDetails']);

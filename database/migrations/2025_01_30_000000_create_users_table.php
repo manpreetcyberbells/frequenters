@@ -19,10 +19,11 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('gender')->nullable();
             $table->string('profile_image',255)->nullable();
-            $table->string('password');
+            $table->string('password',255)->nullable();
             $table->enum('role', ['customer', 'business', 'admin', 'manager', 'employee']);
             $table->enum('status', ['pending', 'active', 'suspended'])->default('pending');
             $table->enum('providers', ['facebook', 'google', 'apple', 'email']);
+            $table->string('provider_id',255)->nullable();
             $table->string('apple_id')->nullable();
             $table->string('facebook_id')->nullable();
             $table->string('google_id')->nullable();
