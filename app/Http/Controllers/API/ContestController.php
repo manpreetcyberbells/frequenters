@@ -65,8 +65,40 @@ class ContestController extends Controller
             $validatedData['banner_image'] = asset('storage/' . $bannerPath);
 
             // echo"<pre>"; print_r($validatedData); die;
-
-
+            switch ($request->reward_type) {
+                case 'points':
+                    $request->validate([
+                        'winner_points' => 'required|integer',
+                        'participant_points' => 'required|integer',
+                        'voter_points' => 'required|integer',
+                    ]);
+                    $validatedData['winner_points'] = $request->winner_points;
+                    $validatedData['participant_points'] = $request->participant_points;
+                    $validatedData['voter_points'] = $request->voter_points;
+                    break;
+        
+                case 'discount':
+                    $request->validate([
+                        'winner_discount' => 'required|string',
+                        'participant_discount' => 'required|string',
+                        'voter_discount' => 'required|string',
+                    ]);
+                    $validatedData['winner_discount'] = $request->winner_discount;
+                    $validatedData['participant_discount'] = $request->participant_discount;
+                    $validatedData['voter_discount'] = $request->voter_discount;
+                    break;
+        
+                case 'free_item':
+                    $request->validate([
+                        'winner_free_item' => 'required|string',
+                        'participant_free_item' => 'required|string',
+                        'voter_free_item' => 'required|string',
+                    ]);
+                    $validatedData['winner_free_item'] = $request->winner_free_item;
+                    $validatedData['participant_free_item'] = $request->participant_free_item;
+                    $validatedData['voter_free_item'] = $request->voter_free_item;
+                    break;
+            }
             // Create Contest
             $contest = Contest::create($validatedData);
 
@@ -344,7 +376,23 @@ class ContestController extends Controller
     {
         try {
             $contest = Contest::findOrFail($contest_id);
-
+            // echo"<pre>"; print_r($contest); die;
+            $winnerReward = 0;
+            $participantReward = 0;
+            $voterReward = 0;
+            if($contest->reward_type == "points"){
+                $winnerReward = $contest->winner_points;
+                $participantReward = $contest->participant_points;
+                $voterReward = $contest->voter_points;
+            } else if($contest->reward_type == "discount"){
+                $winnerReward = $contest->winner_discount;
+                $participantReward = $contest->participant_discount;
+                $voterReward = $contest->voter_discount;
+            } else {
+                $winnerReward = $contest->winner_free_item;
+                $participantReward = $contest->participant_free_item;
+                $voterReward = $contest->voter_free_item;
+            }
             $voteResults = ContestVotingHistory::select(
                     'participant_id',
                     DB::raw('COUNT(id) as total_votes')
@@ -384,7 +432,7 @@ class ContestController extends Controller
                     'participant_id' => $participant->id ?? null,
                     'name' => $participantUser->name ?? 'Unknown',
                     'thumbnail' => $participantUser->profile_image ?? null,
-                    'points' => $champ->total_votes
+                    'points' => $participantReward //$champ->total_votes
                 ];
 
                 $top6ParticipantIds[] = $champ->participant_id; // Add to exclusion list
@@ -401,7 +449,7 @@ class ContestController extends Controller
                         'participant_id' => $participant->id ?? null,
                         'name' => $participantUser->name ?? 'Unknown',
                         'thumbnail' => $participantUser->profile_image ?? null,
-                        'points' => $result->total_votes
+                        'points' => $voterReward //$result->total_votes
                     ];
                 }
             }

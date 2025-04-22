@@ -14,4 +14,10 @@ class Offer extends Model {
         'campaign_end_time', 'applicable_days', 'min_order_value', 'terms_and_conditions',
         'tagline', 'description', 'banner_image', 'is_active'
     ];
+
+    public function business()
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
+
 }

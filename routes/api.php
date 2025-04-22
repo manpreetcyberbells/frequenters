@@ -149,6 +149,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
 Route::middleware(['auth:api'])->prefix('business')->group(function () {
     // Create Offers
     Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
+    // Recommended Offers
+    Route::get('/get-recommended-offers', [OfferController::class, 'getRecommendedOffers']);
     // Create Event
     Route::post('/events', [EventController::class, 'createBusinessEvent']);
     // Create Complaints

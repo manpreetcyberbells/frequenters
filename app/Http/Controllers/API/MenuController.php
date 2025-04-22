@@ -58,7 +58,7 @@ class MenuController extends Controller
             return response()->json(['status' => false, 'message' => 'Business ID is required'], 400);
         }
 
-        $menus = Menu::where('business_id', $businessId)->orderBy('created_at', 'desc')->get();
+        $menus = Menu::where('business_id', $businessId)->orderBy('created_at', 'desc')->paginate(10);
         if ($menus->isEmpty()) {
             return response()->json(['status' => false, 'message' => 'No menus found for this business'], 404);
         }

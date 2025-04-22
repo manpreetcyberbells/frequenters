@@ -29,6 +29,18 @@ return new class extends Migration
             $table->time('close_end_time')->nullable();
             $table->integer('max_participants')->nullable();
             $table->enum('reward_type', ['points', 'discount', 'free_item']);
+            // Point
+            $table->integer('winner_points')->nullable();
+            $table->integer('participant_points')->nullable();
+            $table->integer('voter_points')->nullable();
+            // Discount
+            $table->string('winner_discount',55)->nullable();
+            $table->string('participant_discount',55)->nullable();
+            $table->string('voter_discount',55)->nullable();
+            // Free Item
+            $table->string('winner_free_item',55)->nullable();
+            $table->string('participant_free_item',55)->nullable();
+            $table->string('voter_free_item',55)->nullable();
             $table->timestamps();
 
             $table->foreign('business_id')->references('id')->on('users')->onDelete('cascade');

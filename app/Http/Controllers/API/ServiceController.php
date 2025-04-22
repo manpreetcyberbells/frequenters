@@ -73,7 +73,7 @@ class ServiceController extends Controller
             return response()->json(['status' => false, 'message' => 'Business ID is required'], 400);
         }
 
-        $services = Service::where('business_id', $businessId)->orderBy('created_at', 'desc')->get();
+        $services = Service::where('business_id', $businessId)->orderBy('created_at', 'desc')->paginate(10);
         if ($services->isEmpty()) {
             return response()->json(['status' => false, 'message' => 'No services found for this business'], 404);
         }
