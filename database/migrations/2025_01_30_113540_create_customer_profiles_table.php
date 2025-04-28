@@ -26,6 +26,7 @@ return new class extends Migration
             $table->enum('preferred_notification_channel', ['email', 'SMS', 'push'])->default('email');
             $table->string('preferred_language', 10)->default('en'); // en // spanish es
             $table->enum('push_notification', ['0', '1'])->default('1'); // 1 = enabled
+            $table->string('fcm_token',255)->nullable();
             $table->enum('location', ['0', '1'])->default('0'); // 0 = disabled
             $table->enum('show_personal_info', ['0', '1'])->default('1'); // 1 = enabled
             $table->string('anonymous_name',55)->nullable();

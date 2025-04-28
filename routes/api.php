@@ -16,6 +16,29 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Events\MessageSent;
+use Illuminate\Support\Facades\Log;
+
+Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
+
+    // broadcast(new MessageSent('Hello via WebSocket!'));
+
+    // // die('EEE');
+    $message = (object)[
+        'sender_id' => 12,
+        'receiver_id' => 3,
+        'text' => $request->text,
+        'timestamp' => now(),
+    ];
+
+    Log::info('Broadcasting MessageSent event', [$message]);
+
+    broadcast(new MessageSent($message));
+
+    Log::info('Broadcast queued.');
+
+    return response()->json(['status' => 'Message broadcasted!', 'message' => $message]);
+});
 
 // Public Routes
 Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(function () {

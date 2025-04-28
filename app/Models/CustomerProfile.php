@@ -29,6 +29,7 @@ class CustomerProfile extends Model
         'anonymous_image',
         'qr_code_url',
         'textCode',
+        'fcm_token'
     ];
 
     public function user()

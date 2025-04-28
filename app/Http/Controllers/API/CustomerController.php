@@ -13,6 +13,8 @@ use App\Models\BusinessAddress;
 use App\Models\BusinessProfile;
 use App\Models\Review;
 use App\Models\Offer;
+use App\Models\Menu;
+use App\Models\Service;
 use Illuminate\Support\Facades\Crypt;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\DB;
@@ -389,6 +391,13 @@ class CustomerController extends Controller
             $query->where('business_profiles.category_id', $categoryId);
         }
         $nearbyBusinesses = $query->paginate(10);
+        $nearbyBusinesses->getCollection()->transform(function ($business) {
+            $hasMenu = Menu::where('business_id', $business->user_id)->exists();
+            $hasService = Service::where('business_id', $business->user_id)->exists();
+            $business->has_menu = $hasMenu;
+            $business->has_service = $hasService;
+            return $business;
+        });
         return $nearbyBusinesses;
     }
 
@@ -462,6 +471,13 @@ class CustomerController extends Controller
             $query->where('business_profiles.category_id', $categoryId);
         }
         $highestReward = $query->paginate(10);
+        $highestReward->getCollection()->transform(function ($business) {
+            $hasMenu = Menu::where('business_id', $business->user_id)->exists();
+            $hasService = Service::where('business_id', $business->user_id)->exists();
+            $business->has_menu = $hasMenu;
+            $business->has_service = $hasService;
+            return $business;
+        });
         return $highestReward;
     }
 
@@ -543,8 +559,18 @@ class CustomerController extends Controller
 
         // Sort by nearest distance
         $query->orderBy('distance', 'ASC');
+        
+        // return $query->paginate(10);
+        $frequentlyVisited = $query->paginate(10);
+        $frequentlyVisited->getCollection()->transform(function ($business) {
+            $hasMenu = \App\Models\Menu::where('business_id', $business->user_id)->exists();
+            $hasService = \App\Models\Service::where('business_id', $business->user_id)->exists();
+            $business->has_menu = $hasMenu;
+            $business->has_service = $hasService;
+            return $business;
+        });
 
-        return $query->paginate(10);
+        return $frequentlyVisited;
     }
 
 }

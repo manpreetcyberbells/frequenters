@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Broadcast;
+use App\Events\MessageSent;
+use Illuminate\Support\Facades\Queue;
 
 class MessageController extends Controller
 {
@@ -102,6 +105,31 @@ class MessageController extends Controller
             'chat_enabled' => $chatEnabled,
             'is_group_message' => 1,
         ]);
+
+        $customers = DB::table('customer_business_relationships')->where('business_id', $businessId)->where('customer_tier', $groupType)->pluck('customer_id');
+        if ($customers->isEmpty()) {
+            return response()->json(['message' => 'No customers in this group'], 404);
+        }
+
+        foreach ($customers as $customerId) {
+            $messageData = (object)[
+                'sender_id' => $businessId,
+                'receiver_id' => $customerId,
+                'text' => $messageText,
+                'timestamp' => now(),
+            ];
+    
+            broadcast(new MessageSent($messageData))->toOthers();
+        }
+
+        // $message = (object)[
+        //     'sender_id' => $businessId,
+        //     'receiver_id' => ,  // customer_id how have into groupType within businessId
+        //     'text' => $messageText,
+        //     'timestamp' => now(),
+        // ];
+
+        // broadcast(new MessageSent($message));
 
         return response()->json(['message' => 'Message sent successfully', 'message_id' => $message]);
     }
@@ -196,6 +224,15 @@ class MessageController extends Controller
             'chat_enabled' => true,
         ]);
 
+        $messageBroadcast = (object)[
+            'sender_id' => $user->id,
+            'receiver_id' => $receiverId,
+            'text' => $messageText,
+            'timestamp' => now(),
+        ];
+
+        $emc = broadcast(new MessageSent($messageBroadcast));
+        // echo"<pre>"; print_r($emc); die;
         // Apply Read to message
         $this->markMessageAsReadInternal($message->id, $user->id);
 

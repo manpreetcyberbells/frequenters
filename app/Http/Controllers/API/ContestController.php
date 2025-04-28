@@ -160,6 +160,11 @@ class ContestController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Optional filter: search by contest name
+        if ($request->has('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
         // Eager load necessary relations
         $query->with(['questions.options', 'questions.answers.participant.user']);
 

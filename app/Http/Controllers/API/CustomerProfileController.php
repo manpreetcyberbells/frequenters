@@ -111,6 +111,7 @@ class CustomerProfileController extends Controller
     {
         $request->validate([
             'enabled' => 'required|boolean',
+            'fcm_token' => 'required|string|max:255'
         ]);
 
         try {
@@ -121,6 +122,7 @@ class CustomerProfileController extends Controller
                     'error' => 'Customer profile not found',
                 ], 404);
             }
+            $customerProfile->fcm_token = $request->fcm_token;
             $customerProfile->push_notification = $request->enabled ? '1' : '0';
             $customerProfile->save();
 
@@ -242,7 +244,6 @@ class CustomerProfileController extends Controller
     {
         try {
             $user = auth()->user();
-
             if (!$user) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
@@ -257,7 +258,14 @@ class CustomerProfileController extends Controller
                 'radius' => 'nullable|numeric|min:1|max:100',
                 'latitude' => 'nullable|string|max:20',
                 'longitude' => 'nullable|string|max:20',
+                'is_current' => 'nullable|boolean',
             ]);
+
+            $isCurrent = $validated['is_current'] ?? 0;
+            $checkIFCurrent = CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->get()->count();
+            if ($isCurrent == 1 && $checkIFCurrent > 0) {
+                CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->update(['is_current' => '0']);
+            }
 
             $customerAddress = CustomerAddress::create([
                 'customer_id' => $user->id,
@@ -270,6 +278,7 @@ class CustomerProfileController extends Controller
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
                 'radius' => $validated['radius'] ?? 5,
+                'is_current' => $isCurrent,
             ]);
 
             return response()->json([
@@ -284,6 +293,7 @@ class CustomerProfileController extends Controller
             ], 500);
         }
     }
+
 
     /**
      *  API Function for Update Customer Address 

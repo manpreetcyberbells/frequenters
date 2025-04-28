@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('radius')->default(5);
             $table->float('latitude', 10, 6)->nullable(); // Precision for GPS coordinates
             $table->float('longitude', 10, 6)->nullable();
+            $table->enum('is_current', ['0', '1'])->default('0'); // 0 = disabled
             $table->timestamps();
 
             // Foreign key constraints

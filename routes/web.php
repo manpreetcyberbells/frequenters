@@ -18,6 +18,31 @@ use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminBusinessController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\API\InviteController;
+use Illuminate\Support\Facades\Log;
+use App\Events\MessageSent;
+// use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+
+
+// Route::view('/reverb-test', 'reverb-test');
+Route::get('/reverb-test', function () {
+    return view('reverb-test');
+});
+
+Route::get('/test-broadcast', function () {
+    $fakeMessage = (object)[
+        'id' => rand(1, 999),
+        'message_text' => 'Test message from Laravel',
+        'sender_id' => 2,
+        'receiver_id' => 3,
+        'created_at' => now()
+    ];
+    Log::info('Broadcasting MessageSent event', array($fakeMessage));
+    broadcast(new MessageSent($fakeMessage));
+    Log::info('Broadcast queued.');
+    return 'Broadcast sent!';
+});
 
 // Show Login Form
 Route::get('/login', [CustomerController::class, 'showLoginForm'])->name('customer.login');
