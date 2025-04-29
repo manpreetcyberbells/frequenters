@@ -20,23 +20,17 @@ use App\Events\MessageSent;
 use Illuminate\Support\Facades\Log;
 
 Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
-
-    // broadcast(new MessageSent('Hello via WebSocket!'));
-
-    // // die('EEE');
     $message = (object)[
         'sender_id' => 12,
         'receiver_id' => 3,
         'text' => $request->text,
         'timestamp' => now(),
     ];
-
     Log::info('Broadcasting MessageSent event', [$message]);
 
     broadcast(new MessageSent($message));
 
     Log::info('Broadcast queued.');
-
     return response()->json(['status' => 'Message broadcasted!', 'message' => $message]);
 });
 
@@ -106,6 +100,8 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
     Route::post('/create-address', [CustomerProfileController::class, 'createCustomerAddress']);
     // Edit Address
     Route::put('/update-address/{id}', [CustomerProfileController::class, 'updateCustomerAddress']);
+    // Make Current Address
+    Route::put('/make-current-address/{id}', [CustomerProfileController::class, 'makeCurrentAddress']);
     // Delete Address
     Route::delete('/delete-address/{id}', [CustomerProfileController::class, 'deleteCustomerAddress']);
     // Lists address

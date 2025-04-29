@@ -272,7 +272,10 @@ class CustomerController extends Controller
         $listType = $request->input('listType');
         $categoryId = $request->input('category_id');
         // Fetch customer address
-        $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)->where('is_current', '1')->first();
+        if (!$customerAddress) {
+            $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
+        }
         if (!$customerAddress) {
             return response()->json(['error' => 'Customer address not found'], 404);
         }

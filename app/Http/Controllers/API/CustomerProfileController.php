@@ -322,7 +322,14 @@ class CustomerProfileController extends Controller
                 'radius' => 'nullable|numeric|min:1|max:100',
                 'latitude' => 'nullable|string|max:20',
                 'longitude' => 'nullable|string|max:20',
+                'is_current' => 'nullable|boolean',
             ]);
+
+            $isCurrent = $validated['is_current'] ?? 0;
+            $checkIFCurrent = CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->get()->count();
+            if ($isCurrent == 1 && $checkIFCurrent > 0) {
+                CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->update(['is_current' => '0']);
+            }
 
             $customerAddress->update($validated);
             return response()->json([
@@ -359,6 +366,47 @@ class CustomerProfileController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while deleting address',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     *  API Function  
+    */
+    public function makeCurrentAddress(Request $request, $id)
+    {
+        // die('HELLO');
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $customerAddress = CustomerAddress::where('id', $id)->where('customer_id', $user->id)->first();
+            if (!$customerAddress) {
+                return response()->json(['message' => 'Address not found'], 404);
+            }
+
+            $validated = $request->validate([
+                'is_current' => 'nullable|boolean',
+            ]);
+
+            $isCurrent = $validated['is_current'] ?? 0;
+            $checkIFCurrent = CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->get()->count();
+            if ($isCurrent == 1 && $checkIFCurrent > 0) {
+                CustomerAddress::where('customer_id', $user->id)->where('is_current', '1')->update(['is_current' => '0']);
+            }
+
+            $customerAddress->update($validated);
+            return response()->json([
+                'message' => 'Current address updated successfully',
+                'address' => $customerAddress,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating address',
                 'error' => $e->getMessage(),
             ], 500);
         }

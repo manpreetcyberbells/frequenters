@@ -46,7 +46,7 @@ class EvaluateCustomerBadges extends Command
             $contestWins = DB::table('contest_answers')->whereIn('participant_id', $participantIds)->where('is_winner', 1)->count();
             $votes = DB::table('contest_voting_history')->whereIn('participant_id', $participantIds)->count();
             $referredFriendsCount = DB::table('invites')->where('customer_id', $customer->id)->where('status','accepted')->where('role','customer')->get()->count();
-            $photoUploads = 0;
+            // $photoUploads = 0;
             // echo"<pre>"; print_r($availablePoints); die;
             
             // ENTRY-LEVEL BADGES
@@ -89,23 +89,23 @@ class EvaluateCustomerBadges extends Command
             }
 
             // TOP-TIER BADGES
-            if ($availablePoints >= 25000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0) {
+            if ($availablePoints >= 25000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $referredFriendsCount > 0) {
                 $eligibleBadges[] = 'frequenters_all_stars';
             }
 
-            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $referredFriendsCount > 0) {
                 $eligibleBadges[] = 'frequenters_icons';
             }
 
-            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 500 && $cities > 1) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $referredFriendsCount > 0 && $checkIns >= 500 && $cities > 1) {
                 $eligibleBadges[] = 'frequenters_legends';
             }
 
-            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 1000 && $cities > 10) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $reviews >= 20 && $votes >= 20 && $referredFriendsCount > 0 && $checkIns >= 1000 && $cities > 10) {
                 $eligibleBadges[] = 'frequenters_royalty';
             }
 
-            if ($availablePoints >= 50000 && $contestWins >= 10 && $contestSubmissions >= 100 && $reviews >= 50 && $votes >= 20 && $photoUploads > 0 && $referredFriendsCount > 0 && $checkIns >= 10000 && $cities > 10) {
+            if ($availablePoints >= 50000 && $contestWins >= 10 && $contestSubmissions >= 100 && $reviews >= 50 && $votes >= 20 && $referredFriendsCount > 0 && $checkIns >= 10000 && $cities > 10) {
                 $eligibleBadges[] = 'frequenters_elite';
             }
 
