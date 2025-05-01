@@ -12,6 +12,8 @@ use App\Http\Requests\StoreOfferRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\FCMService;
+use App\Services\NearbyCustomerService;
 
 class OfferController extends Controller 
 {
@@ -53,9 +55,28 @@ class OfferController extends Controller
                 'banner_image' => asset('storage/' . $bannerPath)
             ]));
 
-            // Notification
-            createNotification($businessId, $offer->title, "push", null, true);
+            $businessAddress = DB::table('business_addresses')->where('business_id',$businessId)->first();
+            $radius = 10; // kilometers
+            $latitude = @$businessAddress->latitude;
+            $longitude = @$businessAddress->longitude;
 
+            $nearbyService = new NearbyCustomerService();
+            $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
+
+            $fcmService = new FCMService();
+            $title = "New Offer";
+            $body = "Offer available for you";
+            $image = asset('storage/notifications/notification.png');
+
+            foreach ($nearbyCustomerIds as $customerId) {
+                $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                // Sending Notification on Device
+                $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+                // Store into DB
+                customerNotification($customerId, $body, "push", null, true);
+            }
+            
             return response()->json(['message' => 'Offer created successfully', 'offer' => $offer], 200);
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Something went wrong', 'error' => $e->getMessage()], 500);

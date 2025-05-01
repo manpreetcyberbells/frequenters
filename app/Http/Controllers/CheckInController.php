@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\CustomerProfile;
 use App\Models\BusinessProfile;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FCMService;
 
 class CheckInController extends Controller
 {
@@ -137,6 +138,8 @@ class CheckInController extends Controller
 
             $customerUid = $decryptedPayload['customer_uid'];
             $customerId = CustomerProfile::where('customer_uid', $customerUid)->pluck('customer_id')->first();
+            $customerName = DB::table('users')->where('id',$customerId)->pluck('name')->first();
+            // User::where('id',$customerId)->pluck('name')->first();
             
             if (!$customerId) {
                 throw new \Exception('Invalid QR Code. Please try again.');
@@ -154,6 +157,24 @@ class CheckInController extends Controller
                 ['customer_id' => $customerId, 'business_id' => $validated['business_id']],
                 ['interaction_count' => DB::raw('interaction_count + 1')]
             );
+
+
+            $fcmService = new FCMService();
+            $businessInfo = BusinessProfile::where('business_id', $validated['business_id'])->first();
+            $fcmToken = $businessInfo->fcm_token;
+            $pointPerCheckIn = $businessInfo->points_per_checkin;
+            $title = "Check-in successful";
+            $body = "Wohoo! You alloted $pointPerCheckIn points to $customerName";
+            $image = asset('storage/notifications/notification.png');
+            // $data = [
+            //     "extra_info" => "some data4455",
+            //     "route" => "businessrewards",
+            //     "arguments" => "53"
+            // ];
+            $response = $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+            // Save into DB
+            createNotification($validated['business_id'], $body, "push", null, true);
 
             return $this->processCheckIn($customerId, $validated['business_id']);
 
@@ -186,7 +207,8 @@ class CheckInController extends Controller
 
             $customerId = $validated['customer_id'];
             $businessUid = $decryptedPayload['business_uid'];
-            $businessId = BusinessProfile::where('business_uid', $businessUid)->pluck('business_id')->first();
+            $businessInfo = BusinessProfile::where('business_uid', $businessUid)->first();
+            $businessId = $businessInfo->business_id;
             if (!$businessId) {
                 throw new \Exception('Invalid QR Code. Please try again.');
             }
@@ -207,6 +229,24 @@ class CheckInController extends Controller
                 ]
             );
 
+            $fcmService = new FCMService();
+            $businessName = $businessInfo->business_name;
+            $pointPerCheckIn = $businessInfo->points_per_checkin;
+            $fcmToken = CustomerProfile::where('customer_id', $customerId)->pluck('fcm_token')->first();
+            $title = "Check-in successful";
+            $body = "Congratulations, You got $pointPerCheckIn points from $businessName";
+            $image = asset('storage/notifications/notification.png');
+            // $data = [
+            //     "extra_info" => "some data4455",
+            //     "route" => "businessrewards",
+            //     "arguments" => "53"
+            // ];
+            $response = $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+            // Save into DB
+            customerNotification($customerId, $body, "push", null, true);
+
+            // echo"<pre>"; print_r($response);  die;
             return $this->processCheckIn($customerId, $businessId);
 
         } catch (\Exception $e) {

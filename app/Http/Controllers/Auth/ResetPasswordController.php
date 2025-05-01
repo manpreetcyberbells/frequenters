@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Password;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
+use App\Services\FCMService;
+use Illuminate\Support\Facades\DB; 
 
 class ResetPasswordController extends Controller
 {
@@ -24,6 +26,7 @@ class ResetPasswordController extends Controller
     */
     public function reset(Request $request)
     {
+        // die('HELLo');
         $request->validate([
             'token' => 'required',
             'email' => 'required|email|exists:users,email',
@@ -36,8 +39,26 @@ class ResetPasswordController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->save();
-    
+                
+                $userId = $user->id;
+                $role = $user->role;
+                $fcm_token = DB::table('customer_profiles')->where('customer_id',$userId)->pluck('fcm_token')->first();
                 $user->tokens()->delete(); // Delete old tokens
+
+                if ($fcm_token) {
+                    $fcmService = new FCMService();
+                    $title = "Password Reset Successful";
+                    $body = "Your password has been changed successfully.";
+                    $image = asset('storage/notifications/notification.png');
+    
+                    $fcmService->sendNotificationToDevice($fcm_token, $title, $body, $image);
+
+                    if($role == "customer"){
+                        customerNotification($userId, $body, "push", null, true);
+                    }else{
+                        createNotification($userId, $body, "push", null, true);
+                    }
+                }
             }
         );
     

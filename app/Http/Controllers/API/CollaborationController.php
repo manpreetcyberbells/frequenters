@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use App\Services\FCMService;
 
 class CollaborationController extends Controller
 {
@@ -46,6 +48,17 @@ class CollaborationController extends Controller
 
             $validatedData['creator_business_id'] = $businessId; // Business initiating the collab
             $collab = Collaboration::create($validatedData);
+
+            $fcmService = new FCMService();
+            $title = $user->name;
+            $body = $validatedData['description'];
+            $image = asset('storage/notifications/notification.png');
+            $fcmToken = DB::table('business_profiles')->where('business_id',$validatedData['partner_business_id'])->pluck('fcm_token')->first();
+            $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+            
+            // Store into DB 
+            createNotification($validatedData['partner_business_id'], $body, "push", null, true);
+            
 
             return response()->json([
                 'message' => 'Collaboration request created successfully',

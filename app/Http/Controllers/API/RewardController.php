@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\CustomerProfile;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Services\FCMService;
+use App\Services\NearbyCustomerService;
 
 class RewardController extends Controller
 {
@@ -75,7 +77,7 @@ class RewardController extends Controller
         // Get QR
         // $qrCode = DB::table('rewards')->where('id', $rewardId)->pluck('qr_code')->first();
         // Notification (Testing for all Users // Later allow for special user also)
-        createNotification($businessId, $rewardCheck->reward_name, "push", null, true);
+        // createNotification($businessId, $rewardCheck->reward_name, "push", null, true);
 
         return response()->json([
             // 'qr_code' => $qrCode,
@@ -131,6 +133,29 @@ class RewardController extends Controller
                 'created_at' => now(),
             ]);
 
+
+            $businessAddress = DB::table('business_addresses')->where('business_id',$businessId)->first();
+            $radius = 10; // kilometers
+            $latitude = @$businessAddress->latitude;
+            $longitude = @$businessAddress->longitude;
+
+            $nearbyService = new NearbyCustomerService();
+            $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
+
+            $fcmService = new FCMService();
+            $title = "Reward";
+            $body = "New reward near you, please redeem it";
+            $image = asset('storage/notifications/notification.png');
+
+            foreach ($nearbyCustomerIds as $customerId) {
+                $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                // Sending Notification on Device
+                $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+                // Store into DB
+                customerNotification($customerId, $body, "push", null, true);
+            }
+
             return $this->processRewardRedemption($businessId, $rewardId, $validated['customer_tiers'] ?? []);
 
         } catch (\Exception $e) {
@@ -164,31 +189,20 @@ class RewardController extends Controller
             }
 
             // Get customer tier from database
-            $customerTier = DB::table('customer_business_relationships')
-                ->where('business_id', $user->id)
-                ->where('customer_id', $customerId)
-                ->value('customer_tier');
-
+            $customerTier = DB::table('customer_business_relationships')->where('business_id', $user->id)->where('customer_id', $customerId)->value('customer_tier');
             // Check if the QR code has tier restrictions
             if (!empty($decryptedPayload['customer_tiers']) && !in_array($customerTier, $decryptedPayload['customer_tiers'])) {
                 return response()->json(['message' => 'This reward is not available for your customer tier'], 403);
             }
 
             // Check customer's points balance
-            $customerBalance = DB::table('customer_profiles')
-                ->where('customer_id', $customerId)
-                ->value('points_balance');
-
+            $customerBalance = DB::table('customer_profiles')->where('customer_id', $customerId)->value('points_balance');
             if (!$customerBalance) {
                 return response()->json(['message' => 'Customer not found or invalid balance'], 404);
             }
 
             // Fetch reward details
-            $reward = DB::table('rewards')
-                ->where('id', $decryptedPayload['reward_id'])
-                ->where('business_id', $user->id)
-                ->first();
-
+            $reward = DB::table('rewards')->where('id', $decryptedPayload['reward_id'])->where('business_id', $user->id)->first();
             if (!$reward) {
                 return response()->json(['message' => 'Invalid reward details'], 400);
             }
@@ -201,9 +215,7 @@ class RewardController extends Controller
             DB::beginTransaction();
 
             try {
-                DB::table('customer_profiles')
-                    ->where('customer_id', $customerId)
-                    ->decrement('points_balance', $reward->points_required);
+                DB::table('customer_profiles')->where('customer_id', $customerId)->decrement('points_balance', $reward->points_required);
 
                 DB::table('reward_redemptions')->insert([
                     'customer_id' => $customerId,
@@ -216,6 +228,30 @@ class RewardController extends Controller
                 ]);
 
                 DB::commit();
+
+                // FCM Notifications
+                $fcmService = new FCMService();
+                $customerInfo = DB::table('customer_profiles')->where('customer_id', $customerId)->first();
+                $businessInfo = DB::table('business_profiles')->where('business_id', $user->id)->first();
+                $businessFcmToken = $customerInfo->fcm_token;
+                $customerFcmToken = $businessInfo->fcm_token;
+                $image = asset('storage/notifications/notification.png');
+                
+                if ($customerFcmToken) {
+                    $customerTitle = "Reward Claimed";
+                    $customerBody = "Show this at the store to redeem.";
+                    $fcmService->sendNotificationToDevice($customerFcmToken, $customerTitle, $customerBody, $image);
+                    // Save into DB
+                    customerNotification($customerId, $customerBody, "push", null, true);
+                }
+            
+                if ($businessFcmToken) {
+                    $businessTitle = "Reward Redeemed";
+                    $businessBody = "A customer has claimed their reward.";
+                    $fcmService->sendNotificationToDevice($businessFcmToken, $businessTitle, $businessBody, $image);
+                    // Save into DB
+                    createNotification($user->id, $businessBody, "push", null, true);
+                }
 
                 return response()->json(['message' => 'Reward redeemed successfully'], 200);
 

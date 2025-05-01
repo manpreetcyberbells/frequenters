@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade'); // Nullable for broadcast
-            $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('users')->onDelete('cascade'); // Nullable for broadcast
+            $table->foreignId('business_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->enum('type', ['email', 'SMS', 'push'])->nullable();
             $table->enum('status', ['pending', 'sent', 'delivered', 'failed'])->default('pending');
             $table->text('message');

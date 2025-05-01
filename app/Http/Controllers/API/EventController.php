@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use App\Services\FCMService;
+use App\Services\NearbyCustomerService;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -74,8 +77,37 @@ class EventController extends Controller
                 'longitude' => $cityData->longitude
             ]);
 
-            // Notification
-            createNotification($businessId, $event->event_name, "push", null, true);
+            // Notification Insert into DB
+            //createNotification($businessId, $event->event_name, "push", null, true);
+            $radius = 10; // kilometers
+            $latitude = $event->latitude;
+            $longitude = $event->longitude;
+            // $nearbyCustomerIds = DB::table('customer_addresses')
+            //     ->select('customer_id')
+            //     ->distinct()
+            //     ->selectRaw("
+            //         (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))
+            //         ) AS distance", [$latitude, $longitude, $latitude])
+            //     ->having('distance', '<', $radius)
+            //     ->pluck('customer_id');
+
+            $nearbyService = new NearbyCustomerService();
+            $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
+
+            // FCM => Push Notifications
+            $fcmService = new FCMService();
+            $title = "Something’s Happening Near You!";
+            $body = "There's an event close by you might love. Check it out and make your day a little less boring";
+            $image = asset('storage/notifications/notification.png');
+
+            foreach ($nearbyCustomerIds as $customerId) {
+                $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                // Sending Notification on Device
+                $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+                // Store into DB
+                customerNotification($customerId, $body, "push", null, true);
+            }
 
             return response()->json([
                 'message' => 'Event created successfully',
@@ -175,6 +207,7 @@ class EventController extends Controller
             ]);
 
             $userId = Auth::id();
+            $userName = Auth::user()->name;
             $eventId = $validatedData['event_id'];
             $status = $validatedData['status'];
 
@@ -196,8 +229,17 @@ class EventController extends Controller
                     'reserved_at' => now(),
                 ]);
 
-                // Notification
-                createNotification($event->business_id, "You have successfully joined the event.", "push", $userId, true);
+                $body = "$userName successfully joined the event";
+                $businessId = DB::table('events')->where('id',$eventId)->pluck('business_id')->first();
+                // Notification into DB
+                createNotification($businessId, $body, "push", null, true);
+                // Push Notification on Device
+                // $fcmService = new FCMService();
+                // $fcmToken = DB::table('customer_profiles')->where('customer_id',$userId)->pluck('fcm_token')->first();
+                // $title = "Event joined";
+                // $body = "You have successfully joined the event";
+                // $image = asset('storage/notifications/notification.png');
+                // $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
 
                 return response()->json(['message' => 'You have successfully joined the event.'], 200);
             }
@@ -209,8 +251,17 @@ class EventController extends Controller
             if ($reservation && $reservation->status === 'confirmed' && $status === 'cancelled') {
                 $reservation->update(['status' => 'cancelled']);
 
-                // Notification
-                createNotification($event->business_id, "You have successfully cancelled your event participation.", "push", $userId, true);
+                $body = "$userName successfully cancelled your event participation";
+                $businessId = DB::table('events')->where('id',$eventId)->pluck('business_id')->first();
+                // Notification into DB
+                createNotification($businessId, $body, "push", null, true);
+                // Push Notification on Device
+                // $fcmService = new FCMService();
+                // $fcmToken = DB::table('customer_profiles')->where('customer_id',$userId)->pluck('fcm_token')->first();
+                // $title = "Event cancelled";
+                // $body = "You have successfully cancelled your event participation.";
+                // $image = asset('storage/notifications/notification.png');
+                // $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
 
                 return response()->json(['message' => 'You have successfully cancelled your event participation.'], 200);
             }

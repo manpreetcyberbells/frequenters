@@ -26,11 +26,11 @@ Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
         'text' => $request->text,
         'timestamp' => now(),
     ];
-    Log::info('Broadcasting MessageSent event', [$message]);
+    // Log::info('Broadcasting MessageSent event', [$message]);
 
     broadcast(new MessageSent($message));
 
-    Log::info('Broadcast queued.');
+    // Log::info('Broadcast queued.');
     return response()->json(['status' => 'Message broadcasted!', 'message' => $message]);
 });
 
@@ -43,29 +43,23 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     // Social Users
     Route::post('/social-login-register', [AuthController::class, 'socialLoginRegister']);
-
+    // Get all badges
+    Route::get('/badges', [AuthController::class, 'fetchBadges']);
     // Get all cities
     Route::get('/cities', [CityController::class, 'getCityDetails']);
-
     // Get all Zip_code
     Route::get('/zipcodes', [CityController::class, 'getZipCodes']);
-
     // Get unique states
     Route::get('/states', [CityController::class, 'getStates']);
-
     // Get unique countries
     Route::get('/countries', [CityController::class, 'getCountries']);
-
     // Get cities by state or country (Optional for dependent dropdowns)
     Route::get('/cities/filter', [CityController::class, 'getCitiesByStateOrCountry']);
-
     // API's for getting all categories
     Route::get('/categories-list', [CategoryController::class, 'getCategories']);
-
     // API's for getting Parent categories and Child categories
     Route::get('/categories/parents', [CategoryController::class, 'getParentCategories']);
     Route::get('/categories/{parentId}/children', [CategoryController::class, 'getChildCategories']);
-
     // Get Cities by ZipCode
     Route::get('/zip/{zip_code}/cities', [CityController::class, 'getCitiesByZip']);
     // Get country, state, latitude, and longitude by city_id

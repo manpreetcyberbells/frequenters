@@ -10,7 +10,7 @@ class Notification extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'business_id', 'type', 'status', 'message', 
+        'customer_id', 'business_id', 'type', 'status', 'message', 
         'campaign_id', 'retry_count', 'priority', 'scheduled_time', 'is_broadcast'
     ];
 }

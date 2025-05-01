@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Broadcast;
 use App\Events\MessageSent;
 use Illuminate\Support\Facades\Queue;
+use App\Services\FCMService;
 
 class MessageController extends Controller
 {
@@ -111,6 +112,8 @@ class MessageController extends Controller
             return response()->json(['message' => 'No customers in this group'], 404);
         }
 
+        $business = DB::table('business_profiles')->where('business_id', $businessId)->pluck('business_name')->first();
+       
         foreach ($customers as $customerId) {
             $messageData = (object)[
                 'sender_id' => $businessId,
@@ -120,6 +123,19 @@ class MessageController extends Controller
             ];
     
             broadcast(new MessageSent($messageData))->toOthers();
+
+            $fcmService = new FCMService();
+            $title = $business;
+            $body = $messageText;
+            $image = asset('storage/notifications/notification.png');
+
+            $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+            // Sending Notification on Device
+            $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+            // Store into DB
+            customerNotification($customerId, $body, "push", null, true);
+
         }
 
         // $message = (object)[
@@ -232,6 +248,29 @@ class MessageController extends Controller
         ];
 
         $emc = broadcast(new MessageSent($messageBroadcast));
+
+
+        $sender = DB::table('users')->where('id',$user->id)->first();
+
+        $fcmService = new FCMService();
+        $title = $sender->name;
+        $body = $messageText;
+        $image = asset('storage/notifications/notification.png');
+
+        if($sender->role == "customer"){
+            $fcmToken = DB::table('customer_profiles')->where('customer_id',$sender->id)->pluck('fcm_token')->first();
+            // Store into DB
+            customerNotification($sender->id, $body, "push", null, true);
+
+        } else {
+            $fcmToken = DB::table('business_profiles')->where('business_id',$sender->id)->pluck('fcm_token')->first();
+            // Store into DB 
+            createNotification($sender->id, $body, "push", null, true);
+        }
+        
+        // Sending Notification on Device
+        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
         // echo"<pre>"; print_r($emc); die;
         // Apply Read to message
         $this->markMessageAsReadInternal($message->id, $user->id);

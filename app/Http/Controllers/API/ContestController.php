@@ -13,6 +13,8 @@ use App\Models\ContestVotingHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FCMService;
+use App\Services\NearbyCustomerService;
 
 class ContestController extends Controller
 {
@@ -119,11 +121,34 @@ class ContestController extends Controller
                 }
             }
 
+            $businessAddress = DB::table('business_addresses')->where('business_id',$businessId)->first();
+            $radius = 10; // kilometers
+            $latitude = @$businessAddress->latitude;
+            $longitude = @$businessAddress->longitude;
+
+            $nearbyService = new NearbyCustomerService();
+            $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
+
+            $fcmService = new FCMService();
+            $title = "A Contest Just Landed Nearby!";
+            $body = "Jump in, earn points. It’s local, it’s live, and it's all yours";
+            $image = asset('storage/notifications/notification.png');
+
+            foreach ($nearbyCustomerIds as $customerId) {
+                $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                // Sending Notification on Device
+                $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
+                // Store into DB
+                customerNotification($customerId, $body, "push", null, true);
+            }
+
+
             return response()->json([
                 'message' => 'Contest created successfully',
                 'contest' => $contest,
                 'question' => $question,
-            ], 201);
+            ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -282,6 +307,18 @@ class ContestController extends Controller
             // Save the answer
             $answer = ContestAnswer::create($validated);
 
+            
+            // Business Notification into DB
+            createNotification($contest->business_id, "User by the name $user->name submitted answer on your contest",  "push", null, true);
+            
+            // Push Notification on Device
+            $fcmService = new FCMService();
+            $fcmToken = DB::table('business_profiles')->where('business_id', $contest->business_id)->pluck('fcm_token')->first();
+            $title = "Your Question Got a Hit!";
+            $body = "Someone just answered your contest question. Dive in and read what they have said!";
+            $image = asset('storage/notifications/notification.png');
+            $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+
             return response()->json(['message' => 'Answer submitted successfully', 'answer' => $answer], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -365,7 +402,7 @@ class ContestController extends Controller
             // Record the vote
             $vote = ContestVotingHistory::create($validated);
 
-            return response()->json(['message' => 'Vote recorded successfully', 'vote' => $vote], 201);
+            return response()->json(['message' => 'Vote recorded successfully', 'vote' => $vote], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Something went wrong',

@@ -7,6 +7,7 @@ use App\Models\Complaint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use App\Services\FCMService;
 
 class ComplaintController extends Controller
 {
@@ -40,6 +41,16 @@ class ComplaintController extends Controller
             'priority'    => 'high',
             'attachment'  => $attachmentPath,
         ]);
+
+        $fcmService = new FCMService();
+        $title = "You’ve Got a New Complaint";
+        $body = "A customer just raised a concern. Tap to check and respond before it escalates";
+        $image = asset('storage/notifications/notification.png');
+        $fcmToken = DB::table('business_profiles')->where('business_id',$request->business_id)->pluck('fcm_token')->first();
+        // Sending Notification on Device
+        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+        // Notification into DB
+        createNotification($request->business_id, $body, "push", null, true);
 
         return response()->json([
             'status' => true,

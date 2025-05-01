@@ -39,6 +39,7 @@ return new class extends Migration
             $table->string('owner_phone', 15)->notNullable();
             $table->string('preferred_language', 10)->default('en'); // en // spanish es
             $table->enum('push_notification', ['0', '1'])->default('1'); // 1 = enabled
+            $table->string('fcm_token',255)->nullable();
             $table->timestamps();
 
             // Foreign key constraints

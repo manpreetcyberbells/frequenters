@@ -8,6 +8,7 @@ use App\Models\Badge;
 use App\Models\CustomerBadge;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class EvaluateCustomerBadges extends Command
 {
@@ -23,13 +24,14 @@ class EvaluateCustomerBadges extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Update customer badges';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
+        Log::info('Cron Calling.');
         $customers = User::where('role', 'customer')->where('status','active')->get();
         $now = Carbon::now();
         foreach ($customers as $customer) {
@@ -113,6 +115,7 @@ class EvaluateCustomerBadges extends Command
 
             // Award badges
             foreach ($eligibleBadges as $slug) {
+                Log::info('Update Customer ID::', array($customer->id));
                 $badge = Badge::where('slug', $slug)->first();
 
                 // echo"<pre>"; print_r($badge); die;
@@ -122,13 +125,13 @@ class EvaluateCustomerBadges extends Command
                 $alreadyExists = CustomerBadge::where('customer_id', $customer->id)->where('badge_id', $badge->id)->first();
                 $expiresAt = $now->copy()->addMonths($badge->validity_months);
 
-                if ($alreadyExists) {
-                    // Update
-                    $alreadyExists->update([
-                        'earned_at' => $now,
-                        'expires_at' => $expiresAt,
-                    ]);
-                } else {
+                if (!$alreadyExists) {
+                //     // Update
+                //     $alreadyExists->update([
+                //         'earned_at' => $now,
+                //         'expires_at' => $expiresAt,
+                //     ]);
+                // } else {
                     // Create new
                     CustomerBadge::create([
                         'customer_id' => $customer->id,
@@ -136,6 +139,7 @@ class EvaluateCustomerBadges extends Command
                         'earned_at' => $now,
                         'expires_at' => $expiresAt,
                     ]);
+                    Log::info('Create Customer for Badges::', array($customer->id));
                 }
             }
         }

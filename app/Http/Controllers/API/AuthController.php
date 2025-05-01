@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Crypt;
 use Laravolt\Avatar\Facade as Avatar;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -336,7 +337,7 @@ class AuthController extends Controller
                 'token' => $token,
                 'user' => $user,
                 'role' => $user->role,
-                'badges' => $badges,
+                // 'badges' => '',
             ], 200);
         }
 
@@ -557,6 +558,21 @@ class AuthController extends Controller
                     'token' => $token,
                     'user' => $user,
                 ]);
+        }
+    }
+
+    /**
+     * API Function for getting Badges
+    */
+    public function fetchBadges(){
+        try {
+            $badges = DB::table('badges')->get();
+            return response()->json([
+                'badges' => $badges,
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Fetching profile failed: ' . $e->getMessage());
+            return response()->json(['message' => 'An error occurred while retrieving user information.'], 500);
         }
     }
 
