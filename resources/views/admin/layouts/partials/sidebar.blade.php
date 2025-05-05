@@ -48,7 +48,7 @@
             </ul>
           </li>
 
-            <li class="nav-item {{ request()->routeIs('businesses.*') ? 'menu-open' : '' }}">
+              <li class="nav-item {{ request()->routeIs('businesses.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link {{ request()->routeIs('businesses.*') ? 'active' : '' }}">
                 <i class="fa fa-briefcase" aria-hidden="true"></i>
                   <p>
@@ -71,6 +71,56 @@
                   </li>
                 </ul>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.business.offer.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link {{ request()->routeIs('admin.business.offer.*') ? 'active' : '' }}">
+                <i class="fa fa-percent" aria-hidden="true"></i>
+                  <p>
+                    Offer
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="{{ route('admin.business.offer.index') }}" class="nav-link {{ request()->routeIs('admin.business.offer.index') ? 'active' : '' }}">
+                    <i class="fa fa-building" aria-hidden="true"></i>
+                      <p>Listing</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{ route('admin.business.offer.create') }}" class="nav-link {{ request()->routeIs('admin.business.offer.create') ? 'active' : '' }}">
+                    <i class="fa fa-plus-square" aria-hidden="true"></i>
+                      <p>Create Offer</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
+              <li class="nav-item {{ request()->routeIs('events.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link {{ request()->routeIs('events.*') ? 'active' : '' }}">
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+                  <p>
+                    Events
+                    <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview">
+                  <li class="nav-item">
+                    <a href="{{ route('events.index') }}" class="nav-link {{ request()->routeIs('events.index') ? 'active' : '' }}">
+                    <i class="fa fa-building" aria-hidden="true"></i>
+                      <p>Listing</p>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="{{ route('events.create') }}" class="nav-link {{ request()->routeIs('events.create') ? 'active' : '' }}">
+                    <i class="fa fa-plus-square" aria-hidden="true"></i>
+                      <p>Create Events</p>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
+
               <li class="nav-item {{ request()->routeIs('customers.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                 <i class="fa fa-users" aria-hidden="true"></i>

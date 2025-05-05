@@ -5,18 +5,30 @@ Route::get('/test-log', function () {
 });
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\CustomerController;
-use App\Http\Controllers\API\BusinessController;
+// use App\Http\Controllers\API\CustomerController;
+// use App\Http\Controllers\API\BusinessController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Middleware\RoleMiddleware;
-use App\Http\Controllers\Admin\AdminCheckInController;
 use App\Http\Controllers\CustomerDashboardController;
-use App\Http\Controllers\API\RewardController;
+// use App\Http\Controllers\API\RewardController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Admin\AdminCustomerController;
-use App\Http\Controllers\Admin\AdminBusinessController;
-use App\Http\Controllers\Admin\CategoryController;
+
+// use App\Http\Controllers\Admin\AdminCheckInController;
+// use App\Http\Controllers\Admin\AdminCustomerController;
+// use App\Http\Controllers\Admin\AdminBusinessController;
+// use App\Http\Controllers\Admin\CategoryController;
+// use App\Http\Controllers\Admin\AdminOfferController;
+
+use App\Http\Controllers\API\{
+    CustomerController, BusinessController, RewardController
+};
+
+use App\Http\Controllers\Admin\{
+    AdminCheckInController, AdminCustomerController, AdminBusinessController, CategoryController, AdminOfferController,
+    AdminEventController
+};
+
 use App\Http\Controllers\API\InviteController;
 use Illuminate\Support\Facades\Log;
 use App\Events\MessageSent;
@@ -132,6 +144,14 @@ Route::prefix('admin')->middleware(['auth', RoleMiddleware::class . ':admin'])->
     Route::resource('businesses', AdminBusinessController::class);
     // Categories
     Route::resource('categories', CategoryController::class);
+    // Event
+    Route::resource('events', AdminEventController::class);
+
+    // Business Offer
+    Route::get('/business/offer/index', [AdminOfferController::class, 'index'])->name('admin.business.offer.index');
+    Route::get('/business/offer/create', [AdminOfferController::class, 'create'])->name('admin.business.offer.create');
+    Route::post('/business/offer/store', [AdminOfferController::class, 'store'])->name('admin.business.offer.store');
+
 });
 
 // Customer and Business QR Codes

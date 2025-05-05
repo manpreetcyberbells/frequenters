@@ -32,4 +32,9 @@ class Event extends Model
     {
         return $this->belongsTo(BusinessProfile::class, 'business_id', 'business_id');
     }
+
+    public function businessDetail()
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
 }

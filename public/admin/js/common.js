@@ -26,4 +26,41 @@ $(document).ready(function () {
             reader.readAsDataURL(input.files[0]);
         }
     }
+// });
+
+// $(document).ready(function () {
+    // console.log('HERE123');
+    function validateDateTimeRange(startDateId, startTimeId, endDateId, endTimeId) {
+        const startDate = $(`#${startDateId}`).val();
+        const startTime = $(`#${startTimeId}`).val() + ':00';
+        const endDate = $(`#${endDateId}`).val();
+        const endTime = $(`#${endTimeId}`).val() + ':00';
+    
+        const start = new Date(startDate + 'T' + startTime);
+        const end = new Date(endDate + 'T' + endTime);
+    
+        if (start >= end) {
+            alert('End date/time must be after start date/time.');
+            return false;
+        }
+    
+        // Ensure correct format is submitted
+        $(`#${startTimeId}`).val(startTime);
+        $(`#${endTimeId}`).val(endTime);
+    
+        return true;
+    }    
+
+    $('#offerForm').on('submit', function (e) {
+        if (!validateDateTimeRange('campaign_start_date', 'campaign_start_time', 'campaign_end_date', 'campaign_end_time')) {
+            e.preventDefault();
+        }
+    });
+    
+    $('#eventForm').on('submit', function (e) {
+        if (!validateDateTimeRange('start_date', 'start_time', 'end_date', 'end_time')) {
+            e.preventDefault();
+        }
+    });
+    
 });

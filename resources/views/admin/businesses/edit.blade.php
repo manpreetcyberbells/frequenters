@@ -173,6 +173,19 @@
                           />
                         </div>
 
+                        <div class="col-md-4 form-group">
+                          <label for="owner_name" class="form-label">Owner Name</label>
+                          <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" value="{{ $business->businessProfile->owner_name }}" />
+                        </div>
+                        <div class="col-md-4 form-group">
+                          <label for="owner_email" class="form-label">Owner Email</label>
+                          <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" value="{{ $business->businessProfile->owner_email }}" />
+                        </div>
+                        <div class="col-md-4 form-group">
+                          <label for="owner_phone" class="form-label">Owner Phone</label>
+                          <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" value="{{ $business->businessProfile->owner_phone }}" />
+                        </div>
+
                         <!--end::Col-->
 
                         <div class="col-md-6 mb-3 form-group">

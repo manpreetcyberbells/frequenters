@@ -172,6 +172,19 @@
 
                 <!--end::Col-->
 
+                <div class="col-md-4 form-group">
+                  <label for="owner_name" class="form-label">Owner Name</label>
+                  <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" />
+                </div>
+                <div class="col-md-4 form-group">
+                  <label for="owner_email" class="form-label">Owner Email</label>
+                  <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" />
+                </div>
+                <div class="col-md-4 form-group">
+                  <label for="owner_phone" class="form-label">Owner Phone</label>
+                  <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" />
+                </div>
+                
                 
                 <div class="col-md-4  mb-3">
                   <label for="images" class="form-label">Upload Images</label>

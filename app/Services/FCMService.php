@@ -17,6 +17,7 @@ class FCMService
     private function getAccessToken()
     {
         $serviceAccountFile = base_path(env('FIREBASE_CREDENTIALS_PATH'));
+        // die($serviceAccountFile);
         $scopes = [env('FIREBASE_SCOPES_PATH')];
         $credentials = new ServiceAccountCredentials($scopes, $serviceAccountFile);
         $token = $credentials->fetchAuthToken();
