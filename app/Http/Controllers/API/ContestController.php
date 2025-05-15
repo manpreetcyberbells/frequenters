@@ -122,27 +122,28 @@ class ContestController extends Controller
             }
 
             $businessAddress = DB::table('business_addresses')->where('business_id',$businessId)->first();
-            $radius = 10; // kilometers
-            $latitude = @$businessAddress->latitude;
-            $longitude = @$businessAddress->longitude;
+            if(!empty($businessAddress->latitude) && !empty($businessAddress->longitude)){
+                $radius = 10; // kilometers
+                $latitude = @$businessAddress->latitude;
+                $longitude = @$businessAddress->longitude;
 
-            $nearbyService = new NearbyCustomerService();
-            $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
+                $nearbyService = new NearbyCustomerService();
+                $nearbyCustomerIds = $nearbyService->getNearbyCustomerIds($latitude, $longitude, $radius);
 
-            $fcmService = new FCMService();
-            $title = "A Contest Just Landed Nearby!";
-            $body = "Jump in, earn points. It’s local, it’s live, and it's all yours";
-            $image = asset('storage/notifications/notification.png');
+                $fcmService = new FCMService();
+                $title = "A Contest Just Landed Nearby!";
+                $body = "Jump in, earn points. It’s local, it’s live, and it's all yours";
+                $image = asset('storage/notifications/notification.png');
 
-            foreach ($nearbyCustomerIds as $customerId) {
-                $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
-                // Sending Notification on Device
-                $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+                foreach ($nearbyCustomerIds as $customerId) {
+                    $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                    // Sending Notification on Device
+                    $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
 
-                // Store into DB
-                customerNotification($customerId, $body, "push", null, true);
+                    // Store into DB
+                    customerNotification($customerId, $body, "push", null, true);
+                }
             }
-
 
             return response()->json([
                 'message' => 'Contest created successfully',
@@ -161,7 +162,7 @@ class ContestController extends Controller
     // public function fetchContests(Request $request)
     // {
     //     $query = Contest::query();
-    //     // Optional filter: status=open|closed|completed
+    //     // Optional filter: status=open|close|completed
     //     if ($request->has('status')) {
     //         $query->where('status', $request->status);
     //     }
@@ -180,7 +181,7 @@ class ContestController extends Controller
     {
         $query = Contest::query();
 
-        // Optional filter: status=open|closed|completed
+        // Optional filter: status=open|close|completed
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -256,10 +257,17 @@ class ContestController extends Controller
         ]);
 
         try {
+            // max_participants
             $question = ContestQuestion::findOrFail($validated['contest_question_id']);
             $contest = Contest::where('id', $question->contest_id)->where('status', 'open')->first();
             if (!$contest) {
                 return response()->json(['message' => 'Contest is not open for submission'], 403);
+            }
+
+            // Check if max participants limit is reached
+            $currentParticipantCount = ContestAnswer::where('contest_id', $contest->id)->distinct('participant_id')->count('participant_id');
+            if ($contest->max_participants !== null && $currentParticipantCount >= $contest->max_participants) {
+                return response()->json(['message' => 'Maximum number of participants has been reached'], 403);
             }
 
             // Ensure either 'answer' OR 'contest_question_option_id' is provided (but not both)
@@ -328,6 +336,49 @@ class ContestController extends Controller
         }
     }
 
+    /**
+     *  API Function Delete answer 
+    */
+    public function deleteAnswerByBusiness($id)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            if ($user->role !== 'business') {
+                return response()->json(['message' => 'Access denied. You are not permitted to perform this action.'], 403);
+            }
+
+            $contestAnswer = DB::table('contest_answers')->where('id', $id)->first();
+            if (!$contestAnswer) {
+                return response()->json(['message' => 'Answer not found.'], 404);
+            }
+
+            $contest = DB::table('contests')->where('id', $contestAnswer->contest_id)->first();
+            if (!$contest) {
+                return response()->json(['message' => 'Contest not found or has been deleted.'], 404);
+            }
+
+            if ($contest->business_id !== $user->id) {
+                return response()->json(['message' => 'You are not authorized to delete this answer.'], 403);
+            }
+
+            // Delete related voting history and answer
+            DB::table('contest_voting_history')->where('contest_id', $contest->id)->where('contest_answer_id', $id)->delete();
+
+            DB::table('contest_answers')->where('id', $id)->delete();
+
+            return response()->json(['message' => 'Answer deleted successfully.'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Something went wrong.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
     /**
      *  API Function of Submit Customer Vote. 
     */
@@ -417,30 +468,97 @@ class ContestController extends Controller
     public function getWinners($contest_id)
     {
         try {
-            $contest = Contest::findOrFail($contest_id);
+            // $contest = Contest::findOrFail($contest_id);
             // echo"<pre>"; print_r($contest); die;
-            $winnerReward = 0;
-            $participantReward = 0;
-            $voterReward = 0;
-            if($contest->reward_type == "points"){
-                $winnerReward = $contest->winner_points;
-                $participantReward = $contest->participant_points;
-                $voterReward = $contest->voter_points;
-            } else if($contest->reward_type == "discount"){
-                $winnerReward = $contest->winner_discount;
-                $participantReward = $contest->participant_discount;
-                $voterReward = $contest->voter_discount;
-            } else {
-                $winnerReward = $contest->winner_free_item;
-                $participantReward = $contest->participant_free_item;
-                $voterReward = $contest->voter_free_item;
-            }
-            $voteResults = ContestVotingHistory::select(
-                    'participant_id',
-                    DB::raw('COUNT(id) as total_votes')
-                )
+            // $winnerReward = 0;
+            // $participantReward = 0;
+            // $voterReward = 0;
+            // if($contest->reward_type == "points"){
+            //     $winnerReward = $contest->winner_points;
+            //     $participantReward = $contest->participant_points;
+            //     $voterReward = $contest->voter_points;
+            // } else if($contest->reward_type == "discount"){
+            //     $winnerReward = $contest->winner_discount;
+            //     $participantReward = $contest->participant_discount;
+            //     $voterReward = $contest->voter_discount;
+            // } else {
+            //     $winnerReward = $contest->winner_free_item;
+            //     $participantReward = $contest->participant_free_item;
+            //     $voterReward = $contest->voter_free_item;
+            // }
+            // $voteResults = ContestVotingHistory::select(
+            //         'participant_id',
+            //         DB::raw('COUNT(id) as total_votes')
+            //     )
+            //     ->where('contest_id', $contest_id)
+            //     ->groupBy('participant_id')
+            //     ->orderByDesc('total_votes')
+            //     ->get();
+
+            // if ($voteResults->isEmpty()) {
+            //     return response()->json(['message' => 'No votes recorded for this contest'], 404);
+            // }
+
+            // // Get all participant IDs from vote results
+            // $participantIds = $voteResults->pluck('participant_id')->toArray();
+            // $participants = ContestParticipant::whereIn('id', $participantIds)->with('user:id,name,profile_image')->get()->keyBy('id');
+            // // Winner
+            // $topVote = $voteResults->first();
+            // $winner = $participants[$topVote->participant_id] ?? null;
+            // $winnerUser = $winner->user ?? null;
+            // $winnerData = [
+            //     'participant_id' => $winner->id ?? null,
+            //     'name' => $winnerUser->name ?? 'Unknown',
+            //     'thumbnail' => $winnerUser->profile_image ?? null,
+            //     'points' => $topVote->total_votes
+            // ];
+
+            // // Voting Champs (Top 6 without winner)
+            // $votingChamps = [];
+            // $top6Votes = $voteResults->slice(1, 6); // First is winner, next 9 are champs
+            // $top6ParticipantIds = [$topVote->participant_id];
+            // foreach ($top6Votes as $champ) {
+            //     $participant = $participants[$champ->participant_id] ?? null;
+            //     $participantUser = $participant->user ?? null;
+
+            //     $votingChamps[] = [
+            //         'participant_id' => $participant->id ?? null,
+            //         'name' => $participantUser->name ?? 'Unknown',
+            //         'thumbnail' => $participantUser->profile_image ?? null,
+            //         'points' => $participantReward //$champ->total_votes
+            //     ];
+
+            //     $top6ParticipantIds[] = $champ->participant_id; // Add to exclusion list
+            // }
+
+            // // Point Crew (All participants not in top 6)
+            // $pointCrew = [];
+            // foreach ($voteResults as $result) {
+            //     if (!in_array($result->participant_id, $top6ParticipantIds)) {
+            //         $participant = $participants[$result->participant_id] ?? null;
+            //         $participantUser = $participant->user ?? null;
+
+            //         $pointCrew[] = [
+            //             'participant_id' => $participant->id ?? null,
+            //             'name' => $participantUser->name ?? 'Unknown',
+            //             'thumbnail' => $participantUser->profile_image ?? null,
+            //             'points' => $voterReward //$result->total_votes
+            //         ];
+            //     }
+            // }
+
+
+            $contest = Contest::findOrFail($contest_id);
+            // Determine reward values
+            $winnerReward = $contest->reward_type === "points" ? $contest->winner_points : ($contest->reward_type === "discount" ? $contest->winner_discount : $contest->winner_free_item);
+            $participantReward = $contest->reward_type === "points" ? $contest->participant_points : ($contest->reward_type === "discount" ? $contest->participant_discount : $contest->participant_free_item);
+            $voterReward = $contest->reward_type === "points" ? $contest->voter_points : ($contest->reward_type === "discount" ? $contest->voter_discount : $contest->voter_free_item);
+
+            // Get vote counts per contest_answer_id
+            $voteResults = DB::table('contest_voting_history')
+                ->select('contest_answer_id', DB::raw('COUNT(*) as total_votes'))
                 ->where('contest_id', $contest_id)
-                ->groupBy('participant_id')
+                ->groupBy('contest_answer_id')
                 ->orderByDesc('total_votes')
                 ->get();
 
@@ -448,57 +566,77 @@ class ContestController extends Controller
                 return response()->json(['message' => 'No votes recorded for this contest'], 404);
             }
 
-            // Get all participant IDs from vote results
-            $participantIds = $voteResults->pluck('participant_id')->toArray();
-            $participants = ContestParticipant::whereIn('id', $participantIds)->with('user:id,name,profile_image')->get()->keyBy('id');
-            // Winner
-            $topVote = $voteResults->first();
-            $winner = $participants[$topVote->participant_id] ?? null;
-            $winnerUser = $winner->user ?? null;
-            $winnerData = [
-                'participant_id' => $winner->id ?? null,
-                'name' => $winnerUser->name ?? 'Unknown',
-                'thumbnail' => $winnerUser->profile_image ?? null,
-                'points' => $topVote->total_votes
-            ];
+            // Map answer_id to participant_id
+            $answerIds = $voteResults->pluck('contest_answer_id')->toArray();
+            $answers = DB::table('contest_answers')->whereIn('id', $answerIds)->pluck('participant_id', 'id')->toArray();
 
-            // Voting Champs (Top 6 excluding winner)
-            $votingChamps = [];
-            $top6Votes = $voteResults->slice(1, 6); // First is winner, next 9 are champs
-            $top6ParticipantIds = [$topVote->participant_id];
-            foreach ($top6Votes as $champ) {
-                $participant = $participants[$champ->participant_id] ?? null;
-                $participantUser = $participant->user ?? null;
-
-                $votingChamps[] = [
-                    'participant_id' => $participant->id ?? null,
-                    'name' => $participantUser->name ?? 'Unknown',
-                    'thumbnail' => $participantUser->profile_image ?? null,
-                    'points' => $participantReward //$champ->total_votes
-                ];
-
-                $top6ParticipantIds[] = $champ->participant_id; // Add to exclusion list
+            // Step 5: Count total votes per participant
+            $participantVotes = [];
+            foreach ($voteResults as $vote) {
+                $participantId = $answers[$vote->contest_answer_id] ?? null;
+                if ($participantId) {
+                    $participantVotes[$participantId] = ($participantVotes[$participantId] ?? 0) + $vote->total_votes;
+                }
             }
 
-            // Point Crew (All participants not in top 6)
-            $pointCrew = [];
-            foreach ($voteResults as $result) {
-                if (!in_array($result->participant_id, $top6ParticipantIds)) {
-                    $participant = $participants[$result->participant_id] ?? null;
-                    $participantUser = $participant->user ?? null;
+            // Get all participants based on contest_answers
+            $participantIds = DB::table('contest_answers')->where('contest_id', $contest_id)->pluck('participant_id')->unique()->toArray();
 
-                    $pointCrew[] = [
-                        'participant_id' => $participant->id ?? null,
-                        'name' => $participantUser->name ?? 'Unknown',
-                        'thumbnail' => $participantUser->profile_image ?? null,
-                        'points' => $voterReward //$result->total_votes
-                    ];
-                }
+            $participants = ContestParticipant::whereIn('id', $participantIds)->with('user:id,name,profile_image')->get()->keyBy('id');
+            // Add vote count to each participant
+            foreach ($participants as $pid => $p) {
+                $participants[$pid]->total_votes = $participantVotes[$pid] ?? 0;
+            }
+
+            // Sort participants by vote count
+            $sortedParticipants = $participants->sortByDesc('total_votes');
+
+            $winner = $sortedParticipants->first();
+            $winnerId = $winner->id ?? null;
+            $winnerUser = $winner->user ?? null;
+
+            $winnerData = [
+                'participant_id' => $winner->id ?? null,
+                'user_id' => $winner->user_id ?? null,
+                'name' => $winnerUser->name ?? 'Unknown',
+                'thumbnail' => $winnerUser->profile_image ?? null,
+                'points' => $winnerReward
+            ];
+
+            // Other participants (without winner)
+            $pointCrew = [];
+            foreach ($sortedParticipants as $pid => $p) {
+                if ($p->id == $winnerId) continue;
+
+                $pUser = $p->user ?? null;
+                $pointCrew[] = [
+                    'participant_id' => $p->id ?? null,
+                    'user_id' => $p->user_id ?? null,
+                    'name' => $pUser->name ?? 'Unknown',
+                    'thumbnail' => $pUser->profile_image ?? null,
+                    'points' => $participantReward
+                ];
+            }
+
+            // Get all voter user_ids
+            $voterParticipantIds = DB::table('contest_voting_history')->where('contest_id', $contest_id)->pluck('participant_id')->unique()->toArray();
+            $voterUserIds = ContestParticipant::whereIn('id', $voterParticipantIds)->pluck('user_id')->unique()->toArray();
+            $voters = User::whereIn('id', $voterUserIds)->get(['id', 'name', 'profile_image']);
+
+            // All voters
+            $voterList = [];
+            foreach ($voters as $voter) {
+                $voterList[] = [
+                    'user_id' => $voter->id,
+                    'name' => $voter->name,
+                    'thumbnail' => $voter->profile_image,
+                    'points' => $voterReward
+                ];
             }
 
             return response()->json([
                 'winner' => $winnerData,
-                'voting_champs' => $votingChamps,
+                'voting_champs' => $voterList,
                 'point_crew' => $pointCrew
             ], 200);
 

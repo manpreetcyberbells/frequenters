@@ -122,7 +122,8 @@ class AdminBusinessController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $business = User::findOrFail($id);
+        return view('admin.businesses.show', compact('business'));
     }
 
     /**

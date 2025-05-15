@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Events\MessageSent;
 use Illuminate\Support\Facades\Log;
+use App\Http\Middleware\SetUserTimezone;
 
 Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
     $message = (object)[
@@ -75,7 +76,7 @@ Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(func
 });
 
 // Customer API's
-Route::middleware(['auth:api'])->prefix('customer')->group(function () {
+Route::middleware(['auth:api', SetUserTimezone::class])->prefix('customer')->group(function () {
     //API User profile Update
     Route::post('/profile', [CustomerProfileController::class, 'updateProfile']);
     //API Change User Status
@@ -161,7 +162,7 @@ Route::middleware(['auth:api'])->prefix('customer')->group(function () {
 });
 
 // Business API's
-Route::middleware(['auth:api'])->prefix('business')->group(function () {
+Route::middleware(['auth:api', SetUserTimezone::class])->prefix('business')->group(function () {
     // Create Offers
     Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
     // Recommended Offers
@@ -172,6 +173,8 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
     Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
     // Create Contest
     Route::post('/contests', [ContestController::class, 'create']);
+    // Delete Answer of Contest
+    Route::post('/delete-answer/{id}', [ContestController::class, 'deleteAnswerByBusiness']);
     // Messgae to Customer
     Route::post('/send-message', [MessageController::class, 'sendBusinessMessage']);
     // Business Dashboard
@@ -205,7 +208,7 @@ Route::middleware(['auth:api'])->prefix('business')->group(function () {
 });
 
 // Protected Routes (Require Authentication)
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum', SetUserTimezone::class])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::get('/customer/dashboard', [CustomerController::class, 'dashboard']);
@@ -225,7 +228,7 @@ Route::apiResource('transactions', TransactionController::class);
 // Route::get('/cities-by-zip/{zip}', [CityController::class, 'getCitiesByZip']);
 
 // Generate Customer QR Code
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', SetUserTimezone::class])->group(function () {
     // Customer QR Code
     Route::get('/customer/qr-code', [CustomerController::class, 'generateEncryptedQrCode'])->name('api.customer.qrCode');
 
@@ -243,7 +246,7 @@ Route::prefix('generate-qr')->middleware('auth:sanctum')->group(function () {
 Route::post('/business/{businessId}/grant-checkin-points', [BusinessController::class, 'grantCheckinPoints'])->middleware('auth:sanctum')->name('api.business.grantCheckinPoints');
 
 // for businesses to add rewards
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum',SetUserTimezone::class])->group(function () {
     Route::post('/business/post-reward', [RewardController::class, 'storeRewardApi'])->name('api.business.storeReward');
     // QR code generation
     Route::post('/checkin/customer', [CheckInController::class, 'customerCheckIn']);

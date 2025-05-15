@@ -26,7 +26,8 @@ use App\Http\Controllers\API\{
 
 use App\Http\Controllers\Admin\{
     AdminCheckInController, AdminCustomerController, AdminBusinessController, CategoryController, AdminOfferController,
-    AdminEventController
+    AdminEventController, AdminContestController, AdminStaffController, AdminMenuController, AdminRewardController, 
+    AdminServiceController
 };
 
 use App\Http\Controllers\API\InviteController;
@@ -146,7 +147,19 @@ Route::prefix('admin')->middleware(['auth', RoleMiddleware::class . ':admin'])->
     Route::resource('categories', CategoryController::class);
     // Event
     Route::resource('events', AdminEventController::class);
-
+    // Contest
+    Route::resource('contests', AdminContestController::class);
+    // Delete Answer of Contest
+    Route::post('/contest-answers-delete/{id}', [AdminContestController::class, 'deleteAnswerByAdmin'])->name('contest.answers.destroy');
+    // Staff Members
+    Route::resource('staff', AdminStaffController::class);
+    // Staff Menu
+    Route::resource('menus', AdminMenuController::class);
+    // Staff Members
+    Route::resource('rewards', AdminRewardController::class);
+    Route::get('/reward-reedemption-history/{id}', [AdminRewardController::class, 'rewardReedemHistory'])->name('reward.reedemption.history');
+    // Staff Menu
+    Route::resource('services', AdminServiceController::class);
     // Business Offer
     Route::get('/business/offer/index', [AdminOfferController::class, 'index'])->name('admin.business.offer.index');
     Route::get('/business/offer/create', [AdminOfferController::class, 'create'])->name('admin.business.offer.create');

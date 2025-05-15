@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('google_id')->nullable();
             $table->integer('otp')->nullable();
             $table->dateTime('last_login_at')->nullable();
+            $table->string('timezone',255)->default('America/New_York');
             $table->longText('preferences')->nullable()->comment('User preferences');
             $table->timestamps(); // Includes created_at and updated_at
 

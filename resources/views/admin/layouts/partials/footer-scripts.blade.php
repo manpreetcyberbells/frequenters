@@ -8,6 +8,8 @@
 </script>
 <!-- Bootstrap 4 -->
 <script src="{{ asset('admin_v1/plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<!-- Select2 -->
+<script src="{{ asset('admin_v1/plugins/select2/js/select2.full.min.js') }}"></script>
 <!-- ChartJS -->
 <script src="{{ asset('admin_v1/plugins/chart.js/Chart.min.js') }}"></script>
 <!-- Sparkline -->
@@ -46,17 +48,29 @@
 <script src="{{ asset('admin_v1/plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
 <script src="{{ asset('admin_v1/plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
 <script src="{{ asset('admin_v1/plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
-<!-- AdminLTE App -->
-<script src="{{ asset('admin_v1/dist/js/adminlte.min.js') }}"></script>
+<!-- jquery-validation -->
+<script src="{{ asset('admin_v1/plugins/jquery-validation/jquery.validate.min.js') }}"></script>
+<script src="{{ asset('admin_v1/plugins/jquery-validation/additional-methods.min.js') }}"></script>
 <!-- AdminLTE for demo purposes -->
 <!-- <script src="{{ asset('admin_v1/dist/js/demo.js') }}"></script> -->
 <script src="{{ asset('admin/js/business/create.js') }}"></script>
 <script src="{{ asset('admin/js/business/edit.js') }}"></script>
+<!-- AdminLTE App -->
+<script src="{{ asset('admin_v1/dist/js/adminlte.min.js') }}"></script>
 <!-- Common jQuery -->
 <script src="{{ asset('admin/js/common.js') }}"></script>
+<script src="{{ asset('admin/js/formvalidation.js') }}"></script>
 <!-- Page specific script -->
 <script>
   $(function () {
+    //Initialize Select2 Elements
+    $('.select2').select2()
+
+    //Initialize Select2 Elements
+    $('.select2bs4').select2({
+      theme: 'bootstrap4'
+    })
+    
     $("#example1").DataTable({
       "responsive": true, "lengthChange": false, "autoWidth": false,
       "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]

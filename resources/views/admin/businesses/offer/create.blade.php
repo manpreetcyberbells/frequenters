@@ -10,7 +10,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Business</h1>
+                    <!-- <h1>Business</h1> -->
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -59,7 +59,7 @@
 
                             <div class="col-md-4 form-group">
                                 <label for="status" class="form-label">Business</label>
-                                <select id="business_id" name="business_id" class="form-control" required>
+                                <select id="business_id" name="business_id" class="form-control select2" required>
                                     @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                         <option value="{{ $business->id }}">{{ $business->name }}</option>
                                     @endforeach

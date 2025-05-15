@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                   <div class="col-sm-6">
-                    <h1>Business</h1>
+                    <!-- <h1>Business</h1> -->
                   </div>
                   <div class="col-sm-6">
                      <ol class="breadcrumb float-sm-right">
@@ -30,7 +30,7 @@
                <!-- /.card -->
                <div class="card">
                   <div class="card-header">
-                     <h3 class="card-title">Business Event</h3>
+                     <h3 class="card-title">Business Events</h3>
                      <div class="card-tools">
                         <a href="{{ route('events.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Event</a>
                      </div>
@@ -72,7 +72,7 @@
                                 <td>{{ $event->end_date }}</td>
                                 <td>{{ $event->end_time }}</td>
                                 <td>{{ $event->target_tier }}</td>
-                                <td>{{ $event->status }}</td>
+                                <td> <span class="badge @if($event->status == 'published') badge-success @else badge-secondary @endif">{{ $event->status }}</span></td>
                                 <!-- <td>{{ $event->created_at }}</td> -->
                                 <td>{{ $event->event_description }}</td>
                             </tr>

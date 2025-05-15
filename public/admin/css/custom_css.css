@@ -8,3 +8,6 @@ img.preview-image{
     width: 140px;
     height: 140px;
 }
+span.badge.badge-success, span.badge.badge-danger, span.badge.badge-primary, span.badge.badge-secondary, span.badge.badge-dark, span.badge.badge-info, span.badge.bg-navy {
+    text-transform: capitalize;
+}

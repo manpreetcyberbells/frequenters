@@ -77,9 +77,14 @@
                         @endswitch
                         </td>
                         <td>
+                          <!-- View Business -->
+                          <a href="{{ route('businesses.show', $business->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Edit">
+                            <i class="nav-icon fas fa-eye"></i>
+                          </a>
+
                           <!-- Edit Button -->
                           <a href="{{ route('businesses.edit', $business->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
-                          <i class="nav-icon fas fa-edit"></i>
+                            <i class="nav-icon fas fa-edit"></i>
                           </a>
 
                           <!-- Delete Button (with confirmation) -->

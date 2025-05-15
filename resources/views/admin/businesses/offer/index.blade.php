@@ -8,7 +8,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Business</h1>
+                    <!-- <h1>Business</h1> -->
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -67,7 +67,7 @@
                                 <td>{{ $offer->title }}</td>
                                 <td>{{ $offer->discount_percentage }}</td>
                                 <td>{{ $offer->discount_cap }}</td>
-                                <td>{{ $offer->applicable_users }}</td>
+                                <td> <span class="badge @if($offer->applicable_users == 'regular') badge-success @elseif($offer->applicable_users == 'new') badge-primary @else badge-dark @endif">{{ $offer->applicable_users }}</span></td>
                                 <td>{{ $offer->offer_time }}</td>
                                 <td>{{ $offer->campaign_start_date }}</td>
                                 <td>{{ $offer->campaign_start_time }}</td>
