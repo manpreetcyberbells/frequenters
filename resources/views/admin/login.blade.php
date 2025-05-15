@@ -10,7 +10,7 @@
     <meta name="author" content="ColorlibHQ" />
     <meta
       name="description"
-      content="AdminLTE is a Free Bootstrap 5 Admin Dashboard, 30 example pages using Vanilla JS."
+      content="Access the Frequenters Admin Panel – your gateway to managing a powerful loyalty program that rewards customer check-ins and helps grow your loyal customer base."
     />
     <meta
       name="keywords"

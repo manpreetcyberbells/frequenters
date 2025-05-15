@@ -286,7 +286,7 @@
                 </ul>
               </li>
 
-              <li class="nav-item">
+              <!-- <li class="nav-item">
                 <a href="#" class="nav-link">
                 <i class="fa fa-list-alt" aria-hidden="true"></i>
                   <p>Manual CheckIn</p>
@@ -315,7 +315,7 @@
                 <i class="far fa-circle nav-icon"></i>
                   <p>Points</p>
                 </a>
-              </li>
+              </li> -->
             <li class="nav-item">
               <a href="pages/kanban.html" class="nav-link">
                 <p>
