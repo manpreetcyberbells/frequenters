@@ -205,6 +205,11 @@ Route::middleware(['auth:api', SetUserTimezone::class])->prefix('business')->gro
     Route::post('/service-post', [ServiceController::class, 'createServiceMenu']);
     // Create Menu
     Route::post('/create-menu', [MenuController::class, 'createMenu']);
+    // Listing
+    Route::get('/offer-listing', [OfferController::class, 'offerListing']);
+    Route::get('/event-listing', [EventController::class, 'eventListing']);
+    Route::get('/reward-listing', [RewardController::class, 'rewardListing']);
+    Route::get('/contest-listing', [ContestController::class, 'contestListing']);
 });
 
 // Protected Routes (Require Authentication)

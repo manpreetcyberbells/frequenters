@@ -1,4 +1,7 @@
-@extends('admin.layouts.master') @section('title', 'Business Contest Details') @section('content')
+@extends('admin.layouts.master') 
+@section('title', 'Business Contest Details') 
+@section('content')
+
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
@@ -217,14 +220,15 @@
                                     </select>
                                 </div>
                             </div>
-<?php
-    // foreach ($submittedAnswers as $key => $answer) {
-    //     echo"<pre>"; print_r($answer['participant']['user']['name']); 
-    //     echo"<pre>"; print_r($answer->created_at->diffForHumans());
-    // }
-    // die;
-    // echo"<pre>"; print_r($content['questions'][0]['question']);  die;
-?>
+                            
+                            <?php
+                                // foreach ($submittedAnswers as $key => $answer) {
+                                //     echo"<pre>"; print_r($answer['participant']['user']['name']); 
+                                //     echo"<pre>"; print_r($answer->created_at->diffForHumans());
+                                // }
+                                // die;
+                                // echo"<pre>"; print_r($content['questions'][0]['question']);  die;
+                            ?>
                             <!-- Timelime example  -->
                             <div class="row">
                                 <div class="col-md-12">
@@ -256,9 +260,9 @@
                                             <div class="timeline-body">
                                                 {{ @$answer->answer }}
                                             </div>
-                                            <div class="timeline-footer">
+                                            <!-- <div class="timeline-footer">
                                                 <a class="btn btn-warning btn-sm">Comment</a>
-                                            </div>
+                                            </div> -->
                                         </div>
                                     </div>
                                     @endforeach

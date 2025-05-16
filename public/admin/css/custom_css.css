@@ -11,3 +11,15 @@ img.preview-image{
 span.badge.badge-success, span.badge.badge-danger, span.badge.badge-primary, span.badge.badge-secondary, span.badge.badge-dark, span.badge.badge-info, span.badge.bg-navy {
     text-transform: capitalize;
 }
+
+.nav-sidebar .menu-is-opening>.nav-link i.right, .nav-sidebar .menu-is-opening>.nav-link svg.right, .nav-sidebar .menu-open>.nav-link i.right, .nav-sidebar .menu-open>.nav-link svg.right {
+    -webkit-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+}
+/*  */
+a.nav-link i {
+    margin-right: .3rem;
+}
+.card-tools i {
+    margin-right: .4rem;
+}

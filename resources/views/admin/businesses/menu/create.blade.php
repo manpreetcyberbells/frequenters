@@ -44,7 +44,7 @@
                             <div class="row g-3">
                                 <div class="form-group col-md-6">
                                     <label for="status" class="form-label">Business</label>
-                                    <select id="business_id" name="business_id" class="form-control select2" required>
+                                    <select id="business_id" name="business_id" class="form-control" required>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                             <option value="{{ $business->id }}">{{ $business->name }}</option>
                                         @endforeach
@@ -69,7 +69,7 @@
 
                                 <div class="form-group col-md-6">
                                     <label for="category_id" class="form-label">Category</label>
-                                    <select id="category_id" name="category_id" class="form-control select2" required>
+                                    <select id="category_id" name="category_id" class="form-control" required>
                                         @foreach($categories as $index => $category)
                                             <option value="{{ $category->id }}">{{ $category->name }}</option>
                                         @endforeach
@@ -80,7 +80,10 @@
                             <div class="row g-3">
                                 <div class="form-group col-md-6">
                                     <label for="photo" class="form-label">Upload Images</label>
-                                    <input type="file" class="form-control" id="menuPhoto" name="photo" accept="image/*" required>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
+                                        <label class="custom-file-label" for="customFile">Upload Images</label>
+                                    </div>
                                 </div>
 
                                 <div class="form-group col-md-6">

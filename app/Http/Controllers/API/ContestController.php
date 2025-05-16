@@ -19,6 +19,48 @@ use App\Services\NearbyCustomerService;
 class ContestController extends Controller
 {
     /**
+     *  API Function Contest Listing
+    */
+    public function contestListing(Request $request)
+    {
+        try{
+            $business = auth()->user();
+            $perPage = $request->get('per_page', 10);
+            $contests = Contest::where('business_id', $business->id)->paginate($perPage);
+            	
+            $transformed = $contests->map(function ($contest) {
+                return [
+                    'id' => $contest->id,
+                    'business_id' => $contest->business_id,
+                    'name' => $contest->name,
+                    'banner_image' => $contest->banner_image,
+                    'createdAt' => $contest->created_at->diffForHumans(),
+                ];
+            });
+
+
+            return response()->json([
+                'message' => 'Contests retrieved successfully',
+                'data' => [
+                    'current_page' => $contests->currentPage(),
+                    'last_page' => $contests->lastPage(),
+                    'per_page' => $contests->perPage(),
+                    'total' => $contests->total(),
+                    'contests' => $transformed,
+                ]
+            ], 200);
+
+            
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
      *  API Function Create Contest
     */
     public function create(Request $request)

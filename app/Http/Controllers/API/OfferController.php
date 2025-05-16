@@ -33,6 +33,48 @@ class OfferController extends Controller
     }
 
     /**
+     *  API Function Offer Listing
+    */
+    public function offerListing(Request $request)
+    {
+        try{
+            $business = auth()->user();
+            $perPage = $request->get('per_page', 10);
+            $offers = Offer::where('business_id', $business->id)->paginate($perPage);
+
+            $transformed = $offers->map(function ($offer) {
+                return [
+                    'id' => $offer->id,
+                    'business_id' => $offer->business_id,
+                    'title' => $offer->title,
+                    'applicable_users' => $offer->applicable_users,
+                    'createdAt' => Carbon::parse($offer->created_at)->diffForHumans(),
+                ];
+            });
+
+
+            return response()->json([
+                'message' => 'Offers retrieved successfully',
+                'data' => [
+                    'current_page' => $offers->currentPage(),
+                    'last_page' => $offers->lastPage(),
+                    'per_page' => $offers->perPage(),
+                    'total' => $offers->total(),
+                    'offers' => $transformed,
+                ]
+            ], 200);
+
+            
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
      *  API Function to create Offer. 
     */
     public function businessCreateOffer(StoreOfferRequest $request) 

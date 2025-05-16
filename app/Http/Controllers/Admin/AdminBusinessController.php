@@ -13,6 +13,7 @@ use App\Models\BusinessHour;
 use App\Models\Admin\City;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class AdminBusinessController extends Controller
 {
@@ -42,7 +43,7 @@ class AdminBusinessController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
-            'website' => ['required', 'url'],
+            // 'website' => ['required', 'url'],
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'business_hours' => 'required|array',
             'owner_name' => 'required|string',
@@ -122,8 +123,12 @@ class AdminBusinessController extends Controller
      */
     public function show(string $id)
     {
-        $business = User::findOrFail($id);
-        return view('admin.businesses.show', compact('business'));
+        $business = User::with(['businessProfile', 'businessAddress', 'businessImage', 'businessHours'])->findOrFail($id);
+        $getContest = DB::table('contests')->where('business_id',$id)->get()->count();
+        $getEvents = DB::table('events')->where('business_id',$id)->get()->count();
+        $getOffers = DB::table('offers')->where('business_id',$id)->get()->count();
+        $getRewards = DB::table('rewards')->where('business_id',$id)->get()->count();
+        return view('admin.businesses.show', compact('business', 'getContest', 'getEvents', 'getOffers', 'getRewards'));
     }
 
     /**

@@ -44,7 +44,7 @@
                             <div class="row g-4">
                                 <div class="form-group col-md-4">
                                     <label for="business" class="form-label">Business</label>
-                                    <select id="business_id" name="business_id" class="form-control select2" required>
+                                    <select id="business_id" name="business_id" class="form-control" required>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                             <option value="{{ $business->id }}">{{ $business->name }}</option>
                                         @endforeach
@@ -62,12 +62,12 @@
                             <div class="row g-3">
                                 <div class="col-md-4 form-group">
                                     <label for="valid_from" class="form-label">Valid From</label>
-                                    <input type="date" class="form-control" id="valid_from" name="valid_from" required placeholder="2025-04-24"/>
+                                    <input type="date" class="form-control" id="valid_from" name="valid_from" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
                                 </div>
 
                                 <div class="col-md-4 form-group">
                                     <label for="valid_until" class="form-label">Valid Until</label>
-                                    <input type="date" class="form-control" id="valid_until" name="valid_until" required placeholder="2025-04-26"/>
+                                    <input type="date" class="form-control" id="valid_until" name="valid_until" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
                                 </div>
                             </div>
                         </div>

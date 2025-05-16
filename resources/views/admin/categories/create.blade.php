@@ -68,13 +68,18 @@
                         <label for="validationActive" class="form-label">Active Icon</label>
                         <div class="input-group has-validation">
                             <img id="active_icon_preview" src="/media/dummy.png" width="35">
-                            <input
+                            <!-- <input
                               type="file"
                               name="active_icon"
                               class="form-control"
                               id="active_icon"
                               required
-                            />
+                            /> -->
+                            <div class="custom-file">
+                            <input type="file" class="custom-file-input form-control"  name="active_icon" id="active_icon"
+                              required>
+                            <label class="custom-file-label" for="customFile">Active Icon</label>
+                          </div>
                         </div>
                       </div>
 
@@ -82,7 +87,11 @@
                         <label for="validationInactive" class="form-label">Inactive Icon</label>
                         <div class="input-group has-validation">
                           <img id="inactive_icon_preview" src="/media/dummy.png" width="35">
-                          <input type="file" name="inactive_icon" class="form-control" id="inactive_icon">
+                          <!-- <input type="file" name="inactive_icon" class="form-control" id="inactive_icon"> -->
+                          <div class="custom-file">
+                            <input type="file" class="custom-file-input form-control" name="inactive_icon"  id="inactive_icon">
+                            <label class="custom-file-label" for="customFile">Inactive Icon</label>
+                          </div>
                         </div>
                       </div>
 
@@ -90,7 +99,11 @@
                           <label for="validationdark" class="form-label">Dark Mode Icon</label>
                           <div class="input-group has-validation">
                             <img id="darkmode_active_preview" src="/media/dummy.png" width="35">
-                            <input type="file" name="darkmode_active" class="form-control" id="validationdark">
+                            <!-- <input type="file" name="darkmode_active" class="form-control" id="validationdark"> -->
+                             <div class="custom-file">
+                              <input type="file" class="custom-file-input form-control" name="darkmode_active" id="validationdark">
+                              <label class="custom-file-label" for="customFile">Dark Mode Icon</label>
+                            </div>
                           </div>
                       </div>
 
@@ -98,7 +111,10 @@
                           <label for="validationdarkin" class="form-label">Dark Mode Icon</label>
                           <div class="input-group has-validation">
                             <img id="darkmode_inactive_preview" src="/media/dummy.png" width="35">
-                            <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
+                            <div class="custom-file">
+                              <input type="file" class="custom-file-input form-control"  name="darkmode_inactive" id="validationdarkin">
+                              <label class="custom-file-label" for="customFile">Dark Mode Icon</label>
+                            </div>
                           </div>
                       </div>
 

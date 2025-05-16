@@ -27,7 +27,7 @@ class CustomerProfileController extends Controller
                 'gender'       => 'nullable|in:male,female,other',
                 'dob'          => 'nullable|date|before:today',
                 'anniversary'  => 'nullable|date|after:dob',
-                'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max size 2MB
+                'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp', // Max size 2MB |max:2048
             ]);
 
             $user = Auth::user();

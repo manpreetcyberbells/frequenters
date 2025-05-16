@@ -33,11 +33,8 @@
       <!-- Sidebar Menu -->
       <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+         
           <li class="nav-item menu-open">
-            <!-- <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>Dashboard<i class="right fas fa-angle-left"></i></p>
-            </a> -->
             <ul class="nav nav-treeview">
               <li class="nav-item">
                 <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -52,8 +49,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                 <i class="fa fa-users" aria-hidden="true"></i>
                   <p>
-                    Customers
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Customer
+                    <i class="right fas fa-angle-left"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -76,8 +73,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('businesses.*') ? 'active' : '' }}">
                 <i class="fa fa-briefcase" aria-hidden="true"></i>
                   <p>
-                    Businesses
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Business
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -100,8 +97,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('contests.*') ? 'active' : '' }}">
                 <i class="fa fa-calendar" aria-hidden="true"></i>
                   <p>
-                    Contests
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Contest
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -124,8 +121,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('events.*') ? 'active' : '' }}">
                 <i class="fa fa-calendar" aria-hidden="true"></i>
                   <p>
-                    Events
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Event
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -148,8 +145,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('admin.business.offer.*') ? 'active' : '' }}">
                 <i class="fa fa-percent" aria-hidden="true"></i>
                   <p>
-                    Offers
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Offer
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -173,8 +170,8 @@
                 <a href="#" class="nav-link {{ request()->routeIs('rewards.*') ? 'active' : '' }}">
                 <i class="fa fa-gift" aria-hidden="true"></i>
                   <p>
-                    Rewards
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    Reward
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -198,7 +195,7 @@
                 <i class="fa fa-users" aria-hidden="true"></i>
                   <p>
                   Staff
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -210,7 +207,7 @@
                   </li>
                   <li class="nav-item">
                     <a href="{{ route('staff.create') }}" class="nav-link {{ request()->routeIs('staff.create') ? 'active' : '' }}">
-                    <i class="fa fa-user-square" aria-hidden="true"></i>
+                    <i class="fa fa-user-plus" aria-hidden="true"></i>
                       <p>Create Employee</p>
                     </a>
                   </li>
@@ -222,7 +219,7 @@
                 <i class="fa fa-bars" aria-hidden="true"></i>
                   <p>
                   Menu
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -246,7 +243,7 @@
                 <i class="fa fa-bars" aria-hidden="true"></i>
                   <p>
                   Service
-                    <i class="nav-arrow bi bi-chevron-right"></i>
+                    <i class="nav-arrow fas fa-angle-left right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview">
@@ -268,7 +265,7 @@
               <li class="nav-item {{ request()->routeIs('categories.*') ? 'menu-open' : '' }}">
                 <a href="#" class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                   <i class="fas fa-table" ></i>
-                  <p>Categories<i class="nav-arrow bi bi-chevron-right"></i></p>
+                  <p>Categories <i class="nav-arrow fas fa-angle-left right"></i></p>
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
@@ -285,37 +282,6 @@
                   </li>
                 </ul>
               </li>
-
-              <!-- <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="fa fa-list-alt" aria-hidden="true"></i>
-                  <p>Manual CheckIn</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                  <p>Business Points</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                  <p>Rewards</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                  <p>Offers</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="far fa-circle nav-icon"></i>
-                  <p>Points</p>
-                </a>
-              </li> -->
             <li class="nav-item">
               <a href="pages/kanban.html" class="nav-link">
                 <p>

@@ -521,11 +521,13 @@ class BusinessController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
                     $imageName = time() . '_' . $image->getClientOriginalName();
-                    $image->move(public_path('uploads/businesses'), $imageName);
+
+                    $profileImagePath = $image->storeAs('businesses', $imageName, 'public');
+                    $imageUrl = asset('storage/businesses/' . $imageName);
 
                     BusinessImage::create([
                         'business_id' => $user->id,
-                        'photo' => 'uploads/businesses/' . $imageName,
+                        'photo' => $imageUrl,
                     ]);
                 }
             }

@@ -62,14 +62,10 @@
                                  <td> <span class="badge @if($staff->role == 'manager') badge-primary @else badge-info @endif">{{$staff->role}} </span></td>
                                  <td> <span class="badge @if($staff->providers == 'email') bg-navy @elseif($staff->providers == 'facebook') badge-primary @elseif($staff->providers == 'google') badge-info @elseif($staff->providers == 'apple') badge-gray @else badge-lime @endif"> {{$staff->providers}} </td>
                                  <td>
-                                    <div class="input-group-prepend">
-                                       <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-                                          Action
-                                       </button>
-                                       <ul class="dropdown-menu">
-                                          <li class="dropdown-item"><a href="{{ route('staff.edit', $staff->id) }}">Edit</a></li>
-                                       </ul>
-                                    </div>
+                                    <!-- Edit Button -->
+                                    <a href="{{ route('staff.edit', $staff->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                                    <i class="nav-icon fas fa-edit"></i>
+                                    </a>
                                  </td>
                               </tr>
                            @endforeach

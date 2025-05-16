@@ -105,8 +105,9 @@ class AdminCustomerController extends Controller
     */
     public function show(User $customer)
     {
-        die('Show PAGE!!! PLEASE WAIT!!!');
-        return view('admin.customers.show', compact('customer'));
+        $customer->load(['customerProfile', 'customerAddress']);
+        $cityName = City::where('id', $customer->customerAddress->city)->value('city_name');
+        return view('admin.customers.show', compact('customer', 'cityName'));
     }
 
     /**

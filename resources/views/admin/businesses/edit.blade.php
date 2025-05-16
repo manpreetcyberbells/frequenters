@@ -199,12 +199,12 @@
                                   @if(!empty($business['businessImage']))
                                   @foreach($business['businessImage'] as $image)
                                    
-                                      <img src="{{ url('').'/'.$image->photo }}" 
+                                      <img src="{{ $image->photo }}" 
                                           alt="Business Image" 
                                           width="100" 
                                           height="100"
                                           class="preview-image border border-dark rounded" 
-                                          data-src="{{ url('').'/'.$image->photo }}"
+                                          data-src="{{ $image->photo }}"
                                           style="cursor: pointer;">
                                
                                   @endforeach

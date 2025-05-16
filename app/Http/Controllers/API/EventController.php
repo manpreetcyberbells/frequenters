@@ -18,6 +18,50 @@ use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
+
+    /**
+     *  API Function Reward Listing
+    */
+    public function eventListing(Request $request)
+    {
+        try{
+            $business = auth()->user();
+            $perPage = $request->get('per_page', 10);
+            $events = Event::where('business_id', $business->id)->where('status','published')->paginate($perPage);
+
+            $transformed = $events->map(function ($event) {
+                return [
+                    'id' => $event->id,
+                    'business_id' => $event->business_id,
+                    'event_name' => $event->event_name,
+                    'venue_name' => $event->venue_name,
+                    'event_banner' => $event->event_banner,
+                    'createdAt' => Carbon::parse($event->created_at)->diffForHumans(),
+                ];
+            });
+
+
+            return response()->json([
+                'message' => 'Events retrieved successfully',
+                'data' => [
+                    'current_page' => $events->currentPage(),
+                    'last_page' => $events->lastPage(),
+                    'per_page' => $events->perPage(),
+                    'total' => $events->total(),
+                    'events' => $transformed,
+                ]
+            ], 200);
+
+            
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+    
     /**
      *  API Function to Create Business Event. 
     */

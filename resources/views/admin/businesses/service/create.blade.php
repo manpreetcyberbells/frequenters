@@ -45,7 +45,7 @@
                                 <div class="row g-3">
                                     <div class="form-group col-md-4">
                                         <label for="business_id" class="form-label">Business</label>
-                                        <select id="business_id" name="business_id" class="form-control select2" required>
+                                        <select id="business_id" name="business_id" class="form-control" required>
                                             @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                                 <option value="{{ $business->id }}">{{ $business->name }}</option>
                                             @endforeach
@@ -67,7 +67,7 @@
                                 <div class="row g-3">
                                     <div class="form-group col-md-4">
                                         <label for="category_id" class="form-label">Category</label>
-                                        <select id="category_id" name="category_id" class="form-control select2" required>
+                                        <select id="category_id" name="category_id" class="form-control" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories as $category)
                                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -77,14 +77,17 @@
 
                                     <div class="form-group col-md-4">
                                         <label for="duration">Duration (HH:MM:SS)</label>
-                                        <input type="time" step="1" name="duration" class="form-control" id="duration" required>
+                                        <input type="time" name="duration" class="form-control" id="duration" required>
                                     </div>
                                 </div>
 
                                 <div class="row g-3">
                                     <div class="form-group col-md-4">
                                         <label for="photo" class="form-label">Upload Images</label>
-                                        <input type="file" class="form-control" id="menuPhoto" name="photo" accept="image/*" required>
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
+                                            <label class="custom-file-label" for="customFile">Upload Images</label>
+                                        </div>
                                     </div>
 
                                     <!-- images upload -->

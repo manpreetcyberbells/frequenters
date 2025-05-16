@@ -55,8 +55,12 @@
 <!-- <script src="{{ asset('admin_v1/dist/js/demo.js') }}"></script> -->
 <script src="{{ asset('admin/js/business/create.js') }}"></script>
 <script src="{{ asset('admin/js/business/edit.js') }}"></script>
+<!-- Ekko Lightbox -->
+<script src="{{ asset('admin_v1/plugins/ekko-lightbox/ekko-lightbox.min.js') }}"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('admin_v1/dist/js/adminlte.min.js') }}"></script>
+<!-- Filterizr-->
+<script src="{{ asset('admin_v1/plugins/filterizr/jquery.filterizr.min.js') }}"></script>
 <!-- Common jQuery -->
 <script src="{{ asset('admin/js/common.js') }}"></script>
 <script src="{{ asset('admin/js/formvalidation.js') }}"></script>
@@ -85,4 +89,19 @@
       "responsive": true,
     });
   });
+
+  $(function () {
+    $(document).on('click', '[data-toggle="lightbox"]', function(event) {
+      event.preventDefault();
+      $(this).ekkoLightbox({
+        alwaysShowClose: true
+      });
+    });
+
+    $('.filter-container').filterizr({gutterPixels: 3});
+    $('.btn[data-filter]').on('click', function() {
+      $('.btn[data-filter]').removeClass('active');
+      $(this).addClass('active');
+    });
+  })
 </script>

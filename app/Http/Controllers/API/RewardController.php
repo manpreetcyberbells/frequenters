@@ -86,6 +86,50 @@ class RewardController extends Controller
     }
 
     /**
+     *  API Function Reward Listing
+    */
+    public function rewardListing(Request $request)
+    {
+        try{
+            $business = auth()->user();
+            $perPage = $request->get('per_page', 10);
+            $rewards = DB::table('rewards')->where('business_id', $business->id)->paginate($perPage);
+            	
+            // echo"<pre>"; print_r($rewards);  die;
+
+            $transformed = $rewards->map(function ($reward) {
+                return [
+                    'id' => $reward->id,
+                    'business_id' => $reward->business_id,
+                    'reward_name' => $reward->reward_name,
+                    'points_required' => $reward->points_required,
+                    'createdAt' => Carbon::parse($reward->created_at)->diffForHumans(),
+                ];
+            });
+
+
+            return response()->json([
+                'message' => 'Rewards retrieved successfully',
+                'data' => [
+                    'current_page' => $rewards->currentPage(),
+                    'last_page' => $rewards->lastPage(),
+                    'per_page' => $rewards->perPage(),
+                    'total' => $rewards->total(),
+                    'rewards' => $transformed,
+                ]
+            ], 200);
+
+            
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
      * API Function to hanle // create Reward and QR
      * 
     */

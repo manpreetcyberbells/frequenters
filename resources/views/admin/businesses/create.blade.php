@@ -187,11 +187,16 @@
                 
                 
                 <div class="col-md-4  mb-3">
-                  <label for="images" class="form-label">Upload Images</label>
-                  <input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*" required>
+                   <label for="images" class="form-label">Upload Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="images" name="images[]" multiple accept="image/*">
+                      <label class="custom-file-label" for="customFile">Upload Images</label>
+                    </div>
+
+
                 </div>
                 <!-- images upload -->
-                <div class="col-md-12 text-center">
+                <div class="col-md-4 text-center">
                   <div id="image-preview" class="mt-3"></div>
                 </div>
 

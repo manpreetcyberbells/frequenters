@@ -86,12 +86,19 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
+                              <!-- Edit Button -->
+                              <a href="{{ route('categories.edit', $category->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                              <i class="nav-icon fas fa-edit"></i>
+                              </a>
+
+                              <!-- Delete Button (with confirmation) -->
+                              <form action="{{ route('categories.destroy', $category->id) }}" method="POST" class="d-inline">
+                                  @csrf
+                                  @method('DELETE')
+                                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this?');" data-bs-toggle="tooltip" title="Delete">
+                                  <i class="nav-icon fas fa-trash"></i>
+                                  </button>
+                              </form>
                             </td>
                         </tr>
                       @endforeach

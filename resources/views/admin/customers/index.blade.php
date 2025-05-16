@@ -76,6 +76,11 @@
                           @endswitch
                           </td>
                           <td>
+                            <!-- View Business -->
+                            <a href="{{ route('customers.show', $customer->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Edit">
+                              <i class="nav-icon fas fa-eye"></i>
+                            </a>
+
                             <!-- Edit Button -->
                             <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
                             <i class="nav-icon fas fa-edit"></i>

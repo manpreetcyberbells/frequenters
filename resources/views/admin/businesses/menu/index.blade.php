@@ -68,14 +68,10 @@
                                  </td>
                                  <td> {{$menu->description}} </td>
                                  <td>
-                                    <div class="input-group-prepend">
-                                       <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-                                          Action
-                                       </button>
-                                       <ul class="dropdown-menu">
-                                          <li class="dropdown-item"><a href="{{ route('menus.edit', $menu->id) }}">Edit</a></li>
-                                       </ul>
-                                    </div>
+                                    <!-- Edit Button -->
+                                    <a href="{{ route('menus.edit', $menu->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                                       <i class="nav-icon fas fa-edit"></i>
+                                    </a>
                                  </td>
                               </tr>
                            @endforeach

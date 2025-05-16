@@ -54,12 +54,15 @@
                         <div class="row g-3">
                             <div class="col-md-3 mb-3">
                                 <label for="event_banner" class="form-label">Upload Banner</label>
-                                <input type="file" class="form-control" id="event_banner" name="event_banner" accept="image/*">
+                                <div class="custom-file">
+                                    <input type="file" class="custom-file-input" id="event_banner" name="event_banner" accept="image/*">
+                                    <label class="custom-file-label" for="customFile">Upload Banner</label>
+                                </div>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Business</label>
-                                <select id="business_id" name="business_id" class="form-control select2" required>
+                                <select id="business_id" name="business_id" class="form-control" required>
                                     @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                         <option value="{{ $business->id }}">{{ $business->name }}</option>
                                     @endforeach
@@ -84,7 +87,7 @@
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24"/>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">
@@ -94,7 +97,7 @@
 
                             <div class="col-md-3 form-group">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26"/>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">

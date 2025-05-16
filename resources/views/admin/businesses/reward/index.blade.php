@@ -58,15 +58,16 @@
                                  <td>{{$reward->valid_from}}</td>
                                  <td>{{$reward->valid_until}}</td>
                                  <td>
-                                 <div class="input-group-prepend">
-                                       <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-                                          Action
-                                       </button>
-                                       <ul class="dropdown-menu">
-                                          <li class="dropdown-item"><a href="{{ route('rewards.edit', $reward->id) }}">Edit</a></li>
-                                          <li class="dropdown-item"><a href="{{ route('reward.reedemption.history', $reward->id) }}">Redemption History</a></li>
-                                       </ul>
-                                    </div>
+                                    <!-- View Business -->
+                                    <a href="{{ route('reward.reedemption.history', $reward->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Edit">
+                                       <i class="fa fa-history"></i>
+                                    </a>
+
+                                    <!-- Edit Button -->
+                                    <a href="{{ route('rewards.edit', $reward->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                                       <i class="nav-icon fas fa-edit"></i>
+                                    </a>
+                                 </td>
                               </tr>
                         @endforeach
                         </tbody>

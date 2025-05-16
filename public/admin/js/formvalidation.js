@@ -9,7 +9,6 @@ $(function () {
       rules: {
         name: {
           required: true,
-          name: true,
         },
         email: {
             required: true,
@@ -27,7 +26,6 @@ $(function () {
       messages: {
         name: {
             required: "Please enter a valid name",
-            name: "Please enter a valid name"
         },
         email: {
             required: "Please enter a email address",
@@ -70,11 +68,6 @@ $(function () {
       rules: {
         name: {
           required: true,
-          name: true,
-        },
-        email: {
-            required: true,
-            email: true,
         },
         price: {
             required: true,
@@ -85,11 +78,6 @@ $(function () {
       messages: {
         name: {
             required: "Please enter a valid name",
-            name: "Please enter a valid name"
-        },
-        email: {
-            required: "Please enter a email address",
-            email: "Please enter a valid email address"
         },
         price: {
             required: "Please enter the price",
@@ -188,11 +176,6 @@ $(function () {
 });
 
 $(function () {
-  // Custom validator: reward name should only contain letters and spaces
-  $.validator.addMethod("serviceNameValid", function (value, element) {
-    return this.optional(element) || /^[a-zA-Z\s]+$/.test(value);
-  }, "Please enter a valid name (letters and spaces only)");
-
   // Custom method to validate end time is after start time (optional)
   $.validator.addMethod("timeAfter", function (value, element, params) {
     const startTime = $(params).val();
@@ -213,7 +196,6 @@ $(function () {
       },
       name: {
         required: true,
-        serviceNameValid: true
       },
       category_id: {
         required: true
