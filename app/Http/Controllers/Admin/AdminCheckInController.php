@@ -27,7 +27,7 @@ class AdminCheckInController extends Controller
     {
         $validated = $request->validate([
             'text_code' => 'required|string',
-            'business_id' => 'required|exists:users,user_id',
+            'business_id' => 'required|exists:users,id',
         ]);
 
         try {
@@ -52,12 +52,12 @@ class AdminCheckInController extends Controller
                 ]
             );
 
-            Session::flash('success', "Customer ID: $customerId successfully checked in!");
-            return redirect()->back();
+            // Session::flash('success', "Customer ID: $customerId successfully checked in!");
+            return redirect()->back()->with('success', "Customer ID: $customerId successfully checked in!");
 
         } catch (\Exception $e) {
-            Session::flash('error', 'Failed to process check-in: ' . $e->getMessage());
-            return redirect()->back();
+            // Session::flash('error', 'Failed to process check-in: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to process check-in: ' . $e->getMessage());
         }
     }
 

@@ -23,5 +23,10 @@ class RewardRedemption extends Model
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+
+    public function business()
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
 }
 

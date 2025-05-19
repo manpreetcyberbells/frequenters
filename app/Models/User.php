@@ -88,4 +88,63 @@ class User extends Authenticatable
         return $this->hasOne(CustomerBadge::class, 'customer_id');
     }
 
+    // Contests
+    public function businessContest()
+    {
+        return $this->hasMany(Contest::class, 'business_id');
+    }
+
+    // Events
+    public function businessEvent()
+    {
+        return $this->hasMany(Event::class, 'business_id');
+    }
+
+    // Offers
+    public function businessOffer()
+    {
+        return $this->hasMany(Offer::class, 'business_id');
+    }
+
+    // Rewards
+    public function businessReward()
+    {
+        return $this->hasMany(Reward::class, 'business_id');
+    }
+
+    // Menu
+    public function businessMenu()
+    {
+        return $this->hasMany(Menu::class, 'business_id');
+    }
+
+    // Services
+    public function businessService()
+    {
+        return $this->hasMany(Service::class, 'business_id');
+    }
+
+    // CheckIn
+    public function customerCheckIn()
+    {
+        return $this->hasMany(CheckIn::class, 'customer_id');
+    }
+
+    // reward_redemptions
+    public function customerRewardRedemptions()
+    {
+        return $this->hasMany(RewardRedemption::class, 'customer_id');
+    }
+
+    // History
+    public function customerHistory()
+    {
+        return $this->hasMany(SearchHistory::class, 'customer_id');
+    }
+
+    // Wishlist
+    public function customerWishlist()
+    {
+        return $this->hasMany(Wishlist::class, 'customer_id');
+    }
 }

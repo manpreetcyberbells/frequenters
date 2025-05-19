@@ -128,7 +128,13 @@ class AdminBusinessController extends Controller
         $getEvents = DB::table('events')->where('business_id',$id)->get()->count();
         $getOffers = DB::table('offers')->where('business_id',$id)->get()->count();
         $getRewards = DB::table('rewards')->where('business_id',$id)->get()->count();
-        return view('admin.businesses.show', compact('business', 'getContest', 'getEvents', 'getOffers', 'getRewards'));
+        $staffMembers = User::where('parent_business_id',$id)->orderBy('id', 'desc')->get();
+        foreach ($staffMembers as $key => $staff) {
+            $staffDetail = User::where('id', $staff->parent_business_id)->first();
+            $staff->parent_business = @$staffDetail->name;
+        }
+        
+        return view('admin.businesses.show', compact('business', 'getContest', 'getEvents', 'getOffers', 'getRewards', 'staffMembers'));
     }
 
     /**

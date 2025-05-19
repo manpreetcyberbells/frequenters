@@ -1,75 +1,80 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Manual Check-In</title>
-    <!-- Select2 CSS -->
-    <link rel="stylesheet" href="{{ asset('css/select2.min.css') }}">
+@extends('admin.layouts.master')
+@section('title', 'Manual CheckIn')
+@section('content')
 
-    <!-- jQuery -->
-    <script src="{{ asset('js/jquery.min.js') }}"></script>
 
-    <!-- Select2 JS -->
-    <script src="{{ asset('js/select2.min.js') }}"></script>
-</head>
-<body>
-    <center>
-        <h2>Manual Check-In</h2>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Check-In</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Home</a></li>
+              <li class="breadcrumb-item active">Check-In</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
 
-        <!-- Success/Error Messages -->
-        @if (session('success'))
-            <p style="color: green;">{{ session('success') }}</p>
-        @endif
-        @if (session('error'))
-            <p style="color: red;">{{ session('error') }}</p>
-        @endif
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+       <!-- Success/Error Messages -->
+        @include('admin.layouts.notifications')
+        <div class="row">
+          <!-- left column -->
+          <div class="col-md-12">
+            <!-- jquery validation -->
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Manual <small>Check-In</small></h3>
+              </div>
+              <!-- /.card-header -->
+              <!-- form start -->
+              <form id="checkInForm" action="{{ route('admin.manual-checkin.process') }}" method="POST">
+                @csrf
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="status" class="form-label">Business</label>
+                        <select id="businessIdManual" name="business_id" class="form-control" required >
+                            @foreach(\App\Models\User::where('role', 'business')->get() as $business)
+                                <option value="{{ $business->id }}">{{ $business->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <!-- Manual Check-In Form -->
-        <form action="{{ route('admin.manual-checkin.process') }}" method="POST">
-            @csrf
+                    <div class="form-group">
+                        <label for="text_code" class="form-label">Enter Text Code:</label>
+                        <textarea class="form-control" id="text_code" name="text_code" rows="3" required placeholder="Enter text code here"></textarea>
+                    </div>
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer">
+                  <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+              </form>
+            </div>
+            <!-- /.card -->
+            </div>
+          <!--/.col (left) -->
+          <!-- right column -->
+          <div class="col-md-6">
 
-            <!-- Text Code Input -->
-            <label for="text_code">Enter Text Code:</label><br>
-            <textarea rows="10" cols="40" name="text_code" id="text_code" required placeholder="Enter text code here"></textarea>
-            <br><br>
+          </div>
+          <!--/.col (right) -->
+        </div>
+        <!-- /.row -->
+      </div><!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
 
-            <!-- Business Dropdown -->
-            <label for="business_id">Select Business:</label><br>
-            <select name="business_id" id="business_id" style="width: 300px;" required>
-                <option value="">Search and Select a Business</option>
-            </select>
-            <br><br>
-
-            <button type="submit">Process Check-In</button>
-        </form>
-    </center>
-    
-    <!-- Initialize Select2 -->
-    <script>
-        $(document).ready(function() {
-            $('#business_id').select2({
-                ajax: {
-                    url: '{{ route("admin.get-businesses") }}',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return { q: params.term }; // Pass the search term
-                    },
-                    processResults: function(data) {
-                        return {
-                            results: data.map(function(item) {
-                                return { 
-                                    id: item.id, 
-                                    text: `${item.name} - ${item.email}` // Show name and email
-                                };
-                            })
-                        };
-                    },
-                    cache: true
-                },
-                placeholder: 'Search for a business by name or email',
-                minimumInputLength: 1,
-            });
-        });
-    </script>
-</body>
-</html>
+ 
+@endsection

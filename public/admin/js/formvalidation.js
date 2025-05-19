@@ -260,3 +260,40 @@ $(function () {
     });
   });
 });
+
+
+$(function () {
+  $.validator.setDefaults({
+    submitHandler: function () {
+      // alert( "Form successful submitted!" );
+      return true;
+    }
+  });
+  $('#checkInForm').validate({
+    rules: {
+      business_id: {
+        required: true
+      },
+      // description: {
+      //   required: true
+      // },
+    },
+    messages: {
+      business_id: {
+        required: "Please select a business"
+      },
+      // description: "Please accept our terms"
+    },
+    errorElement: 'span',
+    errorPlacement: function (error, element) {
+      error.addClass('invalid-feedback');
+      element.closest('.form-group').append(error);
+    },
+    highlight: function (element, errorClass, validClass) {
+      $(element).addClass('is-invalid');
+    },
+    unhighlight: function (element, errorClass, validClass) {
+      $(element).removeClass('is-invalid');
+    }
+  });
+});

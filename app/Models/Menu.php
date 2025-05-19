@@ -21,6 +21,7 @@ class Menu extends Model
         return $this->belongsTo(BusinessProfile::class, 'business_id');
     }
 
+
     // public function category()
     // {
     //     return $this->belongsTo(Category::class);

@@ -105,9 +105,28 @@ class AdminCustomerController extends Controller
     */
     public function show(User $customer)
     {
-        $customer->load(['customerProfile', 'customerAddress']);
+        $customer->load([
+            'customerProfile', 
+            'customerAddress', 
+            'customerCheckIn.business:id,name', 
+            'customerCheckIn.customer:id,name', 
+            'customerRewardRedemptions',  
+            'customerRewardRedemptions.business:id,name',
+            'customerRewardRedemptions.customer:id,name',
+            'customerHistory',
+            'customerHistory.customer:id,name',
+            'customerWishlist',
+            'customerWishlist.business:id,name',
+            'customerWishlist.customer:id,name'
+        ]);
         $cityName = City::where('id', $customer->customerAddress->city)->value('city_name');
-        return view('admin.customers.show', compact('customer', 'cityName'));
+
+        //Send Separate variable
+        $rewardRedemptions = $customer->customerRewardRedemptions;
+        $history = $customer->customerHistory;
+        $wishlists = $customer->customerWishlist;
+        
+        return view('admin.customers.show', compact('customer', 'cityName', 'rewardRedemptions', 'history', 'wishlists'));
     }
 
     /**

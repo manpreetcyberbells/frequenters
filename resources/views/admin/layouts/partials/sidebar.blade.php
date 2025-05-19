@@ -282,6 +282,15 @@
                   </li>
                 </ul>
               </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.manual-checkin') ? 'menu-open' : '' }}">
+                  <a href="{{ route('admin.manual-checkin') }}" class="nav-link {{ request()->routeIs('admin.manual-checkin') ? 'active' : '' }}">
+                      <i class="nav-icon fas fa-th"></i>
+                      <p>Manual Check-In</p>
+                  </a>
+              </li>
+
+          
             <li class="nav-item">
               <a href="pages/kanban.html" class="nav-link">
                 <p>

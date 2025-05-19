@@ -19,4 +19,14 @@ class CheckIn extends Model
         'check_in_time'
     ];
 
+    // For Web Detail
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
 }
