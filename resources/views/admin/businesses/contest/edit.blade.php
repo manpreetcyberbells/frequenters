@@ -21,8 +21,9 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('contests.edit', $content->id) }}">Edit Contest</a></li>
-                        <li class="breadcrumb-item active">Contests</li>
+                        <li class="breadcrumb-item"><a href="{{ route('contests.edit', $content->id) }}">Contest</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('contests.edit', $content->id) }}">Listing</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
                     </ol>
                 </div>
             </div>

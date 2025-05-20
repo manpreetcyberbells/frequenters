@@ -14,7 +14,7 @@
                      <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item active"><a href="#">Menu</a></li>
-                        <li class="breadcrumb-item active">Menu Listing</li>
+                        <li class="breadcrumb-item active">Listing</li>
                      </ol>
                   </div>
             </div>

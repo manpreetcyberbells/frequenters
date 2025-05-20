@@ -15,7 +15,8 @@
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item"><a href="{{ route('contests.index') }}">Contests</a></li>
-                        <li class="breadcrumb-item active">Contest Detail</li>
+                        <li class="breadcrumb-item"><a href="{{ route('contests.index') }}">Listing</a></li>
+                        <li class="breadcrumb-item active">Detail</li>
                     </ol>
                 </div>
             </div>

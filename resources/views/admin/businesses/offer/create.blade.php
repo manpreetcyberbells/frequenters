@@ -15,7 +15,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('admin.business.offer.index') }}">Offer Listing</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.business.offer.index') }}">Offer</a></li>
                         <li class="breadcrumb-item active">Create Offer</li>
                     </ol>
                 </div>

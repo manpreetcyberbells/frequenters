@@ -14,7 +14,7 @@
                      <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item active"><a href="#">Staff</a></li>
-                        <li class="breadcrumb-item active">Staff Listing</li>
+                        <li class="breadcrumb-item active">Listing</li>
                      </ol>
                   </div>
             </div>
@@ -32,7 +32,7 @@
                   <div class="card-header">
                      <!-- <h3 class="card-title">Staff</h3> -->
                      <div class="card-tools">
-                        <a href="{{ route('staff.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Staff member</a>
+                        <a href="{{ route('staff.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Employee</a>
                      </div>
                   </div>
                   <!-- /.card-header -->
