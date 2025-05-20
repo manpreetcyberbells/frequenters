@@ -41,6 +41,12 @@
                                  <a class="nav-link" id="vert-tabs-redeem-tab" data-toggle="pill" href="#vert-tabs-redeem" role="tab" aria-controls="vert-tabs-redeem" aria-selected="false">Redeem</a>
                                  <a class="nav-link" id="vert-tabs-search-tab" data-toggle="pill" href="#vert-tabs-search" role="tab" aria-controls="vert-tabs-search" aria-selected="false">Search</a>
                                  <a class="nav-link" id="vert-tabs-wishlist-tab" data-toggle="pill" href="#vert-tabs-wishlist" role="tab" aria-controls="vert-tabs-wishlist" aria-selected="false">Wishlist</a>
+                                 <a class="nav-link" id="vert-tabs-complaint-tab" data-toggle="pill" href="#vert-tabs-complaint" role="tab" aria-controls="vert-tabs-complaint" aria-selected="false">Complaint</a>
+                                 <a class="nav-link" id="vert-tabs-invited-tab" data-toggle="pill" href="#vert-tabs-invited" role="tab" aria-controls="vert-tabs-invited" aria-selected="false">Friends Invited</a>
+                                 <a class="nav-link" id="vert-tabs-review-tab" data-toggle="pill" href="#vert-tabs-review" role="tab" aria-controls="vert-tabs-review" aria-selected="false">Reviews</a>
+                                 <a class="nav-link" id="vert-tabs-contests-tab" data-toggle="pill" href="#vert-tabs-contests" role="tab" aria-controls="vert-tabs-contests" aria-selected="false">Contests</a>
+                                 <a class="nav-link" id="vert-tabs-events-tab" data-toggle="pill" href="#vert-tabs-events" role="tab" aria-controls="vert-tabs-events" aria-selected="false">Events</a>
+                                 <a class="nav-link" id="vert-tabs-interaction-tab" data-toggle="pill" href="#vert-tabs-interaction" role="tab" aria-controls="vert-tabs-interaction" aria-selected="false">Reward Earned</a>
                            </div>
                         </div>
                         <div class="col-7 col-sm-10">
@@ -59,6 +65,24 @@
                                  </div>
                                  <div class="tab-pane fade" id="vert-tabs-wishlist" role="tabpanel" aria-labelledby="vert-tabs-wishlist-tab">
                                     @include('admin.customers.tabs.wishlist')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-complaint" role="tabpanel" aria-labelledby="vert-tabs-complaint-tab">
+                                    @include('admin.customers.tabs.complaint')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-invited" role="tabpanel" aria-labelledby="vert-tabs-invited-tab">
+                                    @include('admin.customers.tabs.invite')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-review" role="tabpanel" aria-labelledby="vert-tabs-review-tab">
+                                    @include('admin.customers.tabs.review')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-contests" role="tabpanel" aria-labelledby="vert-tabs-contests-tab">
+                                    @include('admin.customers.tabs.contests')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-events" role="tabpanel" aria-labelledby="vert-tabs-events-tab">
+                                    @include('admin.customers.tabs.events')
+                                 </div>
+                                 <div class="tab-pane fade" id="vert-tabs-interaction" role="tabpanel" aria-labelledby="vert-tabs-interaction-tab">
+                                    @include('admin.customers.tabs.interaction')
                                  </div>
                            </div>
                         </div>

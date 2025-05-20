@@ -117,7 +117,20 @@ class AdminCustomerController extends Controller
             'customerHistory.customer:id,name',
             'customerWishlist',
             'customerWishlist.business:id,name',
-            'customerWishlist.customer:id,name'
+            'customerWishlist.customer:id,name',
+            'customerComplaints',
+            'customerComplaints.business:id,name',
+            'customerComplaints.customer:id,name',
+            'friendsInvited',
+            'friendsInvited.customer:id,name',
+            'cusomerSubmitReviews',
+            'cusomerSubmitReviews.business:id,name',
+            'cusomerSubmitReviews.customer:id,name',
+            'customerParticipant.contest',
+            'customerParticipant.contest.businessDetail:id,name',
+            'customerEvents.event',
+            'customerBusinessInteractions.customer:id,name',
+            'customerBusinessInteractions.business:id,name',
         ]);
         $cityName = City::where('id', $customer->customerAddress->city)->value('city_name');
 
@@ -125,8 +138,14 @@ class AdminCustomerController extends Controller
         $rewardRedemptions = $customer->customerRewardRedemptions;
         $history = $customer->customerHistory;
         $wishlists = $customer->customerWishlist;
+        $complaints = $customer->customerComplaints;
+        $invitedFriends = $customer->friendsInvited;
+        $reviews = $customer->cusomerSubmitReviews;
+        $contests = $customer->customerParticipant;
+        $events = $customer->customerEvents;
+        $interactionHistory = $customer->customerBusinessInteractions;
         
-        return view('admin.customers.show', compact('customer', 'cityName', 'rewardRedemptions', 'history', 'wishlists'));
+        return view('admin.customers.show', compact('customer', 'cityName', 'rewardRedemptions', 'history', 'wishlists', 'complaints', 'invitedFriends', 'reviews', 'contests', 'events', 'interactionHistory'));
     }
 
     /**

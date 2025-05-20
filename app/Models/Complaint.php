@@ -18,4 +18,14 @@ class Complaint extends Model
         'attachment',
         'resolved_at'
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(User::class, 'business_id');
+    }
 }

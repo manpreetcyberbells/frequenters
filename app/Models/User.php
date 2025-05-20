@@ -147,4 +147,40 @@ class User extends Authenticatable
     {
         return $this->hasMany(Wishlist::class, 'customer_id');
     }
+
+    // Complaint
+    public function customerComplaints()
+    {
+        return $this->hasMany(Complaint::class, 'customer_id');
+    }
+
+    // Invited
+    public function friendsInvited()
+    {
+        return $this->hasMany(Invite::class, 'customer_id');
+    }
+
+    // Invited
+    public function cusomerSubmitReviews()
+    {
+        return $this->hasMany(Review::class, 'customer_id');
+    }
+
+    // Contest Participant
+    public function customerParticipant()
+    {
+        return $this->hasMany(ContestParticipant::class, 'user_id');
+    }
+    
+    // Contest Participant
+    public function customerEvents()
+    {
+        return $this->hasMany(EventReservation::class, 'customer_id');
+    }
+
+    // Interactions
+    public function customerBusinessInteractions()
+    {
+        return $this->hasMany(CustomerBusinessInteraction::class, 'customer_id');
+    }
 }

@@ -1,10 +1,6 @@
-<?php
-    // echo"<pre>"; print_r($rewardRedemptions);
-?>
-
 <!-- /.card-header -->
 <div class="card-body">
-    <table id="example3" class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped datatableExample">
     <thead>
         <tr>
             <th style="width: 10px">#</th>
