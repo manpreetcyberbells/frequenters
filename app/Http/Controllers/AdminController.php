@@ -13,23 +13,23 @@ class AdminController extends Controller
     // Show Admin Dashboard
     public function dashboard()
     {
-        // Fetch customers for the listings
-        $customers = User::where('role', 'customer')->get();
         // Count total customers
-        $totalCustomers = $customers->count();
-        // Count active users (last login in the last 30 days)
-        $activeUsers = User::where('last_login_at', '>=', now()->subDays(30))->count();
-        // Count Pending users
-        $pendingUsers = User::where('status', 'pending')->count();
+        $totalCustomers = User::where('role', 'customer')->get()->count();
+        $activeCustomer = User::where('role', 'customer')->where('status', 'active')->count();
+        $pendingCustomer = User::where('role', 'customer')->where('status', 'pending')->count();
         
-        // Fetch businesses for the listings
-        $businesses = User::where('role', 'business')->get();
         // Count total businesses
-        $totalBusinesses = $businesses->count();
-        // Pass the business list for reward granting
-        // $businessList = DB::table('business_profiles')->get();
+        $totalBusinesses = User::where('role', 'business')->get()->count();
+        $activeBusiness = User::where('role', 'business')->where('status', 'active')->count();
+        $pendingBusiness = User::where('role', 'business')->where('status', 'pending')->count();
 
-        return view('admin.dashboard.index', compact('totalCustomers', 'totalBusinesses', 'activeUsers', 'pendingUsers', 'customers', 'businesses'));
+        // Other Stuff for Dashbord
+        $totalContests = DB::table('contests')->get()->count();
+        $totalEvents = DB::table('events')->get()->count();
+        $totalOffers = DB::table('offers')->get()->count();
+        $totalRewards = DB::table('rewards')->get()->count();
+
+        return view('admin.dashboard.index', compact('totalCustomers', 'activeCustomer', 'pendingCustomer', 'totalBusinesses', 'activeBusiness', 'pendingBusiness','totalContests', 'totalEvents', 'totalOffers', 'totalRewards'));
     }
 
     // Edit a Admin
