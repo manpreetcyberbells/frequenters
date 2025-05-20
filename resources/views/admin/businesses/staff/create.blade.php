@@ -1,5 +1,5 @@
 @extends('admin.layouts.master')
-@section('title', 'Create Staff Member')
+@section('title', 'Create Employee')
 @section('content')
 
 <!-- Content Wrapper. Contains page content -->
@@ -9,13 +9,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Create Employee</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('staff.index') }}">Staff Member</a></li>
-                        <li class="breadcrumb-item active">Create Staff Members</li>
+                        <li class="breadcrumb-item active"><a href="#">Staff</a></li>
+                        <li class="breadcrumb-item active">Create Employee</li>
                     </ol>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <div class="card-header"><div class="card-title">Create Staff member</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Create Staff member</div></div> -->
                     <form id="staffForm" method="POST" action="{{ route('staff.store') }}" enctype="multipart/form-data" class="needs-validation">
                     @csrf
                         <div class="card-body">

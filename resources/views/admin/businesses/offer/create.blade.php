@@ -10,12 +10,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Create Offer</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('businesses.create') }}">Create Business</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('admin.business.offer.index') }}">Offer Listing</a></li>
                         <li class="breadcrumb-item active">Create Offer</li>
                     </ol>
                 </div>
@@ -43,7 +43,7 @@
                     <!--begin::Form Validation-->
                     <div class="card card-info card-outline mb-4">
                     <!--begin::Header-->
-                    <div class="card-header"><div class="card-title">Create Offer</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Create Offer</div></div> -->
                     <!--end::Header-->
                     <!--begin::Form-->
                     <form id="offerForm" method="POST" action="{{ route('admin.business.offer.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>

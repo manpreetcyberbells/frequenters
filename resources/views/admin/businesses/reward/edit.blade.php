@@ -9,13 +9,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Edit Reward</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item"><a href="{{ route('rewards.index') }}">Rewards</a></li>
-                        <li class="breadcrumb-item active">Create Reward</li>
+                        <li class="breadcrumb-item active">Edit Reward</li>
                     </ol>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <div class="card-header"><div class="card-title">Edit Reward</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Edit Reward</div></div> -->
                     <form id="rewardForm" method="POST" action="{{ route('rewards.update', $reward->id) }}" enctype="multipart/form-data" class="needs-validation">
                     @csrf
                     @method('PUT')

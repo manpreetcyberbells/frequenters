@@ -9,12 +9,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Create Reward</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('rewards.index') }}">Rewards</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('rewards.index') }}">Reward Listing</a></li>
                         <li class="breadcrumb-item active">Create Reward</li>
                     </ol>
                 </div>
@@ -37,7 +37,7 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <div class="card-header"><div class="card-title">Create Reward</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Create Reward</div></div> -->
                     <form id="rewardForm" method="POST" action="{{ route('rewards.store') }}" enctype="multipart/form-data" class="needs-validation">
                     @csrf
                         <div class="card-body">

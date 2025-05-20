@@ -14,12 +14,13 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Customer</h1>
+            <h1>Edit Customer</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-              <li class="breadcrumb-item active">Customer Edit</li>
+              <li class="breadcrumb-item"><a href="{{ route('customers.index') }}">Customer</a></li>
+              <li class="breadcrumb-item active">Edit Customer</li>
             </ol>
           </div>
         </div>
@@ -47,7 +48,7 @@
                 <!--begin::Form Validation-->
                 <div class="card card-info card-outline mb-4">
                   <!--begin::Header-->
-                  <div class="card-header"><div class="card-title">Customer Edit</div></div>
+                  <!-- <div class="card-header"><div class="card-title">Customer Edit</div></div> -->
                   <!--end::Header-->
                   <!--begin::Form-->
                   <form action="{{route('customers.update', $customer->id)}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">

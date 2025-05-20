@@ -16,7 +16,7 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Edit Contest</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
@@ -49,7 +49,7 @@
                     <!--begin::Form Validation-->
                     <div class="card card-info card-outline mb-4">
                     <!--begin::Header-->
-                    <div class="card-header"><div class="card-title">Edit Content</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Edit Content</div></div> -->
                     <!--end::Header-->
                     <!--begin::Form-->
                     <form id="contestEditForm" method="post" action="{{ route('contests.update', $content->id) }}" enctype="multipart/form-data" class="needs-validation">

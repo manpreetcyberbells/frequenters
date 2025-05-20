@@ -10,13 +10,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Create Content</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('contests.create') }}">Create Contest</a></li>
-                        <li class="breadcrumb-item active">Contests</li>
+                        <li class="breadcrumb-item"><a href="{{ route('contests.index') }}">Contest</a></li>
+                        <li class="breadcrumb-item active">Create Contest</li>
                     </ol>
                 </div>
             </div>
@@ -43,7 +43,7 @@
                     <!--begin::Form Validation-->
                     <div class="card card-info card-outline mb-4">
                     <!--begin::Header-->
-                    <div class="card-header"><div class="card-title">Create Content</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Create Content</div></div> -->
                     <!--end::Header-->
                     <!--begin::Form-->
                     <form id="contestForm" method="POST" action="{{ route('contests.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>

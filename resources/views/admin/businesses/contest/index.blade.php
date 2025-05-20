@@ -1,6 +1,7 @@
 @extends('admin.layouts.master')
 @section('title', 'Business Contests')
 @section('content')
+
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
    <!-- Content Header (Page header) -->
@@ -8,13 +9,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Contest Listing</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('contests.create') }}">Create Contest</a></li>
-                        <li class="breadcrumb-item active">Contests</li>
+                        <li class="breadcrumb-item"><a href="{{ route('contests.index') }}">Contest</a></li>
+                        <li class="breadcrumb-item active">Contest Listing</li>
                     </ol>
                 </div>
             </div>
@@ -30,7 +31,7 @@
                <!-- /.card -->
                <div class="card">
                   <div class="card-header">
-                     <h3 class="card-title">Business Contests</h3>
+                     <!-- <h3 class="card-title">Contest Listing</h3> -->
                      <div class="card-tools">
                         <a href="{{ route('contests.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Contest</a>
                      </div>

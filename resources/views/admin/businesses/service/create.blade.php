@@ -9,12 +9,12 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Create Service</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('services.index') }}">Services</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('services.index') }}">Service</a></li>
                         <li class="breadcrumb-item active">Create Service</li>
                     </ol>
                 </div>
@@ -38,7 +38,7 @@
                 @include('admin.layouts.notifications')
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                        <div class="card-header"><div class="card-title">Create Service</div></div>
+                        <!-- <div class="card-header"><div class="card-title">Create Service</div></div> -->
                         <form id="serviceForm" method="POST" action="{{ route('services.store') }}" enctype="multipart/form-data" class="needs-validation">
                             @csrf
                             <div class="card-body">

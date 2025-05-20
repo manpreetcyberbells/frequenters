@@ -9,13 +9,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <!-- <h1>Business</h1> -->
+                    <h1>Edit Staff</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('staff.index') }}">Staff Member</a></li>
-                        <li class="breadcrumb-item active">Edit Staff Members</li>
+                        <li class="breadcrumb-item"><a href="{{ route('staff.index') }}">Staff Listing</a></li>
+                        <li class="breadcrumb-item active">Edit Staff</li>
                     </ol>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <div class="card-header"><div class="card-title">Edit Staff member</div></div>
+                    <!-- <div class="card-header"><div class="card-title">Edit Staff member</div></div> -->
                     <form id="staffForm" method="POST" action="{{ route('staff.update', $staff->id) }}" enctype="multipart/form-data" class="needs-validation">
                     @csrf
                     @method('PUT')

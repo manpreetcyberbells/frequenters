@@ -34,8 +34,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-success">
                   <div class="inner">
+                     <p>Total Customer</p>
                      <h3>{{ $totalCustomers }}</h3>
-                     <p>Total Customers</p>
                   </div>
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
@@ -46,8 +46,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-info">
                   <div class="inner">
+                     <p>Active Customer</p>
                      <h3>{{ $activeCustomer }}</h3>
-                     <p>Active Customers</p>
                   </div>
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
@@ -58,8 +58,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-warning">
                   <div class="inner">
+                     <p>Deactivated Customer</p>
                      <h3>{{ $pendingCustomer }}</h3>
-                     <p>Pending Customers</p>
                   </div>
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
@@ -72,8 +72,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-success">
                   <div class="inner">
-                     <h3>{{ $totalBusinesses }}</h3>
                      <p>Total Business</p>
+                     <h3>{{ $totalBusinesses }}</h3>
                   </div>
                   <div class="icon">
                      <i class="ion ion-bag"></i>
@@ -84,8 +84,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-info">
                   <div class="inner">
-                     <h3>{{ $activeBusiness }}</h3>
                      <p>Active Business</p>
+                     <h3>{{ $activeBusiness }}</h3>
                   </div>
                   <div class="icon">
                      <i class="ion ion-bag"></i>
@@ -96,8 +96,8 @@
             <div class="col-lg-2 col-6">
                <div class="small-box bg-warning">
                   <div class="inner">
-                     <h3>{{ $pendingBusiness }}</h3>
                      <p>Pending Business</p>
+                     <h3>{{ $pendingBusiness }}</h3>
                   </div>
                   <div class="icon">
                      <i class="ion ion-bag"></i>

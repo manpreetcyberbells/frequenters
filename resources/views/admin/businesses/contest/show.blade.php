@@ -15,7 +15,7 @@
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                         <li class="breadcrumb-item"><a href="{{ route('contests.index') }}">Contests</a></li>
-                        <li class="breadcrumb-item active">Contest</li>
+                        <li class="breadcrumb-item active">Contest Detail</li>
                     </ol>
                 </div>
             </div>
@@ -115,7 +115,7 @@
 
                                     <div class="row">
                                         <div class="col-12">
-                                            <h4>Description</h4>
+                                            <h4>Close Contest Description</h4>
                                             <div class="post">
                                                 <p> {{ $content->close_description}} </p>
                                             </div>
@@ -123,7 +123,7 @@
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-12 col-lg-4 order-1 order-md-2">
-                                    <h3 class="text-primary"><i class="fas fa-paint-brush"></i>Opne Contest Description</h3>
+                                    <h3 class="text-primary">Open Contest Description</h3>
                                     <p class="text-muted">{{ $content->description}}</p>
                                     <br> @if($content->reward_type == "points")
                                     <div class="row">
