@@ -288,8 +288,15 @@ class EventController extends Controller
                 return response()->json(['message' => 'You have successfully joined the event.'], 200);
             }
 
-            if ($reservation && $reservation->status !== 'confirmed' && $status === 'cancelled') {
-                return response()->json(['error' => 'You cannot cancel without confirming the event.'], 400);
+            if ($reservation && $reservation->status == 'cancelled' && $status === 'confirmed') {
+                $reservation->update(['status' => 'confirmed']);
+
+                $body = "$userName successfully joined the event again!";
+                $businessId = DB::table('events')->where('id',$eventId)->pluck('business_id')->first();
+                createNotification($businessId, $body, "push", null, true);
+                return response()->json(['message' => 'You have successfully joined the event.'], 200);
+
+                // return response()->json(['error' => 'You cannot cancel without confirming the event.'], 400);
             }
 
             if ($reservation && $reservation->status === 'confirmed' && $status === 'cancelled') {

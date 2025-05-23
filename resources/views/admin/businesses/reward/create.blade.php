@@ -44,7 +44,7 @@
                             <div class="row g-4">
                                 <div class="form-group col-md-4">
                                     <label for="business" class="form-label">Business</label>
-                                    <select id="business_id" name="business_id" class="form-control" required>
+                                    <select id="business_id" name="business_id" class="form-control select2bs4" required>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
                                             <option value="{{ $business->id }}">{{ $business->name }}</option>
                                         @endforeach

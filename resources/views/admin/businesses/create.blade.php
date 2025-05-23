@@ -163,14 +163,14 @@
 
                 <div class="col-md-4 form-group">
                   <label for="category" class="form-label">Category</label>
-                  <select id="parent-category" name="category" class="form-control" required>
+                  <select id="parent-category" name="category" class="form-control select2bs4" required>
                     <option value="">Select Parent Category</option>
                   </select>
                 </div>
 
                 <div class="col-md-4 form-group">
                   <label for="category" class="form-label">Child Category</label>
-                  <select id="child-category" name="child_category" class="form-control" required>
+                  <select id="child-category" name="child_category" class="form-control select2bs4" required>
                     <option value="">Select Child Category</option>
                   </select>
                 </div>
