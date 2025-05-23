@@ -53,6 +53,45 @@
                   @method('PUT')
                     <!--begin::Body-->
                     <div class="card-body">
+                      
+                      <div class="row g-3">
+                          <!-- uploaded images -->
+                             <div class="col-4 form-group">
+                                  @if(!empty($business['businessImage']))
+                                  @foreach($business['businessImage'] as $image)
+                                   
+                                      <img src="{{ $image->photo }}" 
+                                          alt="Business Image" 
+                                          width="100" 
+                                          height="100"
+                                          class="preview-image border border-dark rounded" 
+                                          data-src="{{ $image->photo }}"
+                                          style="cursor: pointer;">
+                               
+                                  @endforeach
+                                @else
+                                  <p>No images available</p>
+                                @endif
+
+                             
+                               <div id="imagePreviewModal" style="display: none; position: fixed; top: 4rem; bottom: 4rem; width: 75%; height: 100%; background: #383838cc; align-items: center; justify-content: center; z-index: 1;">
+                                    <div class="close text-white p-2 cursor-pointer"><i class="fas fa-window-close cursor-pointer"></i></div>
+                                    <img id="previewImage" src="" style="text-align: center;">
+                                </div>
+                             </div>
+                      </div>
+                      <div class="row g-3"><div id="image-preview" class="mt-3"></div></div>
+                      <div class="row g-3">
+                         <div class="col-md-6 mb-3 form-group">
+                            <div class="custom-file">
+                            <input type="file" class="custom-file-input form-control"  id="images" name="images[]" multiple="" accept="image/*" required="">
+                            <label class="custom-file-label" for="customFile">Upload Images</label>
+                          </div>                            
+                        </div>
+
+                           
+                             
+                      </div>
                       <!--begin::Row-->
                       <div class="row g-3">
                         <!--begin::Col-->
@@ -190,37 +229,7 @@
 
                         <!--end::Col-->
 
-                        <div class="col-md-6 mb-3 form-group">
-                            <label for="images" class="form-label">Upload Images</label>
-                            <input type="file" class="form-control" id="images" name="images[]" multiple accept="image/*">
-                            <div id="image-preview" class="mt-3"></div>
-                        </div>
-
-                             <!-- uploaded images -->
-                             <div class="col-12 form-group text-center">
-                                  @if(!empty($business['businessImage']))
-                                  @foreach($business['businessImage'] as $image)
-                                   
-                                      <img src="{{ $image->photo }}" 
-                                          alt="Business Image" 
-                                          width="100" 
-                                          height="100"
-                                          class="preview-image border border-dark rounded" 
-                                          data-src="{{ $image->photo }}"
-                                          style="cursor: pointer;">
-                               
-                                  @endforeach
-                                @else
-                                  <p>No images available</p>
-                                @endif
-
-                             
-                               <div id="imagePreviewModal" style="display: none; position: fixed; top: 4rem; bottom: 4rem; width: 75%; height: 100%; background: #383838cc; align-items: center; justify-content: center; z-index: 1;">
-                                    <div class="close text-white p-2 cursor-pointer"><i class="fas fa-window-close cursor-pointer"></i></div>
-                                    <img id="previewImage" src="" style="text-align: center;">
-                                </div>
-                             </div>
-                              <!-- test -->
+                       
                              <!-- col-12 -->
                               <!-- description -->
                               <div class="col-md-12 mb-3 form-group">

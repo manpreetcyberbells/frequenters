@@ -50,15 +50,16 @@
                         @csrf    
                     <!--begin::Body-->
                         <div class="card-body">
-
                         <div class="row g-3">
-                            <div class="col-md-4 mb-3">
+                             <div class="col-md-4 mb-3">
                                 <label for="banner" class="form-label">Upload Banner</label>
                                 <div class="custom-file">
                                     <input type="file" class="custom-file-input"  id="banner" name="banner" accept="image/*">
                                     <label class="custom-file-label" for="customFile">Upload Banner</label>
                                 </div>
                             </div>
+                        </div>
+                        <div class="row g-3">
 
                             <div class="col-md-4 form-group">
                                 <label for="status" class="form-label">Business</label>

@@ -127,8 +127,8 @@ $(document).ready(function () {
             const reader = new FileReader();
             reader.onload = function (e) {
                 const previewHtml = `
-                    <div class="position-relative m-2" style="display:inline-block;">
-                        <img src="${e.target.result}" width="100" height="100" style="object-fit:cover; border-radius:8px; border:1px solid #ccc;" />
+                    <div class="position-relative" style="display:inline-block;">
+                        <img src="${e.target.result}" class="contestImage" style="object-fit:cover; border-radius:8px; border:1px solid #343a40;" />
                         <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 remove-image" data-index="${index}" style="padding: 2px 6px; font-size: 12px;">×</button>
                     </div>
                 `;
@@ -185,5 +185,14 @@ $(document).ready(function () {
             }
         });
     });
+
+
+    banner_image.onchange = evt => {
+        const [file] = banner_image.files
+        if (file) {
+            contestImagePreview.src = URL.createObjectURL(file)
+        }
+    }
+
 
 });

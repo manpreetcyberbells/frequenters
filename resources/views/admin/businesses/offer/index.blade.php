@@ -67,7 +67,7 @@
                                 <td>{{ $offer->title }}</td>
                                 <td>{{ $offer->discount_percentage }}</td>
                                 <td>{{ $offer->discount_cap }}</td>
-                                <td> <span class="badge @if($offer->applicable_users == 'regular') badge-success @elseif($offer->applicable_users == 'new') badge-primary @else badge-dark @endif">{{ $offer->applicable_users }}</span></td>
+                                <td class="text-center"> <span class="badge @if($offer->applicable_users == 'regular') badge-success @elseif($offer->applicable_users == 'new') badge-primary @else badge-dark @endif">{{ $offer->applicable_users }}</span></td>
                                 <td>{{ $offer->offer_time }}</td>
                                 <td>{{ $offer->campaign_start_date }}</td>
                                 <td>{{ $offer->campaign_start_time }}</td>
@@ -82,7 +82,7 @@
                         </tbody>
                         <tfoot>
                            <tr>
-                           <th style="width: 10px">#</th>
+                              <th style="width: 10px">#</th>
                               <th>Banner</th>
                               <th>Business</th>
                               <th>Title</th>

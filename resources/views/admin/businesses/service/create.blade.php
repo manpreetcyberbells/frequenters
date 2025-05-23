@@ -44,6 +44,23 @@
                             @csrf
                             <div class="card-body">
                                 <div class="row g-3">
+                                <!-- images upload -->
+                                    <div class="col-md-4">
+                                        <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="form-group col-md-4">
+                                        <label for="photo" class="form-label">Upload Images</label>
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
+                                            <label class="custom-file-label" for="customFile">Upload Images</label>
+                                        </div>
+                                    </div>
+
+                                    
+                                </div>
+                                <div class="row g-3">
                                     <div class="form-group col-md-4">
                                         <label for="business_id" class="form-label">Business</label>
                                         <select id="business_id" name="business_id" class="form-control" required>
@@ -82,20 +99,7 @@
                                     </div>
                                 </div>
 
-                                <div class="row g-3">
-                                    <div class="form-group col-md-4">
-                                        <label for="photo" class="form-label">Upload Images</label>
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
-                                            <label class="custom-file-label" for="customFile">Upload Images</label>
-                                        </div>
-                                    </div>
-
-                                    <!-- images upload -->
-                                    <div class="col-md-12 text-center">
-                                        <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
-                                    </div>
-                                </div>
+                                
 
                                 <div class="row g-3">
                                     <div class="col-md-12 form-group">

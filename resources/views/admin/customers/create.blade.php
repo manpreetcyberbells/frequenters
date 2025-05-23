@@ -52,6 +52,22 @@
                     <div class="card-body">
                       <!--begin::Row-->
                       <div class="row g-3">
+
+                      <div class="col-md-4 form-group">
+                        <div id="image-preview" class="mt-3"></div>
+                            <label for="profile_image" class="form-label">Upload Profile Image</label>
+                            <!-- <input type="file" class="form-control" id="profile_image" name="profile_image" multiple accept="image/*"> -->
+                             <div class="custom-file">
+                            <input type="file" class="custom-file-input form-control" id="profile_image" name="profile_image" multiple accept="image/*" required>
+                            <label class="custom-file-label" for="customFile">Upload Profile Image</label>
+                          </div>
+                            
+                        </div>
+                        </div>
+
+                         <div class="row g-3">
+
+
                         <!--begin::Col-->
                         <div class="col-md-4 form-group">
                           <label for="name" class="form-label">Name</label>
@@ -141,15 +157,7 @@
                             />
                         </div>
 
-                        <div class="col-md-4 form-group">
-                            <label for="profile_image" class="form-label">Upload Profile Image</label>
-                            <!-- <input type="file" class="form-control" id="profile_image" name="profile_image" multiple accept="image/*"> -->
-                             <div class="custom-file">
-                            <input type="file" class="custom-file-input form-control" id="profile_image" name="profile_image" multiple accept="image/*" required>
-                            <label class="custom-file-label" for="customFile">Upload Profile Image</label>
-                          </div>
-                            <div id="image-preview" class="mt-3"></div>
-                        </div>
+                        
 
                         <div class="col-md-4 form-group">
                             <label for="gender" class="form-label">Gender</label>

@@ -53,7 +53,7 @@
                               <th>End Date</th>
                               <th>End Time</th>
                               <th>Target Tier</th>
-                              <th>Status</th>
+                              <th class="text-center">Status</th>
                               <!-- <th>CreatedAt</th> -->
                               <th>Description</th>
                            </tr>
@@ -73,7 +73,7 @@
                                 <td>{{ $event->end_date }}</td>
                                 <td>{{ $event->end_time }}</td>
                                 <td>{{ $event->target_tier }}</td>
-                                <td> <span class="badge @if($event->status == 'published') badge-success @else badge-secondary @endif">{{ $event->status }}</span></td>
+                                <td class="text-center"> <span class="badge @if($event->status == 'published') badge-success @else badge-secondary @endif">{{ $event->status }}</span></td>
                                 <!-- <td>{{ $event->created_at }}</td> -->
                                 <td>{{ $event->event_description }}</td>
                             </tr>
@@ -93,7 +93,7 @@
                               <th>End Date</th>
                               <th>End Time</th>
                               <th>Target Tier</th>
-                              <th>Status</th>
+                              <th class="text-center">Status</th>
                               <!-- <th>CreatedAt</th> -->
                               <th>Description</th>
                            </tr>

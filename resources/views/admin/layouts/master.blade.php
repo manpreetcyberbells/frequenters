@@ -5,7 +5,7 @@
 <div class="wrapper">
   <!-- Preloader -->
   <div class="preloader flex-column justify-content-center align-items-center">
-    <img class="animation__shake" src="{{ asset('admin_v1/dist/img/frequenter.png') }}" alt="Frequenter" height="60" width="60">
+    <img class="" src="{{ asset('admin_v1/dist/img/frequenter.png') }}" alt="Frequenter" height="60" width="60">
   </div>
     @include('admin.layouts.partials.nav')
     @include('admin.layouts.partials.sidebar')

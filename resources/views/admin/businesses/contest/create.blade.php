@@ -50,16 +50,23 @@
                     @csrf    
                     <!--begin::Body-->
                         <div class="card-body">
-
-                        <div class="row g-3">
-                            <div class="col-md-3 mb-3">
+                             <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <!-- <div id="image-preview" class="mt-3"> -->
+                                    <img id="contestImagePreview" src="{{url('')}}/admin/images/Frequenters_logo_1.png" alt="your image" class="mt-3 img-fluid contestImage border border-dark rounded"/>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                 
+                            <div class="col-md-3 form-group">
                                 <label for="banner_image" class="form-label">Upload Banner</label>
                                     <div class="custom-file">
                                         <input type="file" class="custom-file-input"  id="banner_image" name="banner_image" accept="image/*">
                                         <label class="custom-file-label" for="customFile">Upload Banner</label>
                                     </div>
                             </div>
-
+                            </div>
+                        <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Business</label>
                                 <select id="business_id" name="business_id" class="form-control" required >
@@ -81,6 +88,11 @@
                                 <option value="close">Close</option>
                                 <option value="completed">Completed</option>
                                 </select>
+                            </div>
+
+                            <div class="col-md-3 form-group">
+                                <label for="max_participants" class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="max_participants" name="max_participants" required min="1" max="99999" />
                             </div>
                         </div>
 
@@ -114,12 +126,9 @@
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-3 form-group">
-                                <label for="max_participants" class="form-label">Capacity</label>
-                                <input type="number" class="form-control" id="max_participants" name="max_participants" required min="1" max="99999" />
-                            </div>
-                        </div>
+                        <!-- <div class="row g-3">
+                           
+                        </div> -->
 
                         <div class="row g-3">
                             <div class="col-md-12 form-group">

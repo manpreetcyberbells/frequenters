@@ -54,6 +54,23 @@
             <div class="card-body">
               <!--begin::Row-->
               <div class="row g-3">
+                <div class="col-md-4  mb-3">
+                  <!-- images upload -->
+                  <div class="col-md-4 p-0">
+                    <div id="image-preview" class="mt-3"></div>
+                  </div>
+
+                   <label for="images" class="form-label">Upload Images</label>
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="images" name="images[]" multiple accept="image/*">
+                      <label class="custom-file-label" for="customFile">Upload Images</label>
+                    </div>
+                </div>
+                 
+              </div>
+
+
+              <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-4 form-group">
                   <label for="name" class="form-label">Name</label>
@@ -188,20 +205,8 @@
                 </div>
                 
                 
-                <div class="col-md-4  mb-3">
-                   <label for="images" class="form-label">Upload Images</label>
-                    <div class="custom-file">
-                      <input type="file" class="custom-file-input" id="images" name="images[]" multiple accept="image/*">
-                      <label class="custom-file-label" for="customFile">Upload Images</label>
-                    </div>
-
-
-                </div>
-                <!-- images upload -->
-                <div class="col-md-4 text-center">
-                  <div id="image-preview" class="mt-3"></div>
-                </div>
-
+                
+               
 
                 <!--end::Col-->
                 <div class="col-md-12 mb-3">

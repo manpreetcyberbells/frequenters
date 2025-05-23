@@ -44,6 +44,23 @@
                             @csrf
                             @method('PUT')
                             <div class="card-body">
+                                 <div class="row g-3">
+                                    <!-- images upload -->
+                                    <div class="col-md-4">
+                                        <img src="{{$service->photo}}" alt="" class="mt-3 img-fluid contestImage border border-dark rounded">
+                                        <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                     <div class="form-group col-md-4">
+                                        <label for="photo" class="form-label">Upload Images</label>
+                                        <!-- <input type="file" class="form-control" id="menuPhoto" name="photo" accept="image/*" required> -->
+                                           <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
+                                            <label class="custom-file-label" for="customFile">Upload Images</label>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="row g-3">
                                     <div class="form-group col-md-4">
                                         <label for="business_id" class="form-label">Business</label>
@@ -82,19 +99,9 @@
                                         <input type="time" step="1" name="duration" class="form-control" id="duration" value="{{ $service->duration }}" required>
                                     </div>
 
-                                    <div class="form-group col-md-4">
-                                        <label for="photo" class="form-label">Upload Images</label>
-                                        <input type="file" class="form-control" id="menuPhoto" name="photo" accept="image/*" required>
-                                    </div>
                                 </div>
 
-                                <div class="row g-3">
-                                    <!-- images upload -->
-                                    <div class="col-md-12 text-center">
-                                        <img src="{{$service->photo}}" alt="" class="mt-3 d-flex flex-wrap justify-content-center" style="width:100px; height:100px;">
-                                        <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
-                                    </div>
-                                </div>
+                               
 
                                 <div class="row g-3">
                                     <div class="col-md-12 form-group">

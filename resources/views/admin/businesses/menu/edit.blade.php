@@ -44,6 +44,24 @@
                     @method('PUT')
                         <div class="card-body">
                             <div class="row g-3">
+                                 <!-- images upload -->
+                                <div class="col-md-4">
+                                    <img src="{{$menu->photo}}" alt="" style="width:100px; height:100px; margin-bottom: 5px;">
+                                    <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                  <div class="form-group col-md-6">
+                                    
+                                   
+                                    <div class="custom-file">
+                                        <label class="custom-file-label" for="customFile">Upload Images</label>
+                                        <input type="file" class="custom-file-input form-control" id="menuPhoto" name="photo" multiple accept="image/*" required>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3">
                                 <div class="form-group col-md-6">
                                     <label for="status" class="form-label">Business</label>
                                     <select id="business_id" name="business_id" class="form-control select2" required>
@@ -80,21 +98,13 @@
                             </div>
 
                             <div class="row g-3">
-                                <div class="form-group col-md-6">
-                                    <label for="photo" class="form-label">Upload Images</label>
-                                    <input type="file" class="form-control" id="menuPhoto" name="photo" accept="image/*" required>
-                                </div>
 
                                 <div class="form-group col-md-6">
                                     <label for="price">Price</label>
                                     <input type="number" name="price" class="form-control" id="price" value="{{$menu->price}}">
                                 </div>
 
-                                <!-- images upload -->
-                                <div class="col-md-12 text-center">
-                                    <img src="{{$menu->photo}}" alt="" style="width:100px; height:100px;">
-                                    <div id="imagePreview" class="mt-3 d-flex flex-wrap justify-content-center" style="float: left;"></div>
-                                </div>
+                               
                             </div>
 
                             <div class="row g-3">

@@ -12,10 +12,6 @@
       name="description"
       content="Access the Frequenters Admin Panel – your gateway to managing a powerful loyalty program that rewards customer check-ins and helps grow your loyal customer base."
     />
-    <meta
-      name="keywords"
-      content="bootstrap 5, bootstrap, bootstrap 5 admin dashboard, bootstrap 5 dashboard, bootstrap 5 charts, bootstrap 5 calendar, bootstrap 5 datepicker, bootstrap 5 tables, bootstrap 5 datatable, vanilla js datatable, colorlibhq, colorlibhq dashboard, colorlibhq admin dashboard"
-    />
     <!--end::Primary Meta Tags-->
     <!--begin::Fonts-->
     <link
@@ -53,7 +49,7 @@
         <div class="card-header">
           <a
             href="#"
-            class="link-dark text-center link-offset-2 link-opacity-100 link-opacity-50-hover"
+            class="text-dark text-center text-decoration-none"
           >
             <h1 class="mb-0"><b>Frequenters</b></h1>
           </a>
@@ -69,7 +65,7 @@
           <form action="{{ route('admin.login.submit') }}" method="post">
             <!-- Add CSRF Token -->
             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-            <div class="input-group mb-1">
+            <div class="input-group mb-3">
               <div class="form-floating">
                 <input id="loginEmail" type="email" name="email" class="form-control" value="" placeholder="" required/>
                 <label for="loginEmail">Email</label>
@@ -85,15 +81,10 @@
             </div>
             <!--begin::Row-->
             <div class="row">
-              <div class="col-6 d-inline-flex align-items-center">
-                <div class="form-check">
-                  <!-- <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" />
-                  <label class="form-check-label" for="flexCheckDefault"> Remember Me </label> -->
-                </div>
-              </div>
+              
               <!-- /.col -->
-              <div class="col-6">
-                <div class="d-grid gap-2">
+              <div class="text-center pt-4">
+                <div class="d-grid gap-2 text-center">
                   <button type="submit" class="btn btn-primary">Sign In</button>
                 </div>
               </div>

@@ -60,7 +60,7 @@
                                  <td> {{$menu->name}} </td>
                                  <td> {{$menu->category_id}} </td>
                                  <td> {{$menu->price}} </td>
-                                 <td> <span class="badge @if($menu->availability_status == 1) badge-primary @else badge-danger @endif"> 
+                                 <td class="text-center"> <span class="badge @if($menu->availability_status == 1) badge-primary @else badge-danger @endif"> 
                                     @if($menu->availability_status == 1)
                                        Available
                                     @else
@@ -68,7 +68,7 @@
                                     @endif
                                  </td>
                                  <td> {{$menu->description}} </td>
-                                 <td>
+                                 <td class="text-center">
                                     <!-- Edit Button -->
                                     <a href="{{ route('menus.edit', $menu->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
                                        <i class="nav-icon fas fa-edit"></i>

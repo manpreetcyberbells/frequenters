@@ -59,10 +59,10 @@
                                  <td> {{$staff->name}} </td>
                                  <td> {{$staff->email}} </td>
                                  <td> {{$staff->phone}} </td>
-                                 <td> <span class="badge @if($staff->status == 'active') badge-success @elseif ($staff->status == 'pending') badge-success @else badge-danger @endif"> {{$staff->status}} </span></td>
-                                 <td> <span class="badge @if($staff->role == 'manager') badge-primary @else badge-info @endif">{{$staff->role}} </span></td>
-                                 <td> <span class="badge @if($staff->providers == 'email') bg-navy @elseif($staff->providers == 'facebook') badge-primary @elseif($staff->providers == 'google') badge-info @elseif($staff->providers == 'apple') badge-gray @else badge-lime @endif"> {{$staff->providers}} </td>
-                                 <td>
+                                 <td class="text-center"> <span class="badge @if($staff->status == 'active') badge-success @elseif ($staff->status == 'pending') badge-success @else badge-danger @endif"> {{$staff->status}} </span></td>
+                                 <td class="text-center"> <span class="badge @if($staff->role == 'manager') badge-primary @else badge-info @endif">{{$staff->role}} </span></td>
+                                 <td class="text-center"> <span class="badge @if($staff->providers == 'email') bg-navy @elseif($staff->providers == 'facebook') badge-primary @elseif($staff->providers == 'google') badge-info @elseif($staff->providers == 'apple') badge-gray @else badge-lime @endif"> {{$staff->providers}} </td>
+                                 <td class="text-center">
                                     <!-- Edit Button -->
                                     <a href="{{ route('staff.edit', $staff->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
                                     <i class="nav-icon fas fa-edit"></i>

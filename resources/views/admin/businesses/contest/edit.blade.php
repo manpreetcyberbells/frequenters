@@ -60,23 +60,26 @@
                     <input type="hidden" name="reward_type" value="{{ $content->reward_type }}">
                     <!--begin::Body-->
                         <div class="card-body">
-
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <img src="{{ $content->banner_image }}" alt="">
+                             <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <img src="{{ $content->banner_image }}" alt="" class="mt-3 img-fluid contestImage border border-dark rounded">
                                 <!-- <label for="banner_image" class="form-label">Banner Image</label> -->
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="banner_image" class="form-label">Banner Image</label>
-                            </div>
                         </div>
+                            <div class="row g-3">
+                                <div class="col-md-3 mb-3">
+                                    <label for="banner_image" class="form-label">Upload Banner</label>
+                                    <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="banner_image" name="banner_image" accept="image/*">
+                                            <label class="custom-file-label" for="customFile">Upload Banner</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                       
 
                         <div class="row g-3">
-                            <div class="col-md-3 mb-3">
-                                <label for="banner_image" class="form-label">Upload Banner</label>
-                                <input type="file" class="form-control" id="banner_image" name="banner_image" accept="image/*">
-                            </div>
-
+                            
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Business</label>
                                 <select id="business_id" name="business_id" class="form-control select2" required>

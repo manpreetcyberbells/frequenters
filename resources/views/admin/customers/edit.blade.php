@@ -58,15 +58,27 @@
                     <!--begin::Body-->
                     <div class="card-body">
                       <!--begin::Row-->
-                      <div class="row g-3">
-                        <!-- profile image -->
+                      <div class="row g-3">  <!-- profile image -->
                         <div class="col-md-12 form-group">
                           <label for="pimage" class="form-label">Profile Image</label>
                           <div class="">
-                            <img src="{{ isset($customer->profile_image) && $customer->profile_image ? $customer->profile_image : '/media/dummy.png' }}" alt="Business Image" width="100" height="100" class="preview-image profile-user-img img-fluid img-circle" data-src="{{ $customer->profile_image }}" style="cursor: pointer;">
+                            <img src="{{ isset($customer->profile_image) && $customer->profile_image ? $customer->profile_image : '/media/dummy.png' }}" alt="Business Image" width="100" height="100" class="preview-image contestImage border border-dark img-fluid" data-src="{{ $customer->profile_image }}" style="cursor: pointer;">
                           </div>
                         </div>
-                        <!-- profile image -->
+                        <!-- profile image --> 
+                        </div>
+                        <div class="row g-3">
+                          <div id="image-preview" class="mt-3"></div>
+                        </div>
+                      <div class="row g-3">    
+                        <div class="col-md-4 form-group ml-2">
+                         
+                            <input type="file" class="custom-file-input form-control" id="profile_image" name="profile_image" multiple="" accept="image/*" required="">
+                            <label class="custom-file-label" for="customFile">Upload Profile Image</label>
+                          </div>
+                      </div>
+                      <div class="row g-3">
+                       
                         <!--begin::Col-->
                         <div class="col-md-4 form-group">
                           <label for="name" class="form-label">Name</label>
@@ -159,11 +171,7 @@
                             />
                         </div>
 
-                        <div class="col-md-4 form-group">
-                            <label for="profile_image" class="form-label">Upload Profile Image</label>
-                            <input type="file" class="form-control" id="profile_image" name="profile_image" multiple accept="image/*">
-                            <div id="image-preview" class="mt-3"></div>
-                        </div>
+                    
 
                         <div class="col-md-4 form-group">
                             <label for="gender" class="form-label">Gender</label>

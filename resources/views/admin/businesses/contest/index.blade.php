@@ -45,7 +45,7 @@
                               <th>Banner</th>
                               <th>Business</th>
                               <th>Contest</th>
-                              <th>Status</th>
+                              <th class="text-center">Status</th>
                               <th>Capacity</th>
                               <th>Start Date</th>
                               <th>Start Time</th>
@@ -62,7 +62,7 @@
                                 <td><img src="{{ $content->banner_image }}" style="height: 50px; width: 50px;"/></td>
                                 <td>{{ $content->businessDetail->name }}</td>
                                 <td>{{ $content->name }}</td>
-                                <td><span class="badge @if($content->status == 'open') badge-primary @elseif($content->status == 'close') badge-danger @else badge-success @endif">{{ $content->status }}</span></td>
+                                <td class="text-center"><span class="badge @if($content->status == 'open') badge-primary @elseif($content->status == 'close') badge-danger @else badge-success @endif">{{ $content->status }}</span></td>
                                 <td>{{ $content->max_participants }}</td>
                                 <td>{{ $content->start_date }}</td>
                                 <td>{{ $content->start_time }}</td>
@@ -99,7 +99,7 @@
                               <th>Banner</th>
                               <th>Business</th>
                               <th>Contest</th>
-                              <th>Status</th>
+                              <th class="text-center">Status</th>
                               <th>Capacity</th>
                               <th>Start Date</th>
                               <th>Start Time</th>

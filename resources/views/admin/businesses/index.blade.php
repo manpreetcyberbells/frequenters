@@ -44,7 +44,7 @@
                     <th>Email</th>
                     <th>Last Login</th>
                     <th>Points Per Checkin</th>
-                    <th style="width: 40px">Status</th>
+                    <th class="text-center" style="width: 40px">Status</th>
                     <th>Action</th>
                   </tr>
                   </thead>
@@ -62,19 +62,19 @@
                           @endif
                         </td>
                         <td>{{ $business->businessProfile->points_per_checkin }}</td>
-                        <td>
+                        <td class="text-center">
                         @switch($business->status)
                             @case('active')
-                                <span class="float-right badge bg-success">Active</span>
+                                <span class="badge bg-success">Active</span>
                                 @break
                             @case('pending')
-                                <span class="float-right badge bg-warning">Pending</span>
+                                <span class="badge bg-warning">Pending</span>
                                 @break
                             @case('suspended')
-                                <span class="float-right badge bg-danger">Suspended</span>
+                                <span class="badge bg-danger">Suspended</span>
                                 @break
                             @default
-                                <span class="float-right badge bg-secondary">Unknown</span>
+                                <span class="badge bg-secondary">Unknown</span>
                         @endswitch
                         </td>
                         <td>
@@ -107,7 +107,7 @@
                     <th>Email</th>
                     <th>Last Login</th>
                     <th>Points Per Checkin</th>
-                    <th style="width: 40px">Status</th>
+                    <th  class="text-center" style="width: 40px">Status</th>
                     <th>Action</th>
                   </tr>
                   </tfoot>
