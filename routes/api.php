@@ -285,4 +285,6 @@ Route::middleware(['auth:sanctum',SetUserTimezone::class])->group(function () {
     Route::post('/business/chat/send', [MessageController::class, 'sendOneToOneMessage'])->name('api.chat');
     // Get message
     Route::get('/chat/messages/{receiver_id}', [MessageController::class, 'getChatMessages'])->name('api.message');
+
+    Route::get('/customer-business/chat/list', [MessageController::class, 'getChatList']);
 });

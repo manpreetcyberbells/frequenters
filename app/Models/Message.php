@@ -10,7 +10,7 @@ class Message extends Model
     use HasFactory;
 
     protected $table = 'message';
-    protected $fillable = ['business_id', 'message_text', 'group_target', 'chat_enabled', 'sender_id', 'receiver_id', 'is_group_message', 'read_by'];
+    protected $fillable = ['business_id', 'message_text', 'group_target', 'chat_enabled', 'enable_buttons', 'sender_id', 'receiver_id', 'is_group_message', 'read_by'];
 
     public function business()
     {

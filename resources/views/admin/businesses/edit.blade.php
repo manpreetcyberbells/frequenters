@@ -60,12 +60,12 @@
                                   @if(!empty($business['businessImage']))
                                   @foreach($business['businessImage'] as $image)
                                    
-                                      <img src="{{ $image->photo }}" 
+                                      <img src="/{{ $image->photo }}" 
                                           alt="Business Image" 
                                           width="100" 
                                           height="100"
                                           class="preview-image border border-dark rounded" 
-                                          data-src="{{ $image->photo }}"
+                                          data-src="/{{ $image->photo }}"
                                           style="cursor: pointer;">
                                
                                   @endforeach
@@ -82,7 +82,7 @@
                       </div>
                       <div class="row g-3"><div id="image-preview" class="mt-3"></div></div>
                       <div class="row g-3">
-                         <div class="col-md-6 mb-3 form-group">
+                         <div class="col-md-4 mb-3 form-group">
                             <div class="custom-file">
                             <input type="file" class="custom-file-input form-control"  id="images" name="images[]" multiple="" accept="image/*" required="">
                             <label class="custom-file-label" for="customFile">Upload Images</label>

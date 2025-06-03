@@ -137,7 +137,9 @@ class AdminEventController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $event = Event::with('businessDetail')->findOrFail($id);
+        echo"<pre>"; print_r($event);  die;
+        return view('admin.businesses.event.edit', compact('event'));
     }
 
     /**

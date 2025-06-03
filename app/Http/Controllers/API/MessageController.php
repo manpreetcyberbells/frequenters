@@ -86,13 +86,15 @@ class MessageController extends Controller
         $validated = $request->validate([
             'message_text' => 'nullable|string|max:500',
             'group_target' => 'required|in:new,regular,daily',
-            'chat_enabled' => 'required|boolean'
+            'chat_enabled' => 'required|boolean',
+            'enable_buttons' => 'required|boolean'
         ]);
 
         $businessId = $user->id;
         $groupType = $validated['group_target'];
         $messageText = $validated['message_text'];
         $chatEnabled = $validated['chat_enabled'];
+        $buttonEnabled = $validated['enable_buttons'];
 
         $customers = $this->getCustomersForMessage($businessId, $groupType);
         if ($customers->isEmpty()) {
@@ -104,6 +106,7 @@ class MessageController extends Controller
             'message_text' => $messageText,
             'group_target' => $groupType,
             'chat_enabled' => $chatEnabled,
+            'enable_buttons' => $buttonEnabled,
             'is_group_message' => 1,
         ]);
 
@@ -321,6 +324,53 @@ class MessageController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
+    public function getChatList(Request $request)
+    {
+        $currentUserId = auth()->id(); // or pass manually
 
+        // Step 1: Get latest message per chat (other user)
+        $latestMessages = Message::select(
+                DB::raw('IF(sender_id = '.$currentUserId.', receiver_id, sender_id) as user_id'),
+                DB::raw('MAX(id) as last_message_id')
+            )
+            ->where(function ($query) use ($currentUserId) {
+                $query->where('sender_id', $currentUserId)
+                    ->orWhere('receiver_id', $currentUserId);
+            })
+            ->groupBy('user_id')
+            ->get();
+
+        $chatList = [];
+
+        foreach ($latestMessages as $chat) {
+            $lastMessage = Message::find($chat->last_message_id);
+            $otherUser = User::find($chat->user_id);
+
+            // Step 2: Count of unread messages for this user from the other person
+            $unreadCount = Message::where('sender_id', $otherUser->id)
+                ->where('receiver_id', $currentUserId)
+                ->where(function ($query) use ($currentUserId) {
+                    $query->whereJsonDoesntContain('read_by', $currentUserId);
+                })
+                ->count();
+
+            // Step 3: Is last message read
+            // $isLastRead = in_array($currentUserId, $lastMessage->read_by ?? []);
+            $readByArray = json_decode($lastMessage->read_by, true) ?? [];
+            $isLastRead = in_array($currentUserId, $readByArray);
+
+            $chatList[] = [
+                'id' => $otherUser->id,
+                'name' => $otherUser->name,
+                'profile_image' => $otherUser->profile_image,
+                'last_message' => $lastMessage->message_text,
+                'last_message_time' => $lastMessage->created_at->format('H:i'),
+                'unread_count' => $unreadCount,
+                'is_last_message_read' => $isLastRead
+            ];
+        }
+
+        return response()->json($chatList);
+    }
 
 }

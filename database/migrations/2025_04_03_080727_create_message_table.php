@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('sender_id')->nullable();
             $table->unsignedBigInteger('receiver_id')->nullable();
             $table->boolean('chat_enabled')->default(false);
+            $table->boolean('enable_buttons')->default(false);
             $table->boolean('is_group_message')->default(true);
 
             $table->text('message_text');
