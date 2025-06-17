@@ -107,6 +107,7 @@
                             <option value="other" {{ old('parent_id') ? 'selected' : '' }}>Other</option>
                           </select>
                       </div>
+                      
 
                       <div class="col-md-6 form-group" id="customSubCategory" style="display:none;">
                         <label class="form-label">Sub Category Name</label>
