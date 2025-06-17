@@ -41,26 +41,8 @@
                   <div class="card-body">
                     <!--begin::Row-->
                     <div class="row g-3">
-                      <div class="col-md-6 form-group">
-                        <label for="validationCategoryUsername" class="form-label">Category Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ $category->name }}" required>
-                      </div>
-                      
-                      <div class="col-md-6 form-group">
-                        <label class="form-label">Parent Category (Optional)</label>
-                        <select name="parent_id" class="form-control">
-                          <option value="">None (Parent Category)</option>
-                          @foreach ($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ $cat->id == $category->parent_id ? 'selected' : '' }}>
-                              {{ $cat->name }}
-                            </option>
-                          @endforeach
-                        </select>
-                      </div>
-                    
-
-                    <div class="col-md-3 form-group">
-                      <label for="validationActive" class="form-label">Active Icon</label>
+                      <div class="col-md-3 form-group">
+                        <label for="validationActive" class="form-label">Active Icon</label>
                         <div class="input-group has-validation">
                           <img id="active_icon_preview" src="{{ isset($category) && $category->active_icon ? asset('storage/' . $category->active_icon) : '/media/dummy.png' }}" width="35">
                           <input
@@ -71,30 +53,70 @@
                             required
                           />
                         </div>
-                    </div>
+                      </div>
 
-                    <div class="col-md-3 form-group">
+                      <div class="col-md-3 form-group">
                         <label for="validationInactive" class="form-label">Inactive Icon</label>
                         <div class="input-group has-validation">
                           <img id="inactive_icon_preview" src="{{ isset($category) && $category->inactive_icon ? asset('storage/' . $category->inactive_icon) : '/media/dummy.png' }}" width="35">                          
                           <input type="file" name="inactive_icon" class="form-control" id="inactive_icon">
                         </div>
-                    </div>
+                      </div>
 
-                    <div class="col-md-3 form-group">
-                      <label for="validationdark" class="form-label">Dark Mode Icon</label>
-                        <div class="input-group has-validation">
-                          <img id="darkmode_active_preview"  src="{{ isset($category) && $category->darkmode_active ? asset('storage/' . $category->darkmode_active) : '/media/dummy.png' }}" width="35">
-                          <input type="file" name="darkmode_active" class="form-control" id="validationdark">
-                        </div>
-                    </div>
+                      <div class="col-md-3 form-group">
+                        <label for="validationdark" class="form-label">Dark Mode Icon</label>
+                          <div class="input-group has-validation">
+                            <img id="darkmode_active_preview"  src="{{ isset($category) && $category->darkmode_active ? asset('storage/' . $category->darkmode_active) : '/media/dummy.png' }}" width="35">
+                            <input type="file" name="darkmode_active" class="form-control" id="validationdark">
+                          </div>
+                      </div>
 
-                    <div class="col-md-3 form-group">
-                      <label for="validationdarkin" class="form-label">Dark Mode Inactive</label>
-                        <div class="input-group has-validation">
-                          <img id="darkmode_inactive_preview" src="{{ isset($category) && $category->darkmode_inactive ? asset('storage/' . $category->darkmode_inactive) : '/media/dummy.png' }}" width="35">
-                          <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
-                        </div>
+                      <div class="col-md-3 form-group">
+                        <label for="validationdarkin" class="form-label">Dark Mode Inactive</label>
+                          <div class="input-group has-validation">
+                            <img id="darkmode_inactive_preview" src="{{ isset($category) && $category->darkmode_inactive ? asset('storage/' . $category->darkmode_inactive) : '/media/dummy.png' }}" width="35">
+                            <input type="file" name="darkmode_inactive" class="form-control" id="validationdarkin">
+                          </div>
+                      </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                      <div class="col-md-6 form-group">
+                        <label class="form-label">Parent Category</label>
+                        <select name="parent_id" id="parentCategory" class="form-control">
+                          <option value="">Please select</option>
+                          @foreach ($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ $cat->id == $category->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                          @endforeach
+                          <option value="other" {{ old('parent_id') ? 'selected' : '' }}>Other</option>
+                        </select>
+                      </div>
+
+                      <div class="col-md-6 form-group" id="customParentCategory" style="display:none;">
+                        <label class="form-label">Parent Category Name</label>
+                        <input type="text" name="new_parent_name" class="form-control" placeholder="Enter New Parent Category">
+                      </div>
+
+                      <div class="col-md-6 form-group" id="subcategoryGroup">
+                        <label class="form-label">Sub Category</label>
+                          <select name="child_id" id="childCategory"class="select2" multiple="multiple" data-placeholder="Select a State" style="width: 100%;">
+                            <option value="">Select Sub Category</option>
+                            @foreach ($sub_categories as $child)
+                              <option value="{{ $child->id }}" {{ $child->id == $category->parent_id ? 'selected' : '' }} selected>{{ $child->name }}</option>
+                            @endforeach
+                            <option value="other" {{ old('parent_id') ? 'selected' : '' }}>Other</option>
+                          </select>
+                      </div>
+
+                      <div class="col-md-6 form-group" id="customSubCategory" style="display:none;">
+                        <label class="form-label">Sub Category Name</label>
+                        <input type="text" name="new_sub_name" class="form-control" placeholder="Enter Sub Category">
+                      </div>
+
+                      <div class="col-md-6 form-group" id="grandchildCategory" style="display:none;">
+                        <label class="form-label">Sub-Grand Category Name</label>
+                        <input type="text" name="subGrand" class="form-control" placeholder="Enter Sub-Grand Category Name">
+                      </div>
                     </div>
 
                   </div>

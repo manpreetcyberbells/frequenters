@@ -287,4 +287,6 @@ Route::middleware(['auth:sanctum',SetUserTimezone::class])->group(function () {
     Route::get('/chat/messages/{receiver_id}', [MessageController::class, 'getChatMessages'])->name('api.message');
 
     Route::get('/customer-business/chat/list', [MessageController::class, 'getChatList']);
+    // Create Child Category incase n/a
+    Route::post('/business/create-grand-child-category', [BusinessController::class, 'createGrandChildCategory']);
 });

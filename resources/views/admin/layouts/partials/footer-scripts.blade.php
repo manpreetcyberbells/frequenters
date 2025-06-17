@@ -104,4 +104,72 @@
       $(this).addClass('active');
     });
   })
+
+
+  // Category Page
+  $(document).ready(function () {
+    const parentSelect = document.getElementById("parentCategory");
+    const subCatGroup = document.getElementById("subcategoryGroup");
+    const subCatSelect = document.getElementById("childCategory");
+    const customParentInput = document.getElementById("customParentCategory");
+    const customSubInput = document.getElementById("customSubCategory");
+    const grandchildInput = document.getElementById("grandchildCategory");
+
+    parentSelect.addEventListener("change", function () {
+        const selectedValue = this.value;
+
+        if (selectedValue === "other") {
+            subCatGroup.style.display = "none";
+            subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
+            customParentInput.style.display = "block";
+            customSubInput.style.display = "block";
+            grandchildInput.style.display = "block";
+        } else if (selectedValue) {
+            fetch(`/admin/categories/${selectedValue}/children`)
+                .then(response => response.json())
+                .then(data => {
+                    subCatSelect.innerHTML = `<option value="">Select Sub Category</option>`;
+
+                    if (data.length > 0) {
+                        data.forEach(cat => {
+                            subCatSelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                        });
+
+                        // ✅ Always append "Other" option at end
+                        subCatSelect.innerHTML += `<option value="other">Other</option>`;
+                        subCatGroup.style.display = "block";
+                    } else {
+                        // Still show dropdown with just "Other"
+                        subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
+                        subCatGroup.style.display = "block";
+                    }
+
+                    customParentInput.style.display = "none";
+                    customSubInput.style.display = "none";
+                    grandchildInput.style.display = "none";
+                });
+        } else {
+            subCatGroup.style.display = "none";
+            customParentInput.style.display = "none";
+            customSubInput.style.display = "none";
+            grandchildInput.style.display = "none";
+        }
+    });
+
+    subCatSelect.addEventListener("change", function () {
+        const selectedValue = this.value;
+
+        if (selectedValue === "other") {
+            customSubInput.style.display = "block";
+            grandchildInput.style.display = "block";
+        } else if (selectedValue) {
+            customSubInput.style.display = "none";
+            grandchildInput.style.display = "block";
+        } else {
+            customSubInput.style.display = "none";
+            grandchildInput.style.display = "none";
+        }
+    });
+  });
+
 </script>

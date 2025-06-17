@@ -111,6 +111,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
     Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+    Route::get('/categories/{id}/children', [CategoryController::class, 'getSubcategories']);
 });
 
 
@@ -164,7 +165,6 @@ Route::prefix('admin')->middleware(['auth', RoleMiddleware::class . ':admin'])->
     Route::get('/business/offer/index', [AdminOfferController::class, 'index'])->name('admin.business.offer.index');
     Route::get('/business/offer/create', [AdminOfferController::class, 'create'])->name('admin.business.offer.create');
     Route::post('/business/offer/store', [AdminOfferController::class, 'store'])->name('admin.business.offer.store');
-
 });
 
 // Customer and Business QR Codes

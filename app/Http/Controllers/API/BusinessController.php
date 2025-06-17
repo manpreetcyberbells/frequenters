@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use App\Models\Admin\Category;
 
 class BusinessController extends Controller
 {
@@ -891,4 +892,44 @@ class BusinessController extends Controller
             ], 500);
         }
     }
+
+    /**
+     *  API Function Create GrandChild
+    */
+    public function createGrandChildCategory(Request $request)
+    {
+        // echo"<pre>"; print_r($request->all());  die;
+        $validated = $request->validate([
+            'parent_id' => 'required|exists:categories,id',
+            'child_id'  => 'required|exists:categories,id',
+            'name'      => 'required|string|max:255',
+        ]);
+
+        $childCategory = Category::find($validated['child_id']);
+        if ($childCategory->parent_id != $validated['parent_id']) {
+            return response()->json([
+                'status' => false,
+                'message' => 'The selected child category is not under the specified parent.'
+            ], 422);
+        }
+
+        $existing = Category::where('name', $validated['name'])->where('parent_id', $validated['child_id'])->first();
+        if ($existing) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This grandchild category already exists under the selected child category.'
+            ], 409);
+        }
+
+        $grandchild = Category::create([
+            'name' => $validated['name'],
+            'parent_id' => $validated['child_id']
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'id' => $grandchild->id
+        ], 200);
+    }
+
 }

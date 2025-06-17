@@ -41,7 +41,8 @@
                   <tr>
                     <th style="width: 10px">#</th>
                     <th>Name</th>
-                    <th>Parent</th>
+                    <th>Sub Categories</th>
+                    <th>SubGrand Categories</th>
                     <th>Active</th>
                     <th>Inactive</th>
                     <th>Darkmode Active</th>
@@ -65,6 +66,22 @@
                                     <em>No Subcategories</em>
                                 @endif
                             </td>
+                            <td>
+                              @if ($category->children->count())
+                                  <ul class="mb-0 pl-3">
+                                      @foreach ($category->children as $child)
+                                          @if ($child->children->count())
+                                              @foreach ($child->children as $grandcategory)
+                                                  <li>{{ $grandcategory->name }}</li>
+                                              @endforeach
+                                          @endif
+                                      @endforeach
+                                  </ul>
+                              @else
+                                  <em>No Subcategories</em>
+                              @endif
+                          </td>
+
                             <td>
                                 @if ($category->active_icon)
                                     <img src="{{ asset('storage/' . $category->active_icon) }}" width="50">
@@ -107,7 +124,8 @@
                   <tr>
                   <th style="width: 10px">#</th>
                     <th>Name</th>
-                    <th>Parent</th>
+                    <th>Sub Categories</th>
+                    <th>SubGrand Categories</th>
                     <th>Active</th>
                     <th>Inactive</th>
                     <th>Darkmode Active</th>

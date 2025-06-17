@@ -38,7 +38,8 @@ class CategoryController extends Controller
     */
     public function index()
     {
-        $categories = Category::whereNull('parent_id')->with('children')->get();
+        $categories = Category::whereNull('parent_id')->with(['children','getChildrenRecursive'])->get();
+        // echo"<pre>"; print_r($categories);  die;
         return view('admin.categories.index', compact('categories'));
     }
     
@@ -58,16 +59,45 @@ class CategoryController extends Controller
     {
         // echo"<pre>"; print_r($request->all()); die;
         $request->validate([
-            'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:categories,id',
+            // 'name' => 'required|string|max:255',
+            'subGrand' => 'required|string|max:255',
+            // 'parent_id' => 'nullable|exists:categories,id',
             'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        $data = $request->only(['name', 'parent_id']);
+        // Step 1: Handle parent
+        $parentId = $request->parent_id;
+        if ($parentId === "other" && !empty($request->new_parent_name)) {
+            $parent = Category::create([
+                'name' => $request->new_parent_name,
+            ]);
+            $parentId = $parent->id;
+        }
 
+        // Step 2: Handle child (subcategory)
+        $childId = $request->child_id;
+        if ($childId === "other" || empty($childId) && !empty($request->new_sub_name)) {
+            $child = Category::create([
+                'name' => $request->new_sub_name,
+                'parent_id' => $parentId
+            ]);
+            $childId = $child->id;
+        } elseif ($childId !== "other" && is_numeric($childId)) {
+            $childId = intval($childId);
+        } else {
+            $childId = null;
+        }
+
+        // Step 3: Prepare data for grandchild (final category to be stored)
+        $data = [
+            'name' => $request->subGrand,
+            'parent_id' => $childId ?? $parentId
+        ];
+
+        // Step 4: Handle icon uploads
         if ($request->hasFile('active_icon')) {
             $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
         }
@@ -80,14 +110,9 @@ class CategoryController extends Controller
         if ($request->hasFile('darkmode_inactive')) {
             $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
         }
-        
-        // echo"<pre>"; print_r($data); die;
-    
+
+        // Step 5: Create the grandchild category
         Category::create($data);
-        // Category::create([
-        //     'name' => $request->name,
-        //     'parent_id' => $request->parent_id,
-        // ]);
 
         return redirect()->route('categories.index')->with('success', 'Category Added Successfully');
     }
@@ -99,7 +124,10 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $categories = Category::whereNull('parent_id')->get();
-        return view('admin.categories.edit', compact('category', 'categories'));
+        $sub_categories = Category::where('parent_id', $id)->get();
+        $children = $category->parent_id ? Category::where('parent_id', $category->parent->parent_id)->get() : collect();
+        // echo"<pre>"; print_r($children);  die;
+        return view('admin.categories.edit', compact('category', 'categories', 'children', 'sub_categories'));
     }
 
     /**
@@ -144,6 +172,12 @@ class CategoryController extends Controller
     {
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+    }
+
+    public function getSubcategories($id)
+    {
+        $children = Category::where('parent_id', $id)->get(['id', 'name']);
+        return response()->json($children);
     }
 
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Admin\Category;
 
 class MenuController extends Controller
 {
@@ -23,12 +24,47 @@ class MenuController extends Controller
     
         $validated = $request->validate([
             'name' => 'required|string',
-            'category_id' => 'nullable|exists:categories,id',
+            'grandcategory_id' => 'nullable|exists:categories,id',
+            'grandcategory' => 'nullable|string|max:255',
+            'child_id' => 'nullable|exists:categories,id',   // For grandcategory creation
+            'parent_id' => 'nullable|exists:categories,id',  // For grandcategory creation
             'description' => 'nullable|string',
             'price' => 'nullable|string',
             'photo' => 'nullable|image',
             'availability_status' => 'nullable|boolean',
         ]);
+
+        if (empty($validated['grandcategory_id']) && !empty($validated['grandcategory'])) {
+            // Validate that child_id and parent_id are provided
+            if (empty($validated['child_id']) || empty($validated['parent_id'])) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Both parent_id and child_id are required when creating a new grandcategory.'
+                ], 422);
+            }
+
+            // Verify relationship: child must belong to parent
+            $child = Category::find($validated['child_id']);
+            if ($child->parent_id != $validated['parent_id']) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The child category does not belong to the specified parent.'
+                ], 422);
+            }
+
+            // Check if grandchild already exists
+            $existing = Category::where('name', $validated['grandcategory'])->where('parent_id', $validated['child_id'])->first();
+            if ($existing) {
+                $validated['grandcategory_id'] = $existing->id;
+            } else {
+                // Create the grandchild category
+                $newGrand = Category::create([
+                    'name' => $validated['grandcategory'],
+                    'parent_id' => $validated['child_id']
+                ]);
+                $validated['grandcategory_id'] = $newGrand->id;
+            }
+        }
     
         // Handle Image Upload
         $menuImage = '';
@@ -39,7 +75,15 @@ class MenuController extends Controller
         $validated['business_id'] = $businessId;
         $validated['photo'] = asset('storage/' . $menuImage);
     
-        $menu = Menu::create($validated);
+        $menu = Menu::create([
+            'name' => $validated['name'],
+            'category_id' => $validated['grandcategory_id'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'price' => $validated['price'] ?? null,
+            'availability_status' => $validated['availability_status'] ?? 0,
+            'photo' => asset('storage/' . $menuImage),
+            'business_id' => $businessId,
+        ]);
     
         return response()->json([
             'status' => true,
