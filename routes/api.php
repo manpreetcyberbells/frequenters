@@ -27,11 +27,7 @@ Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
         'text' => $request->text,
         'timestamp' => now(),
     ];
-    // Log::info('Broadcasting MessageSent event', [$message]);
-
     broadcast(new MessageSent($message));
-
-    // Log::info('Broadcast queued.');
     return response()->json(['status' => 'Message broadcasted!', 'message' => $message]);
 });
 
@@ -128,7 +124,7 @@ Route::middleware(['auth:api', SetUserTimezone::class])->prefix('customer')->gro
     // Search API
     Route::get('/search', [SearchHistoryController::class, 'searchLocal']);
     // Get Single Business Detail
-    Route::get('/business-detail/{id}', [BusinessController::class, 'getBusinessDetails']);
+    Route::get('/business-detail/{id?}', [BusinessController::class, 'getBusinessDetails']);
     // Get Offers
     Route::get('/get-offers', [OfferController::class, 'getOffersDetail']);
     // Get Events
@@ -161,52 +157,44 @@ Route::middleware(['auth:api', SetUserTimezone::class])->prefix('customer')->gro
     Route::get('/service-list', [ServiceController::class, 'getServiceList']);
 });
 
-// Business API's
-Route::middleware(['auth:api', SetUserTimezone::class])->prefix('business')->group(function () {
-    // Create Offers
-    Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
-    // Recommended Offers
-    Route::get('/get-recommended-offers', [OfferController::class, 'getRecommendedOffers']);
-    // Create Event
-    Route::post('/events', [EventController::class, 'createBusinessEvent']);
-    // Create Complaints
-    Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
-    // Create Contest
-    Route::post('/contests', [ContestController::class, 'create']);
-    // Delete Answer of Contest
-    Route::post('/delete-answer/{id}', [ContestController::class, 'deleteAnswerByBusiness']);
-    // Messgae to Customer
-    Route::post('/send-message', [MessageController::class, 'sendBusinessMessage']);
-    // Business Dashboard
+// Business routes — STAFF + OWNER access
+Route::middleware(['auth:api', SetUserTimezone::class, 'business.access'])->prefix('business')->group(function () {
     Route::get('/dashboard', [BusinessController::class, 'dashboardBusinessData']);
-    // Business Update Profile
-    Route::post('/update-profile', [BusinessController::class, 'updateBusinessProfile']);
-    // Update Business Hours
-    Route::post('/hours-update', [BusinessController::class, 'updateBusinessHours']);
-    // Change Password
-    Route::post('/change-password', [BusinessController::class, 'changePassword']);
-    // Update Owner Details
-    Route::post('/update-owner', [BusinessController::class, 'updateOwnerDetail']);
-    // Create Staff
-    Route::post('/staff-create', [BusinessController::class, 'createStaff']);
-    // Create Staff
-    Route::get('/staff-listing', [BusinessController::class, 'listStaff']);
-    // De-active Staff
-    Route::delete('/staff/{id}', [BusinessController::class, 'deactivateStaff']);
-    // Create BTOB
-    Route::post('/collaboration-post', [CollaborationController::class, 'bTobCollaboration']);
-    // collaboration Listing By BID 
-    Route::get('/collaboration/{businessId}', [CollaborationController::class, 'getbTobListing']);
-    //API Update Business Language
-    Route::put('/update-language', [BusinessController::class, 'updateBusinessLanguage']);
-    //API Update Push Notifications Business
-    Route::put('/push-notifications-update', [BusinessController::class, 'pushNotificationUpdate']);
-    // Create Service
-    Route::post('/service-post', [ServiceController::class, 'createServiceMenu']);
-    // Create Menu
-    Route::post('/create-menu', [MenuController::class, 'createMenu']);
-    // Listing
     Route::get('/offer-listing', [OfferController::class, 'offerListing']);
+});
+
+
+// Business routes — OWNER ONLY
+Route::middleware(['auth:api', SetUserTimezone::class, 'business.access:owner_only'])->prefix('business')->group(function () {
+    // Offers / Events / Contests / Complaints / Messages
+    Route::post('/offers', [OfferController::class, 'businessCreateOffer']);
+    Route::get('/get-recommended-offers', [OfferController::class, 'getRecommendedOffers']);
+    Route::post('/events', [EventController::class, 'createBusinessEvent']);
+    Route::get('/get-complaints', [ComplaintController::class, 'getComplaintsByBusiness']);
+    Route::post('/contests', [ContestController::class, 'create']);
+    Route::post('/delete-answer/{id}', [ContestController::class, 'deleteAnswerByBusiness']);
+    Route::post('/send-message', [MessageController::class, 'sendBusinessMessage']);
+
+    // Profile / Hours / Owner / Password / Language / Notifications
+    Route::post('/update-profile', [BusinessController::class, 'updateBusinessProfile']);
+    Route::post('/hours-update', [BusinessController::class, 'updateBusinessHours']);
+    Route::post('/change-password', [BusinessController::class, 'changePassword']);
+    Route::post('/update-owner', [BusinessController::class, 'updateOwnerDetail']);
+    Route::put('/update-language', [BusinessController::class, 'updateBusinessLanguage']);
+    Route::put('/push-notifications-update', [BusinessController::class, 'pushNotificationUpdate']);
+    
+    // Staff management
+    Route::post('/staff-create', [BusinessController::class, 'createStaff']);
+    Route::get('/staff-listing', [BusinessController::class, 'listStaff']);
+    Route::delete('/staff/{id}', [BusinessController::class, 'deactivateStaff']);
+
+    // Collaboration / Service / Menu
+    Route::post('/collaboration-post', [CollaborationController::class, 'bTobCollaboration']);
+    Route::get('/collaboration/{businessId}', [CollaborationController::class, 'getbTobListing']);
+    Route::post('/service-post', [ServiceController::class, 'createServiceMenu']);
+    Route::post('/create-menu', [MenuController::class, 'createMenu']);
+
+    // Listings
     Route::get('/event-listing', [EventController::class, 'eventListing']);
     Route::get('/reward-listing', [RewardController::class, 'rewardListing']);
     Route::get('/contest-listing', [ContestController::class, 'contestListing']);
@@ -221,72 +209,65 @@ Route::middleware(['auth:sanctum', SetUserTimezone::class])->group(function () {
 
     // Get information for Customer Dashboard on customer_app
     Route::get('/customer/api-dashboard', [CustomerController::class, 'apiDashboard']);
+
+    // Resource Routes
+    Route::apiResource('customers', CustomerController::class);
+    Route::apiResource('users', UserController::class);
+    Route::apiResource('businesses', BusinessController::class);
+    Route::apiResource('transactions', TransactionController::class);
 });
 
-// Resource Routes (Public/General APIs)
-Route::apiResource('customers', CustomerController::class);
-Route::apiResource('users', UserController::class);
-Route::apiResource('businesses', BusinessController::class);
-Route::apiResource('transactions', TransactionController::class);
-
-// Additional Utility Routes
-// Route::get('/cities-by-zip/{zip}', [CityController::class, 'getCitiesByZip']);
-
-// Generate Customer QR Code
 Route::middleware(['auth', SetUserTimezone::class])->group(function () {
-    // Customer QR Code
     Route::get('/customer/qr-code', [CustomerController::class, 'generateEncryptedQrCode'])->name('api.customer.qrCode');
 
-    // Business QR Code
-    Route::get('/business/qr-code', [BusinessController::class, 'generateBusinessQrCode'])->name('api.business.qrCode');
+    // Business QR staff+owner
+    Route::get('/business/qr-code', [BusinessController::class, 'generateEncryptedQrCode'])->middleware('business.access')->name('api.business.qrCode');
 });
 
-// Group QR code generation endpoints under /api/generate-qr
 Route::prefix('generate-qr')->middleware('auth:sanctum')->group(function () {
     Route::get('/customer', [CustomerController::class, 'generateEncryptedQrCodeApi'])->name('api.qr.customer');
-    Route::get('/business', [BusinessController::class, 'generateBusinessQrCodeApi'])->name('api.qr.business');
+
+    // Business QR API staff+owner
+    Route::get('/business', [BusinessController::class, 'generateEncryptedQrCodeApi'])->middleware('business.access')->name('api.qr.business');
 });
 
 // Grant reward points to businesses manually or automatically
-Route::post('/business/{businessId}/grant-checkin-points', [BusinessController::class, 'grantCheckinPoints'])->middleware('auth:sanctum')->name('api.business.grantCheckinPoints');
-
-// for businesses to add rewards
-Route::middleware(['auth:sanctum',SetUserTimezone::class])->group(function () {
-    Route::post('/business/post-reward', [RewardController::class, 'storeRewardApi'])->name('api.business.storeReward');
-    // QR code generation
-    Route::post('/checkin/customer', [CheckInController::class, 'customerCheckIn']);
-    Route::post('/checkin/business', [CheckInController::class, 'businessCheckIn']);
-    Route::post('/checkin/by-uid', [CheckInController::class, 'checkInWithUID']);
-
-    // for businesses to view reward point summary
-    Route::get('/business/points-summary', [BusinessController::class, 'pointsSummaryApi'])->name('api.business.pointsSummary');
-
-    // for business to modify points per check-in
-    Route::post('/business/checkin-points', [BusinessController::class, 'updateCheckinPointsApi'])->name('api.business.updateCheckinPoints');
-    Route::get('/business/checkin-points', [BusinessController::class, 'getCheckinPointsApi'])->name('api.business.getCheckinPoints');
-
-    // for check-in
-    Route::post('/business/checkin', [CheckinController::class, 'checkIn'])->name('api.business.checkin');
-
-    // Redeem reward
-    Route::get('/rewards/{reward_id}/redeem-qr', [RewardController::class, 'generateRedemptionQrCode'])->name('api.rewards.generateQr');
-
-    // Generate QR code for redeeming a reward
-    Route::post('/rewards/generate-qr', [RewardController::class, 'generateRedemptionQrCodeApi'])->name('api.rewards.generateQr');
-
-    // for check-in
-    Route::post('/reward/redemptions', [RewardController::class, 'rewardRedemptions']);
-
-    // Send Invite
-    Route::post('/customer/invite', [InviteController::class, 'invite'])->name('api.invite');
-    // GET Notifications
-    Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('api.notifications');
-    // One to One Message
-    Route::post('/business/chat/send', [MessageController::class, 'sendOneToOneMessage'])->name('api.chat');
-    // Get message
+Route::middleware(['auth:sanctum', SetUserTimezone::class])->group(function () {
+    // Customer-side
+    Route::post('/checkin/scan-business-qr', [CheckInController::class, 'businessCheckIn']);
+    Route::post('/checkin/business',         [CheckInController::class, 'businessCheckIn']); // legacy alias
+    Route::get('/notifications',               [NotificationController::class, 'getNotifications'])->name('api.notifications');
     Route::get('/chat/messages/{receiver_id}', [MessageController::class, 'getChatMessages'])->name('api.message');
-
     Route::get('/customer-business/chat/list', [MessageController::class, 'getChatList']);
-    // Create Child Category incase n/a
-    Route::post('/business/create-grand-child-category', [BusinessController::class, 'createGrandChildCategory']);
+    Route::post('/customer/invite',            [InviteController::class, 'invite'])->name('api.invite');
+
+    // Reward redemption QR generation for customer
+    Route::get('/rewards/{reward_id}/redeem-qr', [RewardController::class, 'generateRedemptionQrCode'])->name('api.rewards.generateQr');
+    Route::post('/checkin/by-uid',   [CheckInController::class, 'checkInWithUID']);
+
+    // STAFF + OWNER access
+    Route::middleware('business.access')->group(function () {
+        // Check-in scans
+        Route::post('/checkin/scan-customer-qr', [CheckInController::class, 'customerCheckIn']);
+        Route::post('/checkin/customer',         [CheckInController::class, 'customerCheckIn']); // legacy alias
+        Route::post('/business/{businessId}/grant-checkin-points', [BusinessController::class, 'grantCheckinPoints'])->middleware('auth:sanctum')->name('api.business.grantCheckinPoints');
+
+        // Points view (read-only)
+        Route::get('/business/points-summary', [BusinessController::class, 'pointsSummaryApi'])->name('api.business.pointsSummary');
+        Route::get('/business/checkin-points', [BusinessController::class, 'getCheckinPointsApi'])->name('api.business.getCheckinPoints');
+        Route::get('/business/customer-tier-thresholds', [BusinessController::class, 'getCustomerTierThresholdsApi'])->name('api.business.getTierThresholds');
+        Route::get('/business/customer-listing', [BusinessController::class, 'customerListing']);
+    });
+
+    // OWNER ONLY
+    Route::middleware('business.access:owner_only')->group(function () {
+        Route::post('/business/post-reward', [RewardController::class, 'storeRewardApi'])->name('api.business.storeReward');
+        Route::post('/business/checkin-points',[BusinessController::class, 'updateCheckinPointsApi'])->name('api.business.updateCheckinPoints');
+        Route::post('/business/customer-tier-thresholds', [BusinessController::class, 'updateCustomerTierThresholdsApi'])->name('api.business.updateTierThresholds');
+        Route::post('/business/checkin',[CheckinController::class, 'checkIn'])->name('api.business.checkin');
+        Route::post('/rewards/generate-qr',[RewardController::class, 'generateRedemptionQrCodeApi'])->name('api.rewards.generateQrApi');
+        Route::post('/reward/redemptions',[RewardController::class, 'rewardRedemptions']);
+        Route::post('/business/chat/send',[MessageController::class, 'sendOneToOneMessage'])->name('api.chat');
+        Route::post('/business/create-grand-child-category', [BusinessController::class, 'createGrandChildCategory']);
+    });
 });

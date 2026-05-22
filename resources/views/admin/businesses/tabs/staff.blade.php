@@ -31,7 +31,7 @@
                 <td> <span class="badge @if($staff->providers == 'email') bg-navy @elseif($staff->providers == 'facebook') badge-primary @elseif($staff->providers == 'google') badge-info @elseif($staff->providers == 'apple') badge-gray @else badge-lime @endif"> {{$staff->providers}} </td>
                 <td>
                 <!-- Edit Button -->
-                <a href="{{ route('customers.show', $staff->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                <a href="{{ route('customer.show', $staff->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
                     <i class="nav-icon fas fa-eye"></i>
                 </a>
                 </td>

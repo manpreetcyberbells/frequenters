@@ -34,7 +34,6 @@ class AdminServiceController extends Controller
      */
     public function store(Request $request)
     {
-        // echo"<pre>"; print_r($request->all());  die;
         try{
             $businessId = $request->business_id;
             $validated = $request->validate([
@@ -100,7 +99,6 @@ class AdminServiceController extends Controller
     public function edit(string $id)
     {
         $service = Service::with(['businessInfo','schedule'])->findOrFail($id);
-        // echo"<pre>"; print_r($service);  die;
         $categories = Category::whereNotNull('parent_id')->get();
         $availability = $service->schedule->keyBy('day');
         return view('admin.businesses.service.edit', compact('service','categories', 'availability'));
@@ -111,7 +109,6 @@ class AdminServiceController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // echo"<pre>"; print_r($request->all());  die;
         try {
             $service = Service::findOrFail($id);
             $businessId = $request->business_id;

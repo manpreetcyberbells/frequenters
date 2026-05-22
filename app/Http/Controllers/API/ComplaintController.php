@@ -1,93 +1,73 @@
 <?php
-
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 use App\Services\FCMService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 
 class ComplaintController extends Controller
 {
-    /**
-     * Store a newly created complaint in the database.
-     */
+    public function __construct(
+        private readonly FCMService $fcmService
+    ) {}
+
     public function createComplaint(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $validated = $request->validate([
             'business_id' => 'required|exists:users,id',
             'description' => 'required|string',
             'attachment'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
-        }
+        $attachmentPath = $request->hasFile('attachment')
+            ? $request->file('attachment')->store('complaints', 'public')
+            : null;
 
-        // Handle file upload (if any)
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('complaints', 'public');
-        }
-
-        // Create the complaint
         $complaint = Complaint::create([
             'customer_id' => Auth::id(),
-            'business_id' => $request->business_id,
-            'description' => $request->description,
+            'business_id' => $validated['business_id'],
+            'description' => $validated['description'],
             'status'      => 'pending',
             'priority'    => 'high',
             'attachment'  => $attachmentPath,
         ]);
 
-        $fcmService = new FCMService();
-        $title = "You’ve Got a New Complaint";
-        $body = "A customer just raised a concern. Tap to check and respond before it escalates";
-        $image = asset('storage/notifications/notification.png');
-        $fcmToken = DB::table('business_profiles')->where('business_id',$request->business_id)->pluck('fcm_token')->first();
-        // Sending Notification on Device
-        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
-        // Notification into DB
-        createNotification($request->business_id, $body, "push", null, true);
+        $fcmToken = DB::table('business_profiles')
+            ->where('business_id', $validated['business_id'])
+            ->value('fcm_token');
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Complaint submitted successfully',
-            'complaint' => $complaint
-        ], 200);
+        if ($fcmToken) {
+            $this->fcmService->sendNotificationToDevice(
+                $fcmToken,
+                "You've Got a New Complaint",
+                'A customer just raised a concern. Tap to check and respond.',
+                asset('storage/notifications/notification.png')
+            );
+        }
+        createNotification($validated['business_id'], 'A customer raised a complaint.', 'push', null, true);
+
+        return response()->json(['status' => true, 'message' => 'Complaint submitted successfully', 'complaint' => $complaint], 201);
     }
 
-    /**
-     * Get complaints by business_id
-    */
-    public function getComplaintsByBusiness(Request $request)
+    public function getComplaintsByBusiness()
     {
         try {
-            $businessId = Auth::id();
-            $complaints = Complaint::where('business_id', $businessId)->orderBy('created_at', 'desc')->paginate(10);
+            $complaints = Complaint::where('business_id', Auth::id())
+                ->orderByDesc('created_at')
+                ->paginate(10);
 
             if ($complaints->isEmpty()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'No complaints found for this business.'
-                ], 404);
+                return response()->json(['status' => false, 'message' => 'No complaints found for this business.'], 404);
             }
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Complaints retrieved successfully.',
-                'complaints' => $complaints
-            ], 200);
+            return response()->json(['status' => true, 'message' => 'Complaints retrieved successfully.', 'complaints' => $complaints]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Something went wrong.',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['status' => false, 'message' => 'Something went wrong.', 'error' => $e->getMessage()], 500);
         }
     }
-
 }

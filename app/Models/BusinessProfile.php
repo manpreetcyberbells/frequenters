@@ -31,12 +31,15 @@ class BusinessProfile extends Model
         'description',
         'website',
         'social_links',
-        'points_per_checkin',
+        'monthly_points_available',
         'qr_code_url',
         'owner_name',
         'owner_email',
         'owner_phone',
         'logo',
+        'business_uid',
+        'tier_regular_min',
+        'tier_daily_min',
     ];
     
     protected $casts = [
@@ -59,5 +62,17 @@ class BusinessProfile extends Model
     
     public function menus() {
         return $this->hasMany(Menu::class);
+    }
+
+    public function tierFor(int $checkinCount): string
+    {
+        $regularMin = (int) ($this->tier_regular_min ?: 3);
+        $dailyMin   = (int) ($this->tier_daily_min   ?: 10);
+
+        return match (true) {
+            $checkinCount >= $dailyMin   => 'daily',
+            $checkinCount >= $regularMin => 'regular',
+            default                      => 'new',
+        };
     }
 }

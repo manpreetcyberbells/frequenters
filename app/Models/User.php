@@ -183,4 +183,32 @@ class User extends Authenticatable
     {
         return $this->hasMany(CustomerBusinessInteraction::class, 'customer_id');
     }
+
+
+    public function effectiveBusinessId(): ?int
+    {
+        return match ($this->role) {
+            'business'           => $this->id,
+            'manager', 'employee' => $this->parent_business_id,
+            default              => null,
+        };
+    }
+
+    // Whether user is the actual business owner (not staff).
+    public function isBusinessOwner(): bool
+    {
+        return $this->role === 'business';
+    }
+
+    // Whether user is staff under a business.
+    public function isBusinessStaff(): bool
+    {
+        return in_array($this->role, ['manager', 'employee'], true) && !is_null($this->parent_business_id);
+    }
+
+    //  Whether user is allowed to act as the business (owner or staff) || Use this for QR generation, customer check-in scans, etc.
+    public function canActAsBusiness(): bool
+    {
+        return $this->isBusinessOwner() || $this->isBusinessStaff();
+    }
 }

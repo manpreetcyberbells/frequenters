@@ -107,69 +107,175 @@
 
 
   // Category Page
+  // $(document).ready(function () {
+  //   const parentSelect = document.getElementById("parentCategory");
+  //   const subCatGroup = document.getElementById("subcategoryGroup");
+  //   const subCatSelect = document.getElementById("childCategory");
+  //   const customParentInput = document.getElementById("customParentCategory");
+  //   const customSubInput = document.getElementById("customSubCategory");
+  //   const grandchildInput = document.getElementById("grandchildCategory");
+
+  //   parentSelect.addEventListener("change", function () {
+  //   const selectedValue = this.value;
+  //   if (selectedValue === "other") {
+  //     subCatGroup.style.display = "none";
+  //     subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
+  //     customParentInput.style.display = "block";
+  //     customSubInput.style.display = "block";
+  //     grandchildInput.style.display = "block";
+  //   } else if (selectedValue) {
+  //       fetch(`/admin/categories/${selectedValue}/children`)
+  //         .then(response => response.json())
+  //         .then(data => {
+  //           subCatSelect.innerHTML = `<option value="">Select Sub Category</option>`;
+  //           if (data.length > 0) {
+  //             data.forEach(cat => {
+  //               subCatSelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+  //             });
+  //             // Always append "Other" option at end
+  //             subCatSelect.innerHTML += `<option value="other">Other</option>`;
+  //             subCatGroup.style.display = "block";
+  //           } else {
+  //             // Still show dropdown with just "Other"
+  //             subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
+  //             subCatGroup.style.display = "block";
+  //           }
+  //           customParentInput.style.display = "none";
+  //           customSubInput.style.display = "none";
+  //           grandchildInput.style.display = "none";
+  //         });
+  //   } else {
+  //     subCatGroup.style.display = "none";
+  //     customParentInput.style.display = "none";
+  //     customSubInput.style.display = "none";
+  //     grandchildInput.style.display = "none";
+  //   }
+  // });
+
+  //   subCatSelect.addEventListener("change", function () {
+  //     const selectedValue = this.value;
+  //     if (selectedValue === "other") {
+  //       customSubInput.style.display = "block";
+  //       grandchildInput.style.display = "block";
+  //     } else if (selectedValue) {
+  //       customSubInput.style.display = "none";
+  //       grandchildInput.style.display = "block";
+  //     } else {
+  //       customSubInput.style.display = "none";
+  //       grandchildInput.style.display = "none";
+  //     }
+  //   });
+  // });
+
+
   $(document).ready(function () {
-    const parentSelect = document.getElementById("parentCategory");
-    const subCatGroup = document.getElementById("subcategoryGroup");
-    const subCatSelect = document.getElementById("childCategory");
-    const customParentInput = document.getElementById("customParentCategory");
-    const customSubInput = document.getElementById("customSubCategory");
-    const grandchildInput = document.getElementById("grandchildCategory");
+    const parentSelect = $('#parentCategory');
+    const subCatGroup = $('#subcategoryGroup');
+    const subCatSelect = $('#childCategory');
+    const customParentInput = $('#customParentCategory');
+    const customSubInput = $('#customSubCategory');
+    const grandchildInput = $('#grandchildCategory'); 
+    const grandCatSelect = $('#subGrand');
+    const customGrandCategory = $('#customGrandCategory');
 
-    parentSelect.addEventListener("change", function () {
-        const selectedValue = this.value;
-
+    // Initialize Select2 (important!)
+    subCatSelect.select2();
+    $('#subGrand').select2();
+    parentSelect.on('change', function () {
+        const selectedValue = $(this).val();
         if (selectedValue === "other") {
-            subCatGroup.style.display = "none";
-            subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
-            customParentInput.style.display = "block";
-            customSubInput.style.display = "block";
-            grandchildInput.style.display = "block";
+          subCatGroup.hide();
+          subCatSelect.html(`<option value="">Select Sub Category</option><option value="other">Other</option>`).trigger('change');
+          customParentInput.show();
+          customGrandCategory.show();
+          customSubInput.show();
+          grandchildInput.hide();
         } else if (selectedValue) {
-            fetch(`/admin/categories/${selectedValue}/children`)
-                .then(response => response.json())
-                .then(data => {
-                    subCatSelect.innerHTML = `<option value="">Select Sub Category</option>`;
+          fetch(`/admin/categories/${selectedValue}/children`)
+            .then(response => response.json())
+            .then(data => {
+                subCatSelect.html(`<option value="">Select Sub Category</option>`);
+                if (data.length > 0) {
+                    data.forEach(cat => {
+                      subCatSelect.append(`<option value="${cat.id}">${cat.name}</option>`);
+                    });
+                    subCatSelect.append(`<option value="other">Other</option>`);
+                    subCatGroup.show();
+                } else {
+                  subCatSelect.html(`<option value="">Select Sub Category</option><option value="other">Other</option>`);
+                  subCatGroup.show();
+                }
+              subCatSelect.trigger('change'); // Refresh select2
+              customParentInput.hide();
+              customGrandCategory.hide();
+              customSubInput.hide();
+              grandchildInput.hide();
+            });
+        } else {
+          subCatGroup.hide();
+          customParentInput.hide();
+          customGrandCategory.hide();
+          customSubInput.hide();
+          grandchildInput.hide();
+        }
+    });
 
-                    if (data.length > 0) {
-                        data.forEach(cat => {
-                            subCatSelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-                        });
-
-                        // ✅ Always append "Other" option at end
-                        subCatSelect.innerHTML += `<option value="other">Other</option>`;
-                        subCatGroup.style.display = "block";
-                    } else {
-                        // Still show dropdown with just "Other"
-                        subCatSelect.innerHTML = `<option value="">Select Sub Category</option><option value="other">Other</option>`;
-                        subCatGroup.style.display = "block";
-                    }
-
-                    customParentInput.style.display = "none";
-                    customSubInput.style.display = "none";
-                    grandchildInput.style.display = "none";
+    // Handle sub category change (multi-select)
+    subCatSelect.on('change', function () {
+      let selectedValues = $(this).val();
+      if(selectedValues === "other"){
+        $(selectedValues).val(selectedValues).trigger('change');
+        customSubInput.show();
+        grandchildInput.hide();
+        grandCatSelect.show();
+        grandCatSelect.trigger('change');
+      } else if (selectedValues && selectedValues.length > 0) {
+        fetch(`/admin/categories/${selectedValues}/children`)
+        .then(response => response.json())
+        .then(data => {
+            grandCatSelect.html(`<option value="">Select Sub Category</option>`);
+            if (data.length > 0) {
+                data.forEach(cat => {
+                  grandCatSelect.append(`<option value="${cat.id}">${cat.name}</option>`);
                 });
-        } else {
-            subCatGroup.style.display = "none";
-            customParentInput.style.display = "none";
-            customSubInput.style.display = "none";
-            grandchildInput.style.display = "none";
-        }
+                grandCatSelect.append(`<option value="other">Other</option>`);
+                grandchildInput.show();
+            } else {
+              grandCatSelect.html(`<option value="">Select Sub Category</option><option value="other">Other</option>`);
+              grandchildInput.show();
+            }
+          grandCatSelect.trigger('change');
+          customSubInput.hide();
+          grandchildInput.show();
+          grandCatSelect.show();
+        });
+      } else {
+        grandCatSelect.trigger('change');
+        customSubInput.hide();
+        grandchildInput.show();
+        grandCatSelect.show();
+      } 
     });
 
-    subCatSelect.addEventListener("change", function () {
-        const selectedValue = this.value;
-
-        if (selectedValue === "other") {
-            customSubInput.style.display = "block";
-            grandchildInput.style.display = "block";
-        } else if (selectedValue) {
-            customSubInput.style.display = "none";
-            grandchildInput.style.display = "block";
-        } else {
-            customSubInput.style.display = "none";
-            grandchildInput.style.display = "none";
-        }
+    // Handle 'other' in Sub-Grand Category
+    grandCatSelect.on('change', function () {
+      const selectedValue = $(this).val();
+      if (selectedValue === "other") {
+        customGrandCategory.show();
+      } else {
+        customGrandCategory.hide();
+      }
     });
+
   });
 
+
+    function updateFormAction(selectElement) {
+        const form = document.getElementById('grant-reward-form');
+        const id = selectElement.value;
+        if (id) {
+            form.action = "{{ route('admin.business.grantCheckinPoints', ['businessId' => 'BUSINESS_ID']) }}"
+                            .replace('BUSINESS_ID', id);
+        }
+    }
 </script>

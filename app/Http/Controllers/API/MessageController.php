@@ -3,41 +3,250 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Message;
-use App\Models\User;
-use App\Models\CustomerMessageResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Broadcast;
 use App\Events\MessageSent;
-use Illuminate\Support\Facades\Queue;
+use App\Models\Message;
+use App\Models\CustomerMessageResponse;
+use App\Models\User;
 use App\Services\FCMService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
-    /**
-     *  Common Function :: Mark Message as Read 
-    */
-    private function markMessageAsReadInternal($messageId, $userId)
+    public function __construct(
+        private readonly FCMService $fcmService
+    ) {}
+
+    // Business: Send Group Message
+    public function sendBusinessMessage(Request $request)
     {
-        $message = Message::find($messageId);
-        if (!$message) return;
-
-        $readByUsers = json_decode($message->read_by, true) ?? [];
-
-        if (!in_array($userId, $readByUsers)) {
-            $readByUsers[] = $userId;
-            $message->read_by = json_encode($readByUsers);
-            $message->save();
+        if (Auth::user()->role !== 'business') {
+            return response()->json(['message' => 'Please login with a valid Business account'], 403);
         }
+
+        $validated = $request->validate([
+            'message_text'  => 'nullable|string|max:500',
+            'group_target'  => 'required|in:new,regular,daily',
+            'chat_enabled'  => 'required|boolean',
+            'enable_buttons'=> 'required|boolean',
+        ]);
+
+        $businessId  = Auth::id();
+        $groupType   = $validated['group_target'];
+        $messageText = $validated['message_text'];
+
+        $eligibleCustomers = $this->getCustomersForMessage($businessId, $groupType);
+        if ($eligibleCustomers->isEmpty()) {
+            return response()->json(['message' => 'No customers in this group'], 404);
+        }
+
+        $message = Message::create([
+            'business_id'      => $businessId,
+            'message_text'     => $messageText,
+            'group_target'     => $groupType,
+            'chat_enabled'     => $validated['chat_enabled'],
+            'enable_buttons'   => $validated['enable_buttons'],
+            'is_group_message' => 1,
+        ]);
+
+        $businessName = DB::table('business_profiles')->where('business_id', $businessId)->value('business_name');
+        $fcmTokens = DB::table('customer_profiles')
+            ->whereIn('customer_id', $eligibleCustomers->toArray())
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token', 'customer_id');
+
+        $image = asset('storage/notifications/notification.png');
+
+        foreach ($eligibleCustomers as $customerId) {
+            $messageData = (object)[
+                'sender_id'   => $businessId,
+                'receiver_id' => $customerId,
+                'text'        => $messageText,
+                'timestamp'   => now(),
+            ];
+
+            broadcast(new MessageSent($messageData))->toOthers();
+
+            if (isset($fcmTokens[$customerId])) {
+                $this->fcmService->sendNotificationToDevice($fcmTokens[$customerId], $businessName, $messageText, $image);
+            }
+
+            customerNotification($customerId, $messageText, 'push', null, true);
+        }
+
+        return response()->json(['message' => 'Message sent successfully', 'message_id' => $message->id]);
     }
 
-    /**
-     *  Getting Customers 
-    */
-    public function getCustomersForMessage($businessId, $groupType)
+    // Customer: Get Messages from Businesses
+    public function getCustomerMessages(int $customerId)
+    {
+        $messages = Message::join('customer_business_relationships', function ($join) use ($customerId) {
+                $join->on('messages.business_id', '=', 'customer_business_relationships.business_id')
+                     ->where('customer_business_relationships.customer_id', '=', $customerId);
+            })
+            ->select('messages.*')
+            ->distinct()
+            ->get();
+
+        $businessIds = $messages->pluck('business_id')->unique();
+        $businesses  = User::whereIn('id', $businessIds)->pluck('name', 'id');
+
+        foreach ($messages as $message) {
+            $message->business_name = $businesses[$message->business_id] ?? null;
+            $message->time_ago      = Carbon::parse($message->created_at)->diffForHumans();
+        }
+
+        return response()->json($messages);
+    }
+
+    // Customer: Respond to Message
+    public function respondToMessage(Request $request)
+    {
+        if (Auth::user()->role !== 'customer') {
+            return response()->json(['message' => 'Please login with a valid Customer account'], 403);
+        }
+
+        $validated = $request->validate([
+            'business_id' => 'required|exists:users,id',
+            'message_id'  => 'required|exists:messages,id',
+            'status'      => 'required|in:accepted,declined',
+        ]);
+
+        $validated['customer_id'] = Auth::id();
+        CustomerMessageResponse::create($validated);
+
+        return response()->json(['chat_enabled' => $validated['status'] === 'accepted']);
+    }
+
+    // One-to-One Message
+    public function sendOneToOneMessage(Request $request)
+    {
+        $validated = $request->validate([
+            'receiver_id'  => 'required|exists:users,id',
+            'message_text' => 'required|string|max:500',
+        ]);
+
+        $sender     = Auth::user();
+        $receiverId = $validated['receiver_id'];
+        $messageText= $validated['message_text'];
+
+        $message = Message::create([
+            'sender_id'    => $sender->id,
+            'receiver_id'  => $receiverId,
+            'message_text' => $messageText,
+            'is_group_message' => false,
+            'chat_enabled' => true,
+        ]);
+
+        broadcast(new MessageSent((object)[
+            'sender_id'   => $sender->id,
+            'receiver_id' => $receiverId,
+            'text'        => $messageText,
+            'timestamp'   => now(),
+        ]));
+
+        $image = asset('storage/notifications/notification.png');
+
+        if ($sender->role === 'customer') {
+            $fcmToken = DB::table('business_profiles')->where('business_id', $receiverId)->value('fcm_token');
+        } else {
+            $fcmToken = DB::table('customer_profiles')->where('customer_id', $receiverId)->value('fcm_token');
+        }
+
+        if ($fcmToken) {
+            $this->fcmService->sendNotificationToDevice($fcmToken, $sender->name, $messageText, $image);
+        }
+
+        // Notification in DB for receiver
+        if ($sender->role === 'customer') {
+            createNotification($receiverId, $messageText, 'push', null, true);
+        } else {
+            customerNotification($receiverId, $messageText, 'push', null, true);
+        }
+
+        $this->markMessageAsReadInternal($message->id, $sender->id);
+
+        return response()->json(['message' => 'Message sent successfully', 'message_id' => $message->id]);
+    }
+
+    // Chat History
+    public function getChatMessages(Request $request, int $receiverId)
+    {
+        $userId = Auth::id();
+
+        $messages = Message::where(fn($q) => $q->where('sender_id', $userId)->where('receiver_id', $receiverId))
+            ->orWhere(fn($q) => $q->where('sender_id', $receiverId)->where('receiver_id', $userId))
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $userIds = $messages->pluck('sender_id')->merge($messages->pluck('receiver_id'))->unique();
+        $users   = User::whereIn('id', $userIds)->get()->keyBy('id');
+
+        foreach ($messages as $message) {
+            if ($message->receiver_id === $userId) {
+                $this->markMessageAsReadInternal($message->id, $userId);
+            }
+            $message['sender_name']    = $users[$message->sender_id]?->name;
+            $message['receiver_name']  = $users[$message->receiver_id]?->name;
+            $message['sender_image']   = $users[$message->sender_id]?->profile_image;
+            $message['receiver_image'] = $users[$message->receiver_id]?->profile_image;
+            $message->time_ago         = Carbon::parse($message->created_at)->diffForHumans();
+            $message->read_by          = json_decode($message->read_by, true);
+        }
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    // Chat List
+    public function getChatList()
+    {
+        $currentUserId = Auth::id();
+        $latestMessages = Message::select(
+                DB::raw('IF(sender_id = ' . $currentUserId . ', receiver_id, sender_id) as other_user_id'),
+                DB::raw('MAX(id) as last_message_id')
+            )
+            ->where(fn($q) => $q->where('sender_id', $currentUserId)->orWhere('receiver_id', $currentUserId))
+            ->groupBy('other_user_id')
+            ->get();
+
+        $lastMessageIds = $latestMessages->pluck('last_message_id')->toArray();
+        $otherUserIds   = $latestMessages->pluck('other_user_id')->toArray();
+
+        $lastMessages = Message::whereIn('id', $lastMessageIds)->get()->keyBy('id');
+        $otherUsers   = User::whereIn('id', $otherUserIds)->get()->keyBy('id');
+
+        // Unread counts — bulk
+        $unreadCounts = Message::whereIn('sender_id', $otherUserIds)
+            ->where('receiver_id', $currentUserId)
+            ->whereJsonDoesntContain('read_by', $currentUserId)
+            ->selectRaw('sender_id, COUNT(*) as unread')
+            ->groupBy('sender_id')
+            ->pluck('unread', 'sender_id');
+
+        $chatList = $latestMessages->map(function ($chat) use ($lastMessages, $otherUsers, $unreadCounts, $currentUserId) {
+            $lastMessage = $lastMessages[$chat->last_message_id] ?? null;
+            $otherUser   = $otherUsers[$chat->other_user_id] ?? null;
+            $readByArray = json_decode($lastMessage?->read_by, true) ?? [];
+
+            return [
+                'id'                    => $otherUser?->id,
+                'name'                  => $otherUser?->name,
+                'profile_image'         => $otherUser?->profile_image,
+                'last_message'          => $lastMessage?->message_text,
+                'last_message_time'     => $lastMessage?->created_at?->format('H:i'),
+                'unread_count'          => $unreadCounts[$chat->other_user_id] ?? 0,
+                'is_last_message_read'  => in_array($currentUserId, $readByArray),
+            ];
+        });
+
+        return response()->json($chatList);
+    }
+
+    // Private Helpers
+    private function getCustomersForMessage(int $businessId, string $groupType)
     {
         $customers = DB::table('customer_business_relationships')
             ->join('users', 'customer_business_relationships.customer_id', '=', 'users.id')
@@ -51,326 +260,19 @@ class MessageController extends Controller
             ->where('status', 'declined')
             ->pluck('customer_id');
 
-        $eligibleCustomers = $customers->diff($declinedCustomers);
-
-        // Log for declined customer IDs
-        Log::build([
-            'driver' => 'single',
-            'path' => storage_path('logs/declined_customers_log.log'),
-        ])->info('Declined Customers:', ['declined_customers' => $declinedCustomers]);
-         
-        // Log for eligible customers
-        Log::build([
-            'driver' => 'single',
-            'path' => storage_path('logs/eligible_customers_log.log'),
-        ])->info('Eligible Customers:', ['eligible_customers' => $eligibleCustomers]);
-
-        return $eligibleCustomers;
+        return $customers->diff($declinedCustomers);
     }
 
-
-    /**
-     *  API Function Sending Message to Customer 
-    */
-    public function sendBusinessMessage(Request $request)
+    private function markMessageAsReadInternal(int $messageId, int $userId): void
     {
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+        $message = Message::find($messageId);
+        if (!$message) return;
+
+        $readByUsers = json_decode($message->read_by, true) ?? [];
+        if (!in_array($userId, $readByUsers)) {
+            $readByUsers[]    = $userId;
+            $message->read_by = json_encode($readByUsers);
+            $message->save();
         }
-
-        if ($user->role !== 'business') {
-            return response()->json(['message' => 'Please login with a valid Business account'], 403);
-        }
-
-        $validated = $request->validate([
-            'message_text' => 'nullable|string|max:500',
-            'group_target' => 'required|in:new,regular,daily',
-            'chat_enabled' => 'required|boolean',
-            'enable_buttons' => 'required|boolean'
-        ]);
-
-        $businessId = $user->id;
-        $groupType = $validated['group_target'];
-        $messageText = $validated['message_text'];
-        $chatEnabled = $validated['chat_enabled'];
-        $buttonEnabled = $validated['enable_buttons'];
-
-        $customers = $this->getCustomersForMessage($businessId, $groupType);
-        if ($customers->isEmpty()) {
-            return response()->json(['message' => 'No customers in this group'], 404);
-        }
-
-        $message = Message::create([
-            'business_id' => $businessId,
-            'message_text' => $messageText,
-            'group_target' => $groupType,
-            'chat_enabled' => $chatEnabled,
-            'enable_buttons' => $buttonEnabled,
-            'is_group_message' => 1,
-        ]);
-
-        $customers = DB::table('customer_business_relationships')->where('business_id', $businessId)->where('customer_tier', $groupType)->pluck('customer_id');
-        if ($customers->isEmpty()) {
-            return response()->json(['message' => 'No customers in this group'], 404);
-        }
-
-        $business = DB::table('business_profiles')->where('business_id', $businessId)->pluck('business_name')->first();
-       
-        foreach ($customers as $customerId) {
-            $messageData = (object)[
-                'sender_id' => $businessId,
-                'receiver_id' => $customerId,
-                'text' => $messageText,
-                'timestamp' => now(),
-            ];
-    
-            broadcast(new MessageSent($messageData))->toOthers();
-
-            $fcmService = new FCMService();
-            $title = $business;
-            $body = $messageText;
-            $image = asset('storage/notifications/notification.png');
-
-            $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
-            // Sending Notification on Device
-            $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
-
-            // Store into DB
-            customerNotification($customerId, $body, "push", null, true);
-
-        }
-
-        // $message = (object)[
-        //     'sender_id' => $businessId,
-        //     'receiver_id' => ,  // customer_id how have into groupType within businessId
-        //     'text' => $messageText,
-        //     'timestamp' => now(),
-        // ];
-
-        // broadcast(new MessageSent($message));
-
-        return response()->json(['message' => 'Message sent successfully', 'message_id' => $message]);
     }
-
-
-    /**
-     *  API Function Getting Customer Messages 
-    */
-    public function getCustomerMessages($customerId)
-    {
-        $messages = Message::join('customer_business_relationships', function ($join) use ($customerId) {
-                $join->on('message.business_id', '=', 'customer_business_relationships.business_id')
-                    ->where('customer_business_relationships.customer_id', '=', $customerId);
-            })
-            ->select('message.*')
-            ->distinct()
-            ->get();
-
-        // Fetch all business names in one query
-        $businessIds = $messages->pluck('business_id')->unique();
-        $businesses = User::whereIn('id', $businessIds)->pluck('name', 'id');
-
-        // Attach business names
-        foreach ($messages as $message) {
-            $message->business_name = $businesses[$message->business_id] ?? null;
-            $message->time_ago = Carbon::parse($message->created_at)->diffForHumans();
-        }
-
-        return response()->json($messages);
-    }
-
-
-    /**
-     *  API Function Customer respond to Message
-    */
-    public function respondToMessage(Request $request)
-    {
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        if ($user->role !== 'customer') {
-            return response()->json(['message' => 'Please login with a valid Customer account'], 403);
-        }
-
-        $validated = $request->validate([
-            'business_id' => 'required|exists:users,id',
-            'message_id' => 'required|exists:message,id',
-            'status' => 'required|in:accepted,declined',
-        ]);
-
-        $validated['customer_id'] = $user->id;
-
-        $response = CustomerMessageResponse::create($validated);
-
-        return response()->json(['chat_enabled' => $validated['status'] == 'accepted']);
-    }
-
-    /**
-     *  API Function One to One Message
-    */
-    public function sendOneToOneMessage(Request $request)
-    {
-        // echo"<pre>"; print_r(auth()->user());
-        // die('HELLO, Please wait!!');
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $validated = $request->validate([
-            'receiver_id' => 'required|exists:users,id',
-            'message_text' => 'required|string|max:500',
-        ]);
-
-        $receiverId = $validated['receiver_id'];
-        $messageText = $validated['message_text'];
-
-        // Check if receiver exists
-        $receiver = User::find($receiverId);
-        if (!$receiver) {
-            return response()->json(['message' => 'Receiver not found'], 404);
-        }
-
-        // Insert one-to-one message
-        $message = Message::create([
-            'sender_id' => $user->id,
-            'receiver_id' => $receiverId,
-            'message_text' => $messageText,
-            'is_group_message' => false,
-            'chat_enabled' => true,
-        ]);
-
-        $messageBroadcast = (object)[
-            'sender_id' => $user->id,
-            'receiver_id' => $receiverId,
-            'text' => $messageText,
-            'timestamp' => now(),
-        ];
-
-        $emc = broadcast(new MessageSent($messageBroadcast));
-
-
-        $sender = DB::table('users')->where('id',$user->id)->first();
-
-        $fcmService = new FCMService();
-        $title = $sender->name;
-        $body = $messageText;
-        $image = asset('storage/notifications/notification.png');
-
-        if($sender->role == "customer"){
-            $fcmToken = DB::table('customer_profiles')->where('customer_id',$sender->id)->pluck('fcm_token')->first();
-            // Store into DB
-            customerNotification($sender->id, $body, "push", null, true);
-
-        } else {
-            $fcmToken = DB::table('business_profiles')->where('business_id',$sender->id)->pluck('fcm_token')->first();
-            // Store into DB 
-            createNotification($sender->id, $body, "push", null, true);
-        }
-        
-        // Sending Notification on Device
-        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
-
-        // echo"<pre>"; print_r($emc); die;
-        // Apply Read to message
-        $this->markMessageAsReadInternal($message->id, $user->id);
-
-        return response()->json(['message' => 'Message sent successfully', 'message_id' => $message->id]);
-    }
-
-    /**
-     *  API Function to get chat
-    */
-    public function getChatMessages(Request $request, $receiverId)
-    {
-        $user = auth()->user();
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        // Fetch all messages between the two users
-        $messages = Message::where(function ($query) use ($user, $receiverId) {
-                $query->where('sender_id', $user->id)->where('receiver_id', $receiverId);
-            })
-            ->orWhere(function ($query) use ($user, $receiverId) {
-                $query->where('sender_id', $receiverId)->where('receiver_id', $user->id);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        // Get all involved user IDs
-        $userIds = $messages->pluck('sender_id')->merge($messages->pluck('receiver_id'))->unique();
-
-        // Fetch all users in one query
-        $users = User::whereIn('id', $userIds)->get()->keyBy('id');
-
-        // Attach user details to messages
-        foreach ($messages as $message) {
-            if ($message->receiver_id == $user->id) {
-                $this->markMessageAsReadInternal($message->id, $user->id);
-            }
-
-            $message['sender_name'] = $users[$message->sender_id]->name ?? null;
-            $message['receiver_name'] = $users[$message->receiver_id]->name ?? null;
-            $message['sender_image'] = $users[$message->sender_id]->profile_image ?? null;
-            $message['receiver_image'] = $users[$message->receiver_id]->profile_image ?? null;
-            $message->time_ago = Carbon::parse($message->created_at)->diffForHumans();
-            $message->read_by = json_decode($message->read_by, true);
-        }
-
-        return response()->json(['messages' => $messages]);
-    }
-
-    public function getChatList(Request $request)
-    {
-        $currentUserId = auth()->id(); // or pass manually
-
-        // Step 1: Get latest message per chat (other user)
-        $latestMessages = Message::select(
-                DB::raw('IF(sender_id = '.$currentUserId.', receiver_id, sender_id) as user_id'),
-                DB::raw('MAX(id) as last_message_id')
-            )
-            ->where(function ($query) use ($currentUserId) {
-                $query->where('sender_id', $currentUserId)
-                    ->orWhere('receiver_id', $currentUserId);
-            })
-            ->groupBy('user_id')
-            ->get();
-
-        $chatList = [];
-
-        foreach ($latestMessages as $chat) {
-            $lastMessage = Message::find($chat->last_message_id);
-            $otherUser = User::find($chat->user_id);
-
-            // Step 2: Count of unread messages for this user from the other person
-            $unreadCount = Message::where('sender_id', $otherUser->id)
-                ->where('receiver_id', $currentUserId)
-                ->where(function ($query) use ($currentUserId) {
-                    $query->whereJsonDoesntContain('read_by', $currentUserId);
-                })
-                ->count();
-
-            // Step 3: Is last message read
-            // $isLastRead = in_array($currentUserId, $lastMessage->read_by ?? []);
-            $readByArray = json_decode($lastMessage->read_by, true) ?? [];
-            $isLastRead = in_array($currentUserId, $readByArray);
-
-            $chatList[] = [
-                'id' => $otherUser->id,
-                'name' => $otherUser->name,
-                'profile_image' => $otherUser->profile_image,
-                'last_message' => $lastMessage->message_text,
-                'last_message_time' => $lastMessage->created_at->format('H:i'),
-                'unread_count' => $unreadCount,
-                'is_last_message_read' => $isLastRead
-            ];
-        }
-
-        return response()->json($chatList);
-    }
-
 }

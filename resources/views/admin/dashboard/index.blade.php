@@ -40,7 +40,7 @@
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
                   </div>
-                  <a href="{{ route('customers.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('customer.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -52,7 +52,7 @@
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
                   </div>
-                  <a href="{{ route('customers.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('customer.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -64,7 +64,7 @@
                   <div class="icon">
                      <i class="ion ion-person-add"></i>
                   </div>
-                  <a href="{{ route('customers.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('customer.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <!-- ./col -->
@@ -78,7 +78,7 @@
                   <div class="icon">
                      <i class="ion ion-bag"></i>
                   </div>
-                  <a href="{{ route('businesses.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('business.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -90,7 +90,7 @@
                   <div class="icon">
                      <i class="ion ion-bag"></i>
                   </div>
-                  <a href="{{ route('businesses.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('business.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <div class="col-lg-2 col-6">
@@ -102,7 +102,7 @@
                   <div class="icon">
                      <i class="ion ion-bag"></i>
                   </div>
-                  <a href="{{ route('businesses.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                  <a href="{{ route('business.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                </div>
             </div>
             <!-- ./col Buiness -->

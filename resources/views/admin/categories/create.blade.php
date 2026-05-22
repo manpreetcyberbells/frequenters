@@ -40,29 +40,6 @@
                   <div class="card-body">
                     <!--begin::Row-->
                     <div class="row g-3">
-                      <!-- <div class="col-md-6 form-group">
-                        <label for="validationCategoryUsername" class="form-label">Category Name</label>
-                        <div class="input-group has-validation">
-                          <input
-                            type="text"
-                            name="name"
-                            class="form-control"
-                            id="validationCategoryUsername"
-                            required
-                            placeholder="Enter Category name"
-                          />
-                        </div>
-                      </div>
-
-                      <div class="col-md-6 form-group">
-                          <label class="form-label">Parent Category (Optional for main category):</label>
-                          <select name="parent_id" class="form-control">
-                            <option value="">None (Main Category)</option>
-                            @foreach ($categories as $category)
-                              <option value="{{ $category->id }}">{{ $category->name }}</option>
-                            @endforeach
-                          </select>
-                      </div> -->
 
                       <div class="col-md-3 form-group">
                         <label for="validationActive" class="form-label">Active Icon</label>
@@ -130,7 +107,7 @@
 
                       <div class="col-md-6 form-group" id="subcategoryGroup" style="display:none;">
                         <label class="form-label">Sub Category</label>
-                          <select name="child_id" id="childCategory" class="form-control">
+                            <select name="child_id" id="childCategory" class="form-control select2" data-placeholder="Select a State" style="width: 100%;">
                             <option value="">Select Sub Category</option>
                             <option value="other">Other</option>
                           </select>
@@ -141,10 +118,19 @@
                         <input type="text" name="new_sub_name" class="form-control" placeholder="Enter Sub Category">
                       </div>
 
-                      <div class="col-md-6 form-group" id="grandchildCategory" style="display:none;">
+                      <div class="col-md-6 form-group" id="grandchildCategory">
                         <label class="form-label">Sub-Grand Category Name</label>
-                        <input type="text" name="subGrand" class="form-control" placeholder="Enter Sub-Grand Category Name">
+                          <select name="subGrand" id="subGrand" class="form-control select2" data-placeholder="Select a State" style="width: 100%;">  
+                          <option value="">Select Sub-Grand Category</option>
+                            
+                          </select>
                       </div>
+
+                      <div class="col-md-6 form-group" id="customGrandCategory" style="display:none;">
+                        <label class="form-label">Sub-Grand Category Name</label>
+                        <input type="text" name="new_grand_name" class="form-control" placeholder="Enter New Grand Category">
+                      </div>
+
                     </div>
 
                   </div>

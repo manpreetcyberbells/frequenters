@@ -3,577 +3,199 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\CustomerAddress;
+use App\Models\Offer;
+use App\Models\Review;
+use App\Models\BusinessProfile;
+use App\Services\BusinessQueryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use App\Models\CustomerProfile;
-use App\Models\CustomerAddress;
-use App\Models\BusinessAddress;
-use App\Models\BusinessProfile;
-use App\Models\Review;
-use App\Models\Offer;
-use App\Models\Menu;
-use App\Models\Service;
-use Illuminate\Support\Facades\Crypt;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\DB;
-
 
 class CustomerController extends Controller
 {
-    // Show the login form (for web)
-    public function showLoginForm()
-    {
-        return view('customer.login');
-    }
+    public function __construct(
+        private readonly BusinessQueryService $businessQuery
+    ) {}
 
-    public function showRegistrationForm()
-    {
-        return view('customer.register');
-    }
 
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'zip_code' => 'required|string|max:10',
-            'radius' => 'nullable|integer',
-            'address_line1' => 'nullable|string|max:255',
-            'address_line2' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-        ]);
+    public function showLoginForm()       { return view('customer.login'); }
+    public function showRegistrationForm(){ return view('customer.register'); }
+    public function dashboard()           { return view('customer.dashboard', ['customer' => Auth::user()]); }
 
-        // Create the user
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'customer',
-        ]);
-
-        // Create the customer profile
-        CustomerProfile::create([
-            'customer_id' => $user->user_id,
-            'zip_code' => $validated['zip_code'],
-            'radius' => $validated['radius'] ?? 5,
-            'address_line1' => $validated['address_line1'],
-            'address_line2' => $validated['address_line2'],
-            'city' => $validated['city'],
-            'state' => $validated['state'],
-            'country' => $validated['country'],
-        ]);
-
-        return redirect()->route('customer.register')->with('success', 'Registration successful!');
-    }
-
-    // Handle login (supports both web and API)
     public function handleLogin(Request $request)
     {
         $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            // Update last_login_at
-            $user->last_login_at = now();
-            $user->save();
-
-            if ($request->expectsJson()) {
-                // For API Login: Return Sanctum token
-                $token = $user->createToken($user->role . '-token')->plainTextToken;
-
-                return response()->json([
-                    'message' => 'Login successful',
-                    'token' => $token,
-                    'user' => $user,
-                    'role' => $user->role, // Include role in API response
-                ], 200);
-            }
-
-            // For Web Login: Role-based redirection
-            $request->session()->regenerate();
-
-            if ($user->role === 'business') {
-                return redirect()->route('business.dashboard');
-            } elseif ($user->role === 'customer') {
-                return redirect()->route('customer.dashboard');
-            }
-
-            // Default: If role is not set properly
-            Auth::logout();
-            return back()->with('error', 'User role is invalid.');
+        if (!Auth::attempt($credentials)) {
+            return $request->expectsJson()
+                ? response()->json(['error' => 'Unauthorized'], 401)
+                : back()->with('error', 'Invalid login credentials.');
         }
+
+        $user = Auth::user();
+        $user->update(['last_login_at' => now()]);
 
         if ($request->expectsJson()) {
-            // For API: Unauthorized Response
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json([
+                'message' => 'Login successful',
+                'token'   => $user->createToken($user->role . '-token')->plainTextToken,
+                'user'    => $user,
+                'role'    => $user->role,
+            ]);
         }
 
-        // For Web: Return to login form with error
-        return back()->with('error', 'Invalid login credentials.');
+        $request->session()->regenerate();
+
+        return match ($user->role) {
+            'business' => redirect()->route('business.dashboard'),
+            'customer' => redirect()->route('customer.dashboard'),
+            default    => back()->with('error', 'User role is invalid.'),
+        };
     }
 
-    // Customer Dashboard View (web only)
-    public function dashboard(Request $request)
-    {
-        return view('customer.dashboard', ['customer' => Auth::user()]);
-    }
-
-    // Handle Logout (supports both web and API)
     public function logout(Request $request)
     {
         if ($request->expectsJson()) {
-            // For API: Revoke Sanctum token
             $request->user()->tokens()->delete();
-
-            return response()->json(['message' => 'Logged out successfully'], 200);
+            return response()->json(['message' => 'Logged out successfully']);
         }
 
-        // For Web: Logout and invalidate session
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect('/login');
     }
 
-    public function generateEncryptedQrCode()
+    // Customer Home (API)
+    public function getHomeBusinessesOLDV1(Request $request)
     {
-        // Get the authenticated user's ID (customer ID)
-        $userId = Auth::id(); // This retrieves the logged-in user's user_id
-        // Create payload
-        $payload = [
-            "type" => "customer_checkin",
-            "customer_id" => $userId
+        $customerId = Auth::id();
+        $profile    = Auth::user()->customerProfile;
+        $listType   = $request->input('listType');
+        $categoryId = $request->input('category_id');
+
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)
+            ->where('is_current', '1')
+            ->first()
+            ?? CustomerAddress::where('customer_id', $customerId)->first();
+
+        if (!$customerAddress) {
+            return response()->json(['error' => 'Customer address not found'], 404);
+        }
+
+        $lat = $customerAddress->latitude;
+        $lng = $customerAddress->longitude;
+        // echo"<pre>"; print_r($lat);  echo"<br>";
+        // echo"<pre>"; print_r($lng);  echo"<br>";
+        // die('Hell');
+        $nearby          = $this->businessQuery->nearbyBusinesses($customerId, $lat, $lng, $categoryId);
+        $highestRewards  = $this->businessQuery->highestRewardBusinesses($customerId, $lat, $lng, $categoryId);
+        $frequent        = $this->businessQuery->frequentlyVisited($customerId, $lat, $lng, $categoryId);
+
+        $businessIds = BusinessProfile::pluck('business_id')->toArray();
+        $offers      = Offer::where('is_active', true)->orderByDesc('discount_percentage')->limit(3)->get();
+        $reviews     = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderByDesc('created_at')->get();
+        $addresses   = CustomerAddress::where('customer_id', $customerId)->get();
+
+        $data = [
+            'name'            => Auth::user()->name,
+            'title'           => 'Good Morning Bestie',
+            'subtitle'        => "Yo, you just snagged {$profile->points_balance} exclusive points!",
+            'reward_points'   => $profile->points_balance ?? 0,
+            'frequent'        => $frequent,
+            'highest_rewards' => $highestRewards,
+            'nearby'          => $nearby,
+            'reviews'         => $reviews,
+            'offers'          => $offers,
+            'address'         => $addresses,
         ];
 
-        // Encrypt payload
-        $encryptedPayload = Crypt::encryptString(json_encode($payload));
+        if ($listType) {
+            if (!array_key_exists($listType, $data)) {
+                return response()->json(['error' => 'Invalid listType parameter'], 400);
+            }
+            return response()->json([$listType => $data[$listType]]);
+        }
 
-        // Generate QR code
-        $qrCode = QrCode::size(300)->generate($encryptedPayload);
-
-        // Generate text code (Base64-encoded payload)
-        $textCode = base64_encode($encryptedPayload);
-
-        // Return view with QR code and text code
-        return view('customer.qr-code', compact('qrCode', 'textCode'));
+        return response()->json($data);
     }
 
-    public function generateEncryptedQrCodeApi()
+    public function getHomeBusinesses(Request $request)
     {
-        // Get the authenticated user's ID (customer ID)
-        $userId = Auth::id();
+        $customerId = Auth::id();
+        $profile    = Auth::user()->customerProfile;
+        $listType   = $request->input('listType');
+        $categoryId = $request->input('category_id');
 
-        // Create payload
-        $payload = [
-            "type" => "customer_checkin",
-            "customer_id" => $userId
+        // Live GPS from device
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+
+        // Fallback
+        if (!$lat || !$lng) {
+            $customerAddress = CustomerAddress::where('customer_id', $customerId)->where('is_current', '1')->first() ?? CustomerAddress::where('customer_id', $customerId)->first();
+            $lat = $customerAddress->latitude ?? null;
+            $lng = $customerAddress->longitude ?? null;
+        } else {
+            CustomerAddress::updateOrCreate(
+                ['customer_id' => $customerId, 'is_current' => '1'],
+                ['latitude' => $lat, 'longitude' => $lng]
+            );
+        }
+
+        $hasLocation = $lat && $lng;
+
+        // Location-dependent lists
+        $nearby         = $hasLocation ? $this->businessQuery->nearbyBusinesses($customerId, $lat, $lng, $categoryId) : [];
+        $highestRewards = $hasLocation ? $this->businessQuery->highestRewardBusinesses($customerId, $lat, $lng, $categoryId) : [];
+        $frequent       = $hasLocation ? $this->businessQuery->frequentlyVisited($customerId, $lat, $lng, $categoryId) : [];
+
+        $businessIds = BusinessProfile::pluck('business_id')->toArray();
+        $offers      = Offer::where('is_active', true)->orderByDesc('discount_percentage')->limit(3)->get();
+        $reviews     = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderByDesc('created_at')->get();
+        $addresses   = CustomerAddress::where('customer_id', $customerId)->get();
+
+        $data = [
+            'name'            => Auth::user()->name,
+            'title'           => 'Good Morning Bestie',
+            'subtitle'        => "Yo, you just snagged {$profile->points_balance} exclusive points!",
+            'reward_points'   => $profile->points_balance ?? 0,
+            'needs_location'  => !$hasLocation,
+            'frequent'        => $frequent,
+            'highest_rewards' => $highestRewards,
+            'nearby'          => $nearby,
+            'reviews'         => $reviews,
+            'offers'          => $offers,
+            'address'         => $addresses,
         ];
 
-        // Encrypt payload
-        $encryptedPayload = Crypt::encryptString(json_encode($payload));
+        if ($listType) {
+            if (!array_key_exists($listType, $data)) {
+                return response()->json(['error' => 'Invalid listType parameter'], 400);
+            }
+            return response()->json([$listType => $data[$listType]]);
+        }
 
-        // Generate QR Code as PNG
-        $qrCode = QrCode::format('png')->size(300)->generate($encryptedPayload);
-
-        // Generate text code (Base64-encoded payload)
-        $textCode = base64_encode($encryptedPayload);
-
-        // Return JSON response
-        return response()->json([
-            'message' => 'Customer QR code generated successfully.',
-            'qr_code' => 'data:image/png;base64,' . base64_encode($qrCode),
-            'text_code' => $textCode
-        ], 200);
+        return response()->json($data);
     }
 
+    // Web helpers
     public function searchBusinesses(Request $request)
     {
         $query = $request->get('query', '');
-
-        // Search businesses by name or category
         $businesses = DB::table('business_profiles')
             ->where('business_name', 'LIKE', "%{$query}%")
             ->orWhere('industry_type', 'LIKE', "%{$query}%")
             ->paginate(10);
-
         return view('customer.search', compact('businesses', 'query'));
     }
 
     public function viewBusinessProfile($businessId)
     {
         $business = DB::table('business_profiles')->where('business_id', $businessId)->first();
-
-        $rewards = DB::table('rewards')->where('business_id', $businessId)->get();
-        $contests = DB::table('contests')->where('business_id', $businessId)->get(); // If contests exist
-
+        $rewards  = DB::table('rewards')->where('business_id', $businessId)->get();
+        $contests = DB::table('contests')->where('business_id', $businessId)->get();
         return view('customer.business-profile', compact('business', 'rewards', 'contests'));
     }
-
-    public function apiDashboard(Request $request)
-    {
-        try {
-            $user = $request->user();
-            $profile = $user->profile; // Assuming `profile` is a relationship in the User model.
-
-            // 1. Fetch City and State
-            $city = $profile->city ?? 'Unknown';
-            $state = $profile->state ?? 'Unknown'; // Assuming state exists in the profile
-
-            // 2. Fetch Total Check-Ins
-            $checkIns = DB::table('customer_business_interactions')
-                ->where('customer_id', $user->user_id)
-                ->where('interaction_type', 'check_in')
-                ->count();
-
-            // 3. Fetch Total Businesses
-            $businessesCount = DB::table('customer_business_interactions')
-                ->where('customer_id', $user->user_id)
-                ->distinct('business_id')
-                ->count('business_id');
-
-            // 4. Fetch Frequent Businesses
-            $frequentBusinesses = DB::table('customer_business_interactions')
-                ->where('customer_id', $user->user_id)
-                ->join('business_profiles', 'customer_business_interactions.business_id', '=', 'business_profiles.business_id')
-                ->select('business_profiles.business_name')
-                ->groupBy('business_profiles.business_name')
-                ->orderByRaw('COUNT(*) DESC')
-                ->limit(4)
-                ->pluck('business_name')
-                ->toArray();
-
-            return response()->json([
-                'name' => $user->name,
-                'city' => "$city, $state",
-                'reward_points' => $profile->points_balance ?? 0,
-                'businesses_count' => $businessesCount,
-                'check_ins' => $checkIns,
-                'offers' => 5, // Placeholder for now
-                'frequent_businesses' => $frequentBusinesses,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to fetch dashboard data', 'error' => $e->getMessage()], 500);
-        }
-    }
-    
-    /**
-     *  API Function for Customer dashboard 
-    */
-    public function getHomeBusinesses(Request $request)
-    {
-        $customerId = auth()->id();
-        $profile = auth()->user()->customerProfile;
-        $listType = $request->input('listType');
-        $categoryId = $request->input('category_id');
-        // Fetch customer address
-        $customerAddress = CustomerAddress::where('customer_id', $customerId)->where('is_current', '1')->first();
-        if (!$customerAddress) {
-            $customerAddress = CustomerAddress::where('customer_id', $customerId)->first();
-        }
-        if (!$customerAddress) {
-            return response()->json(['error' => 'Customer address not found'], 404);
-        }
-
-        $customerLat = $customerAddress->latitude;
-        $customerLong = $customerAddress->longitude;
-
-        // Call the separate functions
-        $nearbyBusinesses = $this->nearbyBusinesses($customerId, $customerLat, $customerLong, $categoryId);
-        $highestRewardBusinesses = $this->highestRewardBusinesses($customerId, $customerLat, $customerLong, $categoryId);
-        // Fetch frequently visited businesses
-        $frequentBusinesses = $this->frequentlyVisited($customerId, $customerLat, $customerLong, $categoryId);
-        // Fetch Business Offers
-        $businessOffers = Offer::where('is_active', true)->orderBy('discount_percentage', 'desc')->limit(3)->get();
-
-        // Get Reviews Based on Business_Ids
-        $businessIds = BusinessProfile::pluck('business_id')->toArray();
-        $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderBy('created_at', 'desc')->get();
-
-        // Customer All Address
-        $customerAddress = CustomerAddress::where('customer_id', $customerId)->get();
-
-        // Prepare response
-        $responseData = [
-            'name' => auth()->user()->name,
-            'title' => 'Good Morning Bestie',
-            'subtitle' => 'Yo, you just snagged '.$profile->points_balance.' exclusive points for hitting up cafes and restaurants this month!',
-            'reward_points' => $profile->points_balance ?? 0,
-            'frequent' => $frequentBusinesses,
-            'highest_rewards' => $highestRewardBusinesses,
-            'nearby' => $nearbyBusinesses,
-            'reviews' => $reviews,
-            'offers' => $businessOffers,
-            'address' => $customerAddress
-        ];
-
-        // Return only the requested listType
-        if ($listType) {
-            if (isset($responseData[$listType])) {
-                return response()->json([$listType => $responseData[$listType]]);
-            } else {
-                return response()->json(['error' => 'Invalid listType parameter'], 400);
-            }
-        }
-
-        return response()->json($responseData);
-    }
-
-    /**
-     *  Refactored Helper functions
-    */
-    public function nearbyBusinesses($customerId, $customerLat, $customerLong, $categoryId)
-    {
-        $query = BusinessAddress::selectRaw(
-            "business_addresses.id AS business_address_id, 
-            business_addresses.business_id,
-            business_addresses.address_line1, 
-            business_addresses.address_line2, 
-            business_addresses.city, 
-            business_addresses.state, 
-            business_addresses.country, 
-            business_addresses.zip_code, 
-            business_addresses.latitude, 
-            business_addresses.longitude,
-            users.id AS user_id,
-            users.status AS business_status,
-            business_profiles.id AS business_profile_id,
-            business_profiles.business_name,
-            business_profiles.description,
-            business_profiles.website,
-            business_profiles.qr_code_hash,
-            business_profiles.points_given,
-            business_profiles.monthly_points_available,
-            business_profiles.points_redeemed,
-            business_profiles.points_per_checkin,
-            business_profiles.conversion_rate,
-            business_profiles.total_checkins,
-            business_profiles.total_rewards_redeemed,
-            business_profiles.logo,
-            business_profiles.owner_name,
-            business_profiles.owner_email,
-            business_profiles.owner_phone,
-            business_profiles.category_id,
-            business_profiles.child_category_id,
-            parent_category.name AS category_name,
-            child_category.name AS child_category_name,
-            (SELECT GROUP_CONCAT(business_images.photo) 
-                FROM business_images 
-                WHERE business_images.business_id = users.id) AS images,
-            (SELECT GROUP_CONCAT(
-                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
-            ) FROM business_hours 
-            WHERE business_hours.business_id = users.id) AS business_hours,
-            EXISTS (
-                SELECT 1 FROM wishlists 
-                WHERE wishlists.business_id = users.id 
-                AND wishlists.customer_id = ?
-            ) AS is_wishlist,
-            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
-            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
-            ROUND((6371 * acos(
-                cos(radians(?)) * cos(radians(latitude)) 
-                * cos(radians(longitude) - radians(?)) 
-                + sin(radians(?)) * sin(radians(latitude))
-            )), 2) AS distance",
-            [$customerId, $customerLat, $customerLong, $customerLat]
-        )
-        ->join('users', 'users.id', '=', 'business_addresses.business_id')
-        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
-        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
-        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
-        ->having('distance', '<=', 10000)
-        ->orderByDesc('distance');
-        // Apply category filter if provided
-        if ($categoryId) {
-            $query->where('business_profiles.category_id', $categoryId);
-        }
-        $nearbyBusinesses = $query->paginate(10);
-        $nearbyBusinesses->getCollection()->transform(function ($business) {
-            $hasMenu = Menu::where('business_id', $business->user_id)->exists();
-            $hasService = Service::where('business_id', $business->user_id)->exists();
-            $business->has_menu = $hasMenu;
-            $business->has_service = $hasService;
-            return $business;
-        });
-        return $nearbyBusinesses;
-    }
-
-    /**
-     *  Refactored Helper functions
-    */
-    public function highestRewardBusinesses($customerId, $customerLat, $customerLong, $categoryId)
-    {
-        $query = BusinessAddress::selectRaw(
-            "business_addresses.id AS business_address_id, 
-            business_addresses.business_id,
-            business_addresses.address_line1, 
-            business_addresses.address_line2, 
-            business_addresses.city, 
-            business_addresses.state, 
-            business_addresses.country, 
-            business_addresses.zip_code, 
-            business_addresses.latitude, 
-            business_addresses.longitude,
-            users.id AS user_id,
-            users.status AS business_status,
-            business_profiles.id AS business_profile_id,
-            business_profiles.business_name,
-            business_profiles.description,
-            business_profiles.website,
-            business_profiles.qr_code_hash,
-            business_profiles.points_given,
-            business_profiles.monthly_points_available,
-            business_profiles.points_redeemed,
-            business_profiles.points_per_checkin,
-            business_profiles.conversion_rate,
-            business_profiles.total_checkins,
-            business_profiles.total_rewards_redeemed,
-            business_profiles.logo,
-            business_profiles.owner_name,
-            business_profiles.owner_email,
-            business_profiles.owner_phone,
-            business_profiles.category_id,
-            business_profiles.child_category_id,
-            parent_category.name AS category_name,
-            child_category.name AS child_category_name,
-            (SELECT GROUP_CONCAT(business_images.photo) 
-                FROM business_images 
-                WHERE business_images.business_id = users.id) AS images,
-            (SELECT GROUP_CONCAT(
-                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
-            ) FROM business_hours 
-            WHERE business_hours.business_id = users.id) AS business_hours,
-            EXISTS (
-                SELECT 1 FROM wishlists 
-                WHERE wishlists.business_id = users.id 
-                AND wishlists.customer_id = ?
-            ) AS is_wishlist,
-            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
-            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
-            ROUND((6371 * acos(
-                cos(radians(?)) * cos(radians(latitude)) 
-                * cos(radians(longitude) - radians(?)) 
-                + sin(radians(?)) * sin(radians(latitude))
-            )), 2) AS distance",
-            [$customerId, $customerLat, $customerLong, $customerLat]
-        )
-        ->join('users', 'users.id', '=', 'business_addresses.business_id')
-        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
-        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
-        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
-        ->orderByDesc('business_profiles.points_per_checkin')
-        ->orderByDesc('distance');
-        // ->paginate(10);
-        if ($categoryId) {
-            $query->where('business_profiles.category_id', $categoryId);
-        }
-        $highestReward = $query->paginate(10);
-        $highestReward->getCollection()->transform(function ($business) {
-            $hasMenu = Menu::where('business_id', $business->user_id)->exists();
-            $hasService = Service::where('business_id', $business->user_id)->exists();
-            $business->has_menu = $hasMenu;
-            $business->has_service = $hasService;
-            return $business;
-        });
-        return $highestReward;
-    }
-
-    /**
-     *  Refactored Helper functions
-    */
-    public function frequentlyVisited($customerId, $customerLat, $customerLong, $categoryId)
-    {
-        $query = BusinessAddress::selectRaw(
-            "business_addresses.id AS business_address_id, 
-            business_addresses.business_id,
-            business_addresses.address_line1, 
-            business_addresses.address_line2, 
-            business_addresses.city, 
-            business_addresses.state, 
-            business_addresses.country, 
-            business_addresses.zip_code, 
-            business_addresses.latitude, 
-            business_addresses.longitude,
-            users.id AS user_id,
-            users.status AS business_status,
-            business_profiles.id AS business_profile_id,
-            business_profiles.business_name,
-            business_profiles.description,
-            business_profiles.website,
-            business_profiles.qr_code_hash,
-            business_profiles.points_given,
-            business_profiles.monthly_points_available,
-            business_profiles.points_redeemed,
-            business_profiles.points_per_checkin,
-            business_profiles.conversion_rate,
-            business_profiles.total_checkins,
-            business_profiles.total_rewards_redeemed,
-            business_profiles.logo,
-            business_profiles.owner_name,
-            business_profiles.owner_email,
-            business_profiles.owner_phone,
-            business_profiles.category_id,
-            business_profiles.child_category_id,
-            parent_category.name AS category_name,
-            child_category.name AS child_category_name,
-            cbr.customer_tier,
-            (SELECT GROUP_CONCAT(business_images.photo) 
-                FROM business_images 
-                WHERE business_images.business_id = users.id) AS images,
-            (SELECT GROUP_CONCAT(
-                CONCAT(day_of_week, '|', open_time, '|', close_time, '|', is_closed)
-            ) FROM business_hours 
-            WHERE business_hours.business_id = users.id) AS business_hours,
-            EXISTS (
-                SELECT 1 FROM wishlists 
-                WHERE wishlists.business_id = users.id 
-                AND wishlists.customer_id = ?
-            ) AS is_wishlist,
-            (SELECT COUNT(*) FROM reviews WHERE reviews.business_id = users.id) AS total_reviews,
-            (SELECT COALESCE(AVG(reviews.rating), 0) FROM reviews WHERE reviews.business_id = users.id) AS average_rating,
-            ROUND((6371 * acos(
-                cos(radians(?)) * cos(radians(latitude)) 
-                * cos(radians(longitude) - radians(?)) 
-                + sin(radians(?)) * sin(radians(latitude))
-            )), 2) AS distance",
-            [$customerId, $customerLat, $customerLong, $customerLat]
-        )
-        ->join('users', 'users.id', '=', 'business_addresses.business_id')
-        ->leftJoin('business_profiles', 'business_profiles.business_id', '=', 'users.id')
-        ->leftJoin('categories AS parent_category', 'parent_category.id', '=', 'business_profiles.category_id')
-        ->leftJoin('categories AS child_category', 'child_category.id', '=', 'business_profiles.child_category_id')
-        ->leftJoin('customer_business_relationships AS cbr', function ($join) use ($customerId) {
-            $join->on('cbr.business_id', '=', 'users.id')->where('cbr.customer_id', '=', $customerId);
-        });
-
-        // Only fetch 'Daily' visitors
-        $query->where('cbr.customer_tier', 'daily');
-
-        // Apply category filter if provided
-        if ($categoryId) {
-            $query->where('business_profiles.category_id', $categoryId);
-        }
-
-        // Sort by nearest distance
-        $query->orderBy('distance', 'ASC');
-        
-        // return $query->paginate(10);
-        $frequentlyVisited = $query->paginate(10);
-        $frequentlyVisited->getCollection()->transform(function ($business) {
-            $hasMenu = \App\Models\Menu::where('business_id', $business->user_id)->exists();
-            $hasService = \App\Models\Service::where('business_id', $business->user_id)->exists();
-            $business->has_menu = $hasMenu;
-            $business->has_service = $hasService;
-            return $business;
-        });
-
-        return $frequentlyVisited;
-    }
-
 }

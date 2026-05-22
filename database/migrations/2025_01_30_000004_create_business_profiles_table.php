@@ -28,6 +28,8 @@ return new class extends Migration
             // $table->float('latitude', 10, 6)->nullable(); // Precision for GPS coordinates
             // $table->float('longitude', 10, 6)->nullable();
             $table->integer('points_per_checkin')->default(0);
+            $table->unsignedInteger('tier_regular_min')->default(3)->after('points_per_checkin');
+            $table->unsignedInteger('tier_daily_min')->default(10)->after('tier_regular_min');
             $table->decimal('conversion_rate', 5, 2)->default(0.00);
             $table->integer('total_checkins')->default(0);
             $table->integer('total_rewards_redeemed')->default(0);

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class RewardRedemption extends Model
 {
     protected $table = 'reward_redemptions';
+
     protected $fillable = [
         'customer_id',
         'reward_id',
@@ -19,6 +20,10 @@ class RewardRedemption extends Model
         'redemption_method',
     ];
 
+    protected $casts = [
+        'redeemed_at' => 'datetime',
+    ];
+
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
@@ -28,5 +33,9 @@ class RewardRedemption extends Model
     {
         return $this->belongsTo(User::class, 'business_id');
     }
-}
 
+    public function reward()
+    {
+        return $this->belongsTo(Reward::class, 'reward_id', 'reward_id');
+    }
+}

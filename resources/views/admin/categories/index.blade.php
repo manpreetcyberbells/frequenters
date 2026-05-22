@@ -71,8 +71,9 @@
                                   <ul class="mb-0 pl-3">
                                       @foreach ($category->children as $child)
                                           @if ($child->children->count())
+                                              <strong>{{ $child->name }}
                                               @foreach ($child->children as $grandcategory)
-                                                  <li>{{ $grandcategory->name }}</li>
+                                                </strong> <li>{{ $grandcategory->name }}</li>
                                               @endforeach
                                           @endif
                                       @endforeach

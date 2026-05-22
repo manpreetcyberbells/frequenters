@@ -9,13 +9,10 @@ use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller
 {
-    // Get Parent Categories
+    // Get Categories
     public function getCategories(): JsonResponse
     {
-        $categories = Category::whereNull('parent_id')
-            ->with('children')
-            ->get();
-    
+        $categories = Category::whereNull('parent_id')->with('children')->get();
         return response()->json($categories);
     }
 
@@ -39,7 +36,6 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::whereNull('parent_id')->with(['children','getChildrenRecursive'])->get();
-        // echo"<pre>"; print_r($categories);  die;
         return view('admin.categories.index', compact('categories'));
     }
     
@@ -57,62 +53,62 @@ class CategoryController extends Controller
     */
     public function store(Request $request)
     {
-        // echo"<pre>"; print_r($request->all()); die;
         $request->validate([
-            // 'name' => 'required|string|max:255',
-            'subGrand' => 'required|string|max:255',
-            // 'parent_id' => 'nullable|exists:categories,id',
             'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        // Step 1: Handle parent
-        $parentId = $request->parent_id;
-        if ($parentId === "other" && !empty($request->new_parent_name)) {
+        $parentId = null;
+        if ($request->parent_id === 'other' && !empty($request->new_parent_name)) {
             $parent = Category::create([
-                'name' => $request->new_parent_name,
+                'name' => $request->new_parent_name
             ]);
             $parentId = $parent->id;
+        } elseif (is_numeric($request->parent_id)) {
+            $parentId = (int) $request->parent_id;
         }
 
-        // Step 2: Handle child (subcategory)
-        $childId = $request->child_id;
-        if ($childId === "other" || empty($childId) && !empty($request->new_sub_name)) {
+        $childId = null;
+        if (($request->child_id === 'other' || empty($request->child_id)) && !empty($request->new_sub_name)) {
             $child = Category::create([
                 'name' => $request->new_sub_name,
                 'parent_id' => $parentId
             ]);
             $childId = $child->id;
-        } elseif ($childId !== "other" && is_numeric($childId)) {
-            $childId = intval($childId);
-        } else {
-            $childId = null;
+        } elseif (is_numeric($request->child_id)) {
+            $childId = (int) $request->child_id;
         }
 
-        // Step 3: Prepare data for grandchild (final category to be stored)
-        $data = [
-            'name' => $request->subGrand,
-            'parent_id' => $childId ?? $parentId
-        ];
-
-        // Step 4: Handle icon uploads
-        if ($request->hasFile('active_icon')) {
-            $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
-        }
-        if ($request->hasFile('inactive_icon')) {
-            $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
-        }
-        if ($request->hasFile('darkmode_active')) {
-            $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
-        }
-        if ($request->hasFile('darkmode_inactive')) {
-            $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+        $finalCategoryName = null;
+        if (!empty($request->new_grand_name)) {
+            $finalCategoryName = $request->new_grand_name;
+        } elseif (!empty($request->subGrand) && $request->subGrand !== 'other') {
+            $finalCategoryName = $request->subGrand;
         }
 
-        // Step 5: Create the grandchild category
-        Category::create($data);
+        if ($finalCategoryName) {
+            $data = [
+                'name' => $finalCategoryName,
+                'parent_id' => $childId ?? $parentId
+            ];
+
+            if ($request->hasFile('active_icon')) {
+                $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
+            }
+            if ($request->hasFile('inactive_icon')) {
+                $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
+            }
+            if ($request->hasFile('darkmode_active')) {
+                $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
+            }
+            if ($request->hasFile('darkmode_inactive')) {
+                $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+            }
+
+            Category::create($data); // Save final sub-grand category
+        }
 
         return redirect()->route('categories.index')->with('success', 'Category Added Successfully');
     }
@@ -125,44 +121,218 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         $categories = Category::whereNull('parent_id')->get();
         $sub_categories = Category::where('parent_id', $id)->get();
-        $children = $category->parent_id ? Category::where('parent_id', $category->parent->parent_id)->get() : collect();
-        // echo"<pre>"; print_r($children);  die;
-        return view('admin.categories.edit', compact('category', 'categories', 'children', 'sub_categories'));
+        $grand_parent_id = [];
+        foreach ($sub_categories as $key => $value) {
+            $grand_parent_id[] = $value->id;
+
+            $subGrandChildren = Category::where('parent_id', $value->id)->get();
+            $structure[] = [
+                'sub' => $value,
+                'grand' => $subGrandChildren
+            ];
+
+        }
+        $children = Category::whereIn('parent_id', $grand_parent_id)->get();
+        return view('admin.categories.edit', compact('category', 'categories', 'children', 'sub_categories', 'structure'));
     }
 
     /**
      * Update the specified resource in storage.
     */
+    // public function update(Request $request, $id)
+    // {
+    //     echo"<pre>"; print_r($request->all()); die;
+    //     $category = Category::findOrFail($id);
+    //     $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'parent_id' => 'nullable|exists:categories,id',
+    //         'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //     ]);
+
+    //     $data = $request->only(['name', 'parent_id']);
+
+    //     if ($request->hasFile('active_icon')) {
+    //         $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('inactive_icon')) {
+    //         $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('darkmode_active')) {
+    //         $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('darkmode_inactive')) {
+    //         $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+    //     }
+
+    //     $childIds = $request->input('child_id', []);
+    //     $subGrandIds = $request->input('subGrand', []);
+
+
+    //     $category->update($data);
+
+    //     return redirect()->route('categories.index')->with('success', 'Category Updated Successfully');
+    // }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $category = Category::findOrFail($id);
+
+    //     $request->validate([
+    //         'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //         'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
+    //     ]);
+
+    //     $data = $request->only(['name', 'parent_id']);
+
+    //     //If new parent category is entered
+    //     if ($request->filled('new_parent_name')) {
+    //         $newParent = Category::create([
+    //             'name' => $request->input('new_parent_name'),
+    //             'parent_id' => null
+    //         ]);
+    //         $data['parent_id'] = $newParent->id;
+    //     }
+
+    //     // Upload icons
+    //     if ($request->hasFile('active_icon')) {
+    //         $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('inactive_icon')) {
+    //         $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('darkmode_active')) {
+    //         $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
+    //     }
+    //     if ($request->hasFile('darkmode_inactive')) {
+    //         $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+    //     }
+
+    //     $category->update($data);
+
+    //     //Detach all current children
+    //     Category::where('parent_id', $category->id)->update(['parent_id' => null]);
+
+    //     //Handle new sub-categories (child_id[])
+    //     $childIds = $request->input('child_id', []);
+
+    //     // If a new sub-category was added
+    //     if ($request->filled('new_sub_name')) {
+    //         $newSub = Category::create([
+    //             'name' => $request->input('new_sub_name'),
+    //             'parent_id' => $category->id,
+    //         ]);
+    //         $childIds[] = $newSub->id;
+    //     }
+
+    //     // Set selected children to current category
+    //     Category::whereIn('id', $childIds)->update(['parent_id' => $category->id]);
+
+    //     //Detach all current sub-grandchildren
+    //     Category::whereIn('parent_id', $childIds)->update(['parent_id' => null]);
+
+    //     //Handle new sub-grand-categories
+    //     $subGrandIds = $request->input('subGrand', []);
+
+    //     if ($request->filled('new_grand_name') && !empty($childIds)) {
+    //         $newGrand = Category::create([
+    //             'name' => $request->input('new_grand_name'),
+    //             'parent_id' => $childIds[0], // Attach to first child
+    //         ]);
+    //         $subGrandIds[] = $newGrand->id;
+    //     }
+
+    //     if (!empty($childIds)) {
+    //         $firstChildId = $childIds[0];
+    //         Category::whereIn('id', $subGrandIds)->update(['parent_id' => $firstChildId]);
+    //     }
+
+    //     return redirect()->route('categories.index')->with('success', 'Category Updated Successfully');
+    // }
+
     public function update(Request $request, $id)
     {
-        // echo"<pre>"; print_r($request->all()); die;
         $category = Category::findOrFail($id);
+        if (is_null($category->parent_id) && !empty($request->parent_id)) {
+            return redirect()->back()->withErrors([
+                'parent_id' => 'Main categories like "' . $category->name . '" cannot be assigned under another category.',
+            ]);
+        }
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:categories,id',
             'active_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'inactive_icon' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_active' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
             'darkmode_inactive' => 'nullable|image|mimes:jpeg,png,webp|max:2048',
         ]);
 
-        $data = $request->only(['name', 'parent_id']);
+        // Handle Parent Category
+        $parentId = null;
+        if ($request->parent_id === 'other' && $request->filled('new_parent_name')) {
+            $newParent = Category::create([
+                'name' => $request->new_parent_name,
+                'parent_id' => null
+            ]);
+            $parentId = $newParent->id;
+        } elseif (is_numeric($request->parent_id)) {
+            $parentId = (int) $request->parent_id;
+        }
 
+        // Handle Sub Category (Child)
+        $childId = null;
+        if (($request->child_id === 'other' || empty($request->child_id)) && $request->filled('new_sub_name')) {
+            $newChild = Category::create([
+                'name' => $request->new_sub_name,
+                'parent_id' => $parentId
+            ]);
+            $childId = $newChild->id;
+        } elseif (is_numeric($request->child_id)) {
+            $childId = (int) $request->child_id;
+        }
+
+        // Handle Sub-Grand Category
+        $grandId = null;
+        if (($request->subGrand === 'other' || empty($request->subGrand)) && $request->filled('new_grand_name')) {
+            $newGrand = Category::create([
+                'name' => $request->new_grand_name,
+                'parent_id' => $childId ?? $parentId
+            ]);
+            $grandId = $newGrand->id;
+        } elseif (is_numeric($request->subGrand)) {
+            $grandId = (int) $request->subGrand;
+        }
+
+        // Prepare update data
+        $updateData = [];
+
+        // Only set parent_id if the current category is NOT a main category
+        if (!is_null($category->parent_id)) {
+            $finalParentId = $grandId ?? $childId ?? $parentId;
+            if (!is_null($finalParentId)) {
+                $updateData['parent_id'] = $finalParentId;
+            }
+        }
+
+        // Handle icon uploads
         if ($request->hasFile('active_icon')) {
-            $data['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
+            $updateData['active_icon'] = $request->file('active_icon')->store('category_icons', 'public');
         }
         if ($request->hasFile('inactive_icon')) {
-            $data['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
+            $updateData['inactive_icon'] = $request->file('inactive_icon')->store('category_icons', 'public');
         }
         if ($request->hasFile('darkmode_active')) {
-            $data['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
+            $updateData['darkmode_active'] = $request->file('darkmode_active')->store('category_icons', 'public');
         }
         if ($request->hasFile('darkmode_inactive')) {
-            $data['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
+            $updateData['darkmode_inactive'] = $request->file('darkmode_inactive')->store('category_icons', 'public');
         }
 
-        $category->update($data);
+        // Update current category
+        $category->update($updateData);
 
         return redirect()->route('categories.index')->with('success', 'Category Updated Successfully');
     }
@@ -172,6 +342,17 @@ class CategoryController extends Controller
     {
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+    }
+
+    public function destroySubGrand($id)
+    {
+        $category = Category::findOrFail($id);
+        if ($category->parent_id === null) {
+            return redirect()->back()->with('error', 'Cannot delete a root category here.');
+        }
+
+        $category->delete();
+        return redirect()->back()->with('success', 'Sub-Grand Category deleted successfully.');
     }
 
     public function getSubcategories($id)

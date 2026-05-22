@@ -54,7 +54,7 @@
               <div class="card-body box-profile">
                 <div class="text-center">
                   <img class="profile-user-img img-fluid img-circle"
-                       src="{{url('')}}/public/{{ $admin->profile_image }}"
+                       src="{{url('')}}/{{ $admin->profile_image }}"
                        alt="User profile picture"
                        id="image-preview" >
                 </div>

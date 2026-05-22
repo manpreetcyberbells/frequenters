@@ -1,19 +1,21 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Services\QrService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // Import DB Facade
-use Illuminate\Support\Facades\Crypt;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\DB;
 
 class CustomerDashboardController extends Controller
 {
-    public function redemptionQrCode($rewardId)
+    public function __construct(
+        private readonly QrService $qrService
+    ) {}
+
+    public function redemptionQrCode(int $rewardId)
     {
         $customerId = Auth::id();
-
-        // Fetch reward details
-        $reward = DB::table('rewards')->where('reward_id', $rewardId)->first();
+        $reward = DB::table('rewards')->where('id', $rewardId)->first();
         if (!$reward) {
             abort(404, 'Reward not found');
         }
@@ -29,17 +31,17 @@ class CustomerDashboardController extends Controller
         }
 
         $payload = [
-            'type' => 'reward_redemption',
-            'customer_id' => $customerId,
-            'reward_id' => $rewardId,
-            'business_id' => $reward->business_id,
+            'type'            => 'reward_redemption',
+            'customer_id'     => $customerId,
+            'reward_id'       => $rewardId,
+            'business_id'     => $reward->business_id,
             'redemption_code' => $redemption->redemption_code,
             'points_redeemed' => $reward->points_required,
-            'reward_name' => $reward->reward_name,
+            'reward_name'     => $reward->reward_name,
         ];
 
-        $encryptedPayload = Crypt::encryptString(json_encode($payload));
-        $qrCode = QrCode::size(300)->generate($encryptedPayload);
+        $encryptedPayload = $this->qrService->encryptPayload($payload);
+        $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(300)->generate($encryptedPayload);
 
         return view('customer.reward-qr', compact('qrCode', 'reward'));
     }

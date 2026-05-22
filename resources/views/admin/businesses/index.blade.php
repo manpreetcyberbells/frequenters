@@ -13,7 +13,7 @@
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-              <li class="breadcrumb-item"><a href="{{ route('businesses.index') }}">Business</a></li>
+              <li class="breadcrumb-item"><a href="{{ route('business.index') }}">Business</a></li>
               <li class="breadcrumb-item active">Listing</li>
             </ol>
           </div>
@@ -31,7 +31,7 @@
               <div class="card-header">
                 <!-- <h3 class="card-title">Business Listing</h3> -->
                 <div class="card-tools">
-                  <a href="{{ route('businesses.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Business</a>
+                  <a href="{{ route('business.create') }}" ><i class="fa fa-plus-square" aria-hidden="true"></i>Create Business</a>
                 </div>
               </div>
               <!-- /.card-header -->
@@ -79,17 +79,17 @@
                         </td>
                         <td>
                           <!-- View Business -->
-                          <a href="{{ route('businesses.show', $business->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Edit">
+                          <a href="{{ route('business.show', $business->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Edit">
                             <i class="nav-icon fas fa-eye"></i>
                           </a>
 
                           <!-- Edit Button -->
-                          <a href="{{ route('businesses.edit', $business->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
+                          <a href="{{ route('business.edit', $business->id) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="Edit">
                             <i class="nav-icon fas fa-edit"></i>
                           </a>
 
                           <!-- Delete Button (with confirmation) -->
-                          <form action="{{ route('businesses.destroy', $business->id) }}" method="POST" class="d-inline">
+                          <form action="{{ route('business.destroy', $business->id) }}" method="POST" class="d-inline">
                               @csrf
                               @method('DELETE')
                               <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this?');" data-bs-toggle="tooltip" title="Delete">

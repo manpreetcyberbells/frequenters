@@ -84,15 +84,32 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/business/dashboard', [BusinessController::class, 'dashboard'])->name('business.dashboard');
+
+// Business routes
+Route::prefix('business')->group(function () {
+    Route::get('/login', [BusinessController::class, 'showLoginForm'])->name('business.login');
+    Route::post('/login', [BusinessController::class, 'handleLogin'])->name('business.login.submit');
+
+    Route::get('/register', [BusinessController::class, 'showRegistrationForm'])->name('business.register');
+    Route::post('/register', [BusinessController::class, 'register'])->name('business.register.submit');
+
+
+    Route::middleware(['auth', 'role:business'])->group(function () {
+        Route::get('/dashboard', [BusinessController::class, 'dashboard'])->name('business.dashboard');
+        Route::post('/logout', [BusinessController::class, 'logout'])->name('business.logout');
+        // Business specific routes here
+    });
 });
+
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/business/dashboard', [BusinessController::class, 'dashboard'])->name('business.dashboard');
+// });
 
 Route::get('/register', [CustomerController::class, 'showRegistrationForm'])->name('customer.register'); // GET request for the registration form
 Route::post('/register', [CustomerController::class, 'register'])->name('customer.register.submit'); // POST request for form submission
 
-Route::get('/business/register', [BusinessController::class, 'showRegistrationForm'])->name('business.register');
-Route::post('/business/register', [BusinessController::class, 'register'])->name('business.register.submit');
+// Route::get('/business/register', [BusinessController::class, 'showRegistrationForm'])->name('business.register');
+// Route::post('/business/register', [BusinessController::class, 'register'])->name('business.register.submit');
 
 // Group routes with middleware for admin authentication
 // Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
@@ -141,11 +158,12 @@ Route::prefix('admin')->middleware(['auth', RoleMiddleware::class . ':admin'])->
     Route::post('/manual-checkin', [AdminCheckInController::class, 'manualCheckIn'])->name('admin.manual-checkin.process');
 
     // Customers
-    Route::resource('customers', AdminCustomerController::class);
+    Route::resource('customer', AdminCustomerController::class);
     // Businesses
-    Route::resource('businesses', AdminBusinessController::class);
+    Route::resource('business', AdminBusinessController::class);
     // Categories
     Route::resource('categories', CategoryController::class);
+    Route::delete('/categories/sub-grand/{id}', [CategoryController::class, 'destroySubGrand'])->name('categories.subgrand.destroy');
     // Event
     Route::resource('events', AdminEventController::class);
     // Contest

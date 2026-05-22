@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         //
         $middleware->statefulApi();
+        $middleware->alias([
+            'business.access' => \App\Http\Middleware\EnsureBusinessAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

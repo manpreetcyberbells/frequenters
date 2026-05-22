@@ -45,8 +45,8 @@
             </ul>
           </li>
 
-            <li class="nav-item {{ request()->routeIs('customers.*') ? 'menu-open' : '' }}">
-                <a href="#" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('customer.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link {{ request()->routeIs('customer.*') ? 'active' : '' }}">
                 <i class="fa fa-users" aria-hidden="true"></i>
                   <p>
                     Customer
@@ -55,13 +55,13 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}">
+                    <a href="{{ route('customer.index') }}" class="nav-link {{ request()->routeIs('customer.index') ? 'active' : '' }}">
                       <i class="fa fa-users" aria-hidden="true"></i>
                       <p>Listing</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="{{ route('customers.create') }}" class="nav-link {{ request()->routeIs('customers.create') ? 'active' : '' }}">
+                    <a href="{{ route('customer.create') }}" class="nav-link {{ request()->routeIs('customer.create') ? 'active' : '' }}">
                       <i class="fa fa-user-plus" aria-hidden="true"></i>
                       <p>Create Customer</p>
                     </a>
@@ -69,8 +69,8 @@
                 </ul>
               </li>
 
-              <li class="nav-item {{ request()->routeIs('businesses.*') ? 'menu-open' : '' }}">
-                <a href="#" class="nav-link {{ request()->routeIs('businesses.*') ? 'active' : '' }}">
+              <li class="nav-item {{ request()->routeIs('business.*') ? 'menu-open' : '' }}">
+                <a href="#" class="nav-link {{ request()->routeIs('business.*') ? 'active' : '' }}">
                 <i class="fa fa-briefcase" aria-hidden="true"></i>
                   <p>
                     Business
@@ -79,13 +79,13 @@
                 </a>
                 <ul class="nav nav-treeview">
                   <li class="nav-item">
-                    <a href="{{ route('businesses.index') }}" class="nav-link {{ request()->routeIs('businesses.index') ? 'active' : '' }}">
+                    <a href="{{ route('business.index') }}" class="nav-link {{ request()->routeIs('business.index') ? 'active' : '' }}">
                     <i class="fa fa-building" aria-hidden="true"></i>
                       <p>Listing</p>
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a href="{{ route('businesses.create') }}" class="nav-link {{ request()->routeIs('businesses.create') ? 'active' : '' }}">
+                    <a href="{{ route('business.create') }}" class="nav-link {{ request()->routeIs('business.create') ? 'active' : '' }}">
                     <i class="fa fa-plus-square" aria-hidden="true"></i>
                       <p>Create Business</p>
                     </a>
@@ -281,6 +281,13 @@
                     </a>
                   </li>
                 </ul>
+              </li>
+
+              <li class="nav-item {{ request()->routeIs('admin.businesspoints') ? 'menu-open' : '' }}">
+                  <a href="{{ route('admin.businesspoints') }}" class="nav-link {{ request()->routeIs('admin.businesspoints') ? 'active' : '' }}">
+                      <i class="fa fa-gift" aria-hidden="true"></i>
+                      <p>Add Reward Points</p>
+                  </a>
               </li>
 
               <li class="nav-item {{ request()->routeIs('admin.manual-checkin') ? 'menu-open' : '' }}">

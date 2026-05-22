@@ -23,7 +23,7 @@ class StoreOfferRequest extends FormRequest
      */
     public function rules() {
         return [
-            'business_id' => 'required|exists:business_profiles,business_id',
+            // 'business_id' => 'required|exists:business_profiles,business_id',
             'title' => 'required|string|max:255',
             'discount_percentage' => 'required|numeric|min:0|max:100',
             'discount_cap' => 'nullable|numeric|min:0',

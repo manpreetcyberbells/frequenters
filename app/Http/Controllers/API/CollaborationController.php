@@ -1,96 +1,81 @@
 <?php
-
+// ═══════════════════════════════════════════════════════════════════
+// CollaborationController.php
+// ═══════════════════════════════════════════════════════════════════
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Collaboration;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 use App\Services\FCMService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CollaborationController extends Controller
 {
-    /**
-     * API Function : BtoB Collaborations
-    */
+    public function __construct(
+        private readonly FCMService $fcmService
+    ) {}
+
     public function bTobCollaboration(Request $request)
     {
-        // echo"<pre>"; print_r($request->all()); die;
-        $businessId = auth()->id();
-        $user = auth()->user();
-        if ($user->role !== 'business') {
+        if (Auth::user()->role !== 'business') {
             return response()->json(['message' => 'Please login with a valid Business account'], 403);
         }
 
-        $validatedData = $request->validate([
-            //'creator_business_id' => 'required|exists:businesses,id', // Business initiating the collab
-            //'partner_business_id' => 'nullable|exists:users,id', // Partner business
+        $validated = $request->validate([
             'partner_business_id' => [
                 'required',
-                Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', 'business');
-                }),
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business')),
             ],
             'target_business_type' => 'required|string|max:255',
-            'description' => 'required|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'contact_name' => 'nullable|string|max:255',
-            'contact_email' => 'nullable|email',
-            'contact_phone' => 'nullable|string|max:20',
-            'social_links' => 'nullable|string',
+            'description'          => 'required|string',
+            'start_date'           => 'required|date',
+            'end_date'             => 'required|date|after:start_date',
+            'contact_name'         => 'nullable|string|max:255',
+            'contact_email'        => 'nullable|email',
+            'contact_phone'        => 'nullable|string|max:20',
+            'social_links'         => 'nullable|string',
         ]);
 
-        try{
+        try {
+            $validated['creator_business_id'] = Auth::id();
+            $collab = Collaboration::create($validated);
 
-            $validatedData['creator_business_id'] = $businessId; // Business initiating the collab
-            $collab = Collaboration::create($validatedData);
+            $fcmToken = DB::table('business_profiles')
+                ->where('business_id', $validated['partner_business_id'])
+                ->value('fcm_token');
 
-            $fcmService = new FCMService();
-            $title = $user->name;
-            $body = $validatedData['description'];
-            $image = asset('storage/notifications/notification.png');
-            $fcmToken = DB::table('business_profiles')->where('business_id',$validatedData['partner_business_id'])->pluck('fcm_token')->first();
-            $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
-            
-            // Store into DB 
-            createNotification($validatedData['partner_business_id'], $body, "push", null, true);
-            
+            if ($fcmToken) {
+                $this->fcmService->sendNotificationToDevice(
+                    $fcmToken,
+                    Auth::user()->name,
+                    $validated['description'],
+                    asset('storage/notifications/notification.png')
+                );
+            }
+            createNotification($validated['partner_business_id'], $validated['description'], 'push', null, true);
 
-            return response()->json([
-                'message' => 'Collaboration request created successfully',
-                'data' => $collab
-            ], 201);
+            return response()->json(['message' => 'Collaboration request created successfully', 'data' => $collab], 201);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Something went wrong.',
-                'error' => $e->getMessage()
-            ], 500);
+            return response()->json(['status' => false, 'message' => 'Something went wrong.', 'error' => $e->getMessage()], 500);
         }
     }
 
-    /**
-     * API Function : BtoB Collaboration Listing
-    */
-    public function getbTobListing($businessId)
+    public function getbTobListing()
     {
-        $businessId = auth()->id();
-        $user = auth()->user();
-        if ($user->role !== 'business') {
+        if (Auth::user()->role !== 'business') {
             return response()->json(['message' => 'Please login with a valid Business account'], 403);
         }
 
+        $businessId = Auth::id();
         $collabs = Collaboration::where('creator_business_id', $businessId)
             ->orWhere('partner_business_id', $businessId)
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('created_at')
             ->get();
 
         return response()->json($collabs);
     }
-
 }
