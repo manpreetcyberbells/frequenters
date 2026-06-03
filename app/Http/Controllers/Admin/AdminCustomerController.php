@@ -72,7 +72,7 @@ class AdminCustomerController extends Controller
         ]);
 
         Log::info('Customer created:', ['user_id' => $user->id]);
-        return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
+        return redirect()->route('customer.index')->with('success', 'Customer created successfully.');
     }
 
     public function show(User $customer)
@@ -158,7 +158,7 @@ class AdminCustomerController extends Controller
                 ['address_line1' => $request->address1, 'address_line2' => $request->address2, 'zip_code' => $request->zip_code, 'city' => $request->city, 'state' => $request->state, 'country' => $request->country, 'latitude' => $request->latitude, 'longitude' => $request->longitude]
             );
 
-            return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
+            return redirect()->route('customer.index')->with('success', 'Customer updated successfully.');
 
         } catch (\Exception $e) { // ✅ Fixed: was unqualified Exception — never caught
             Log::error('Customer update failed', ['error' => $e->getMessage()]);
@@ -172,6 +172,6 @@ class AdminCustomerController extends Controller
         $user->delete();
         CustomerProfile::where('customer_id', $id)->delete();
         CustomerAddress::where('customer_id', $id)->delete();
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        return redirect()->route('customer.index')->with('success', 'Customer deleted successfully.');
     }
 }

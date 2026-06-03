@@ -24,9 +24,11 @@ class RewardService
         $reward = Reward::create([
             'business_id'     => $businessId,
             'reward_name'     => $data['reward_name'],
-            'points_required' => $data['points_required'],
+            'points_required' => $data['points_required'] ?? 0,
             'valid_from'      => $data['valid_from']  ?? null,
             'valid_until'     => $data['valid_until'] ?? null,
+            'banner_image'    => $data['banner_image'] ?? null,
+            'description'    => $data['description'] ?? null,
         ]);
 
         $qrPayload = [
@@ -112,7 +114,7 @@ class RewardService
     public function sendNearbyNotifications(int $businessId, float $lat, float $lng): void
     {
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
-        if (empty($nearbyCustomerIds)) return;
+        if (empty($nearbyCustomerIds->toArray())) return;
         // FCM tokens
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
         $image = asset('storage/notifications/notification.png');

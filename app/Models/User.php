@@ -42,8 +42,7 @@ class User extends Authenticatable
      */
     public function profile(): HasOne
     {
-        return $this->hasOne(CustomerProfile::class, 'customer_id', 'user_id'); // Ensure 'customer_id' is the foreign key
-
+        return $this->hasOne(CustomerProfile::class, 'customer_id', 'id');
     }
 
     // Relationship with BusinessProfile

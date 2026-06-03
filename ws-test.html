@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pusher Live Test</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+</head>
+<body>
+    <h2>🟢 Pusher Live Test</h2>
+
+    <input type="text" id="token" 
+           placeholder="Bearer Token Yahan Daalo" 
+           style="width:400px; padding:5px">
+    <br><br>
+    <input type="number" id="convId" value="2">
+    <button onclick="connect()">Connect</button>
+
+    <div id="status" style="margin-top:10px; padding:10px; background:#ffcccc;">
+        ⏳ Not Connected
+    </div>
+
+    <div id="log" style="margin-top:10px; border:1px solid #ccc; 
+         padding:10px; min-height:150px; font-family:monospace;">
+    </div>
+
+    <script>
+    function log(msg, color = 'black') {
+        const div = document.getElementById('log');
+        div.innerHTML = `<p style="color:${color}">
+            [${new Date().toLocaleTimeString()}] ${msg}
+            </p>` + div.innerHTML;
+    }
+
+    function connect() {
+        const token  = document.getElementById('token').value.trim();
+        const convId = document.getElementById('convId').value.trim();
+
+        if (!token) { alert('Token daalo!'); return; }
+
+        Pusher.logToConsole = true; // ← Debug ke liye
+
+        const pusher = new Pusher('038be87e078eed81008c', {
+            cluster:  'ap2',
+            forceTLS: true,
+
+            // ✅ New syntax
+            channelAuthorization: {
+                endpoint:  'https://dev.frequenters.com/api/broadcasting/auth',
+                transport: 'ajax',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept':        'application/json',
+                }
+            }
+        });
+
+        pusher.connection.bind('connected', () => {
+            document.getElementById('status').style.background = '#ccffcc';
+            document.getElementById('status').innerHTML = 
+                '✅ Connected! Socket: ' + pusher.connection.socket_id;
+            log('✅ Connected to Pusher!', 'green');
+
+            const channel = pusher.subscribe(
+                'private-b2b.conversation.' + convId
+            );
+
+            channel.bind('pusher:subscription_succeeded', () => {
+                log('✅ Subscribed to conversation ' + convId, 'green');
+            });
+
+            channel.bind('pusher:subscription_error', (err) => {
+                log('❌ Auth Error: ' + JSON.stringify(err), 'red');
+            });
+
+            channel.bind('message.sent', (data) => {
+                log('📨 REAL-TIME MESSAGE: ' + JSON.stringify(data), 'purple');
+            });
+        });
+
+        pusher.connection.bind('error', (err) => {
+            log('❌ Error: ' + JSON.stringify(err), 'red');
+        });
+    }
+    </script>
+</body>
+</html>

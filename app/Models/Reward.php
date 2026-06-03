@@ -20,6 +20,8 @@ class Reward extends Model
         'valid_until',
         'usage_limit',
         'expiry_date',
+        'banner_image',
+        'description'
     ];
 
     protected $casts = [
@@ -28,6 +30,7 @@ class Reward extends Model
         'expiry_date'  => 'datetime',
         'is_exclusive' => 'boolean',
         'usage_limit'  => 'integer',
+        'qr_code_payload' => 'array',
     ];
 
     public function business()
@@ -37,7 +40,7 @@ class Reward extends Model
 
     public function redemptionHistory()
     {
-        return $this->hasMany(RewardRedemption::class, 'reward_id', 'id'); // ✅ id se map
+        return $this->hasMany(RewardRedemption::class, 'reward_id', 'id');
     }
 
     public function isExpired(): bool
@@ -54,9 +57,6 @@ class Reward extends Model
     public function isUsageLimitReached(): bool
     {
         if (is_null($this->usage_limit)) return false;
-
-        return $this->redemptionHistory()
-            ->whereIn('status', ['pending', 'redeemed'])
-            ->count() >= $this->usage_limit;
+        return $this->redemptionHistory()->whereIn('status', ['pending', 'redeemed'])->count() >= $this->usage_limit;
     }
 }

@@ -34,6 +34,11 @@ class RewardController extends Controller
             'business_id'     => $r->business_id,
             'reward_name'     => $r->reward_name,
             'points_required' => $r->points_required,
+            'valid_from'      => $r->valid_from,
+            'valid_until'     => $r->valid_until,
+            'banner_image'    => $r->banner_image,
+            'description'     => $r->description,
+            'customer_tiers'  => data_get($r->qr_code_payload, 'customer_tiers', []),
             'createdAt'       => Carbon::parse($r->created_at)->diffForHumans(),
         ]);
 
@@ -58,17 +63,28 @@ class RewardController extends Controller
 
         $validated = $request->validate([
             'reward_name'      => 'required|string|max:255',
-            'points_required'  => 'required|integer|min:1',
+            // 'points_required'  => 'required|integer|min:1',
             'valid_from'       => 'nullable|date',
             'valid_until'      => 'nullable|date|after_or_equal:valid_from',
             'customer_tiers'   => 'nullable|array',
             'customer_tiers.*' => 'in:new,regular,frequenter',
+            'description'    => 'nullable|string|max:255',
+            'banner_image'     => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+        ],
+        [
+            'banner_image.uploaded' => 'The banner image is too large or failed to upload. Max 2MB.',
+            'banner_image.max'      => 'The banner image must not be larger than 2MB.',
         ]);
 
         $businessId = Auth::id();
         try {
-            $reward = $this->rewardService->createReward($validated, $businessId);
+            if ($request->hasFile('banner_image')) {
+                $validated['banner_image'] = $request->file('banner_image')->store('rewards/banners', 'public');
+            } else {
+                unset($validated['banner_image']); 
+            }
 
+            $reward = $this->rewardService->createReward($validated, $businessId);
             // Nearby notifications
             $address = DB::table('business_addresses')->where('business_id', $businessId)->first();
             if ($address?->latitude && $address?->longitude) {

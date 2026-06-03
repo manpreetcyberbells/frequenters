@@ -26,8 +26,8 @@ class BusinessAddress extends Model
         'longitude',
     ];
 
-    public function city()
-    {
-        return $this->belongsTo(City::class, 'id');
-    }
+    // public function city()
+    // {
+    //     return $this->belongsTo(City::class, 'city');
+    // }
 }

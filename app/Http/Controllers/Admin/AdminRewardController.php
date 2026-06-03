@@ -34,7 +34,8 @@ class AdminRewardController extends Controller
             'valid_from'       => 'nullable|date',
             'valid_until'      => 'nullable|date|after_or_equal:valid_from',
             'customer_tiers'   => 'nullable|array',
-            'customer_tiers.*' => 'in:new,regular,frequenter',
+            // 'customer_tiers.*' => 'in:new,regular,frequenter',
+            'customer_tiers.*' => 'in:new,regular,daily',
         ]);
 
         $businessId = $validated['business_id'];

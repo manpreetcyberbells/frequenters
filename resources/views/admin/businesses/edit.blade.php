@@ -48,7 +48,7 @@
                   <!-- <div class="card-header"><div class="card-title">Business Edit</div></div> -->
                   <!--end::Header-->
                   <!--begin::Form-->
-                  <form action="{{route('businesses.update', $business->id)}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                  <form action="{{route('business.update', $business->id)}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
                   @csrf
                   @method('PUT')
                     <!--begin::Body-->
@@ -355,9 +355,8 @@
                           (event) => {
                             if (!form.checkValidity()) {
                      t         event.preventDefault();
-                              event.stopPropagation();
+                               event.stopPropagation();
                             }
-
                             form.classList.add('was-validated');
                           },
                           false,

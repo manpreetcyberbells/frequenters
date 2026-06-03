@@ -35,7 +35,7 @@ class AdminBusinessController extends Controller
             'images.*'     => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'business_hours'=> 'required|array',
             'owner_name'   => 'required|string',
-            'owner_email'  => 'required|email|unique:users,email',
+            'owner_email'  => 'required|email|unique:business_profiles,owner_email',
             'owner_phone'  => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
         ]);
 
@@ -92,7 +92,7 @@ class AdminBusinessController extends Controller
         }
 
         Log::info('Business created:', ['user_id' => $user->id]);
-        return redirect()->route('businesses.index')->with('success', 'Business created successfully.');
+        return redirect()->route('business.index')->with('success', 'Business created successfully.');
     }
 
     public function show(string $id)
@@ -128,7 +128,7 @@ class AdminBusinessController extends Controller
             'images.*'      => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'business_hours'=> 'required|array',
             'owner_name'    => 'required|string',
-            'owner_email'   => 'required|email|unique:users,email,' . $id,
+            'owner_email'   => 'required|email|unique:business_profiles,owner_email,NULL,id,business_id,' . $id,
             'owner_phone'   => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
         ]);
 
@@ -173,7 +173,7 @@ class AdminBusinessController extends Controller
             );
         }
 
-        return redirect()->route('businesses.index')->with('success', 'Business updated successfully.');
+        return redirect()->route('business.index')->with('success', 'Business updated successfully.');
     }
 
     public function destroy(string $id)
@@ -183,6 +183,7 @@ class AdminBusinessController extends Controller
         BusinessProfile::where('business_id', $id)->delete();
         BusinessAddress::where('business_id', $id)->delete();
         BusinessImage::where('business_id', $id)->delete();
-        return redirect()->route('businesses.index')->with('success', 'Business deleted successfully.');
+        BusinessHour::where('business_id', $id)->delete();
+        return redirect()->route('business.index')->with('success', 'Business deleted successfully.');
     }
 }

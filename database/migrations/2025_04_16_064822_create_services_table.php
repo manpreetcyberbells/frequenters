@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('business_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->foreignId('category_id')->constrained('service_categories');
+            // $table->foreignId('category_id')->constrained('service_categories');
+            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
             $table->text('description')->nullable();
             $table->time('duration')->nullable(); // 01:30:00
             $table->string('price')->nullable(); // e.g. "Fixed", "Range"

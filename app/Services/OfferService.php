@@ -19,7 +19,7 @@ class OfferService
         if (!$lat || !$lng) return;
 
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
-        if (empty($nearbyCustomerIds)) return;
+        if (empty($nearbyCustomerIds->toArray())) return;
 
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
         $image = asset('storage/notifications/notification.png');

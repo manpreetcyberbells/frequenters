@@ -1,0 +1,74 @@
+/* General Body Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to right, #3311cb, #2575fc);
+    color: #333;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Dashboard Container */
+.dashboard-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Header */
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h2 {
+    color: #6a11cb;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Profile Section */
+.profile-info {
+    margin-bottom: 20px;
+}
+
+.profile-info p {
+    font-size: 18px;
+    margin: 5px 0;
+}
+
+/* Action Buttons */
+.btn-primary,
+.btn-secondary {
+    border-radius: 6px;
+    padding: 10px 15px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-right: 10px;
+}
+
+.btn-primary {
+    background-color: #3911cb;
+    border: none;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: #2575fc;
+}
+
+.btn-secondary {
+    background-color: #ccc;
+    border: none;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background-color: #aaa;
+}

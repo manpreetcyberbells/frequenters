@@ -22,3 +22,14 @@ Broadcast::channel('group.business.{businessId}', function ($user, $businessId) 
     // Add your logic, e.g., check if the user is a customer of the business
     return true;
 });
+
+// B2B private conversation channel
+Broadcast::channel('b2b.conversation.{conversationId}', function ($user, $conversationId) {
+    $businessId = $user->effectiveBusinessId();
+    if (!$businessId) return false;
+
+    return \App\Models\B2BConversation::where('id', $conversationId)
+        ->where(fn($q) => $q->where('business_a_id', $businessId)
+                            ->orWhere('business_b_id', $businessId))
+        ->exists();
+});

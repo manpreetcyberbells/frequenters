@@ -405,10 +405,10 @@ class BusinessController extends Controller
             'role'     => 'required|in:manager,employee',
         ]);
 
-        $totalStaff = User::where('parent_business_id', $business->id)->whereIn('role', ['manager', 'employee'])->whereNull('deleted_at')->count();
-        if ($totalStaff >= 5) {
-            return response()->json(['message' => 'You can only add up to 5 staff members.'], 400);
-        }
+        // $totalStaff = User::where('parent_business_id', $business->id)->whereIn('role', ['manager', 'employee'])->whereNull('deleted_at')->count();
+        // if ($totalStaff >= 5) {
+        //     return response()->json(['message' => 'You can only add up to 5 staff members.'], 400);
+        // }
 
         try {
             $user = User::create([

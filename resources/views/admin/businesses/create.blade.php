@@ -48,7 +48,7 @@
           <!-- <div class="card-header"><div class="card-title">Business Create</div></div> -->
           <!--end::Header-->
           <!--begin::Form-->
-          <form action="{{route('businesses.store')}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+          <form action="{{route('business.store')}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
           @csrf
             <!--begin::Body-->
             <div class="card-body">

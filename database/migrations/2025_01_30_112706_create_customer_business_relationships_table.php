@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id(); // Primary key
             $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('business_id')->constrained('users')->onDelete('cascade');
-            $table->enum('customer_tier', ['new', 'repeat', 'regular', 'daily'])->default('new');
+            // $table->enum('customer_tier', ['new', 'repeat', 'regular', 'daily'])->default('new');
+            $table->enum('customer_tier', ['new', 'regular', 'daily'])->default('new')->change();
             $table->dateTime('last_interaction_date')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->integer('interaction_count')->default(0);
             $table->integer('total_points_earned')->default(0);

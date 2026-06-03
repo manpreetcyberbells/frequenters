@@ -248,6 +248,7 @@ class CheckInController extends Controller
                     'interaction_count'     => 1,
                     'last_interaction_date' => now(),
                     'created_at'            => now(),
+                    'updated_at'            => now(),
                 ]);
             });
 

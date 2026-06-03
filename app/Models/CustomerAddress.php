@@ -21,6 +21,6 @@ class CustomerAddress extends Model
 
     public function city()
     {
-        return $this->belongsTo(City::class, 'id');
+        return $this->belongsTo(City::class, 'city');
     }
 }

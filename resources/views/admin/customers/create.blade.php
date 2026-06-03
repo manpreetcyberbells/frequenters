@@ -46,7 +46,7 @@
                   <!-- <div class="card-header"><div class="card-title">Customer Form</div></div> -->
                   <!--end::Header-->
                   <!--begin::Form-->
-                  <form action="{{route('customers.store')}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                  <form action="{{route('customer.store')}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
                   @csrf
                     <!--begin::Body-->
                     <div class="card-body">

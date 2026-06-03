@@ -65,7 +65,7 @@ Route::post('/login', [CustomerController::class, 'handleLogin'])->name('login.p
 
 Route::get('/reset-password', function () {
     return view('auth.reset-password');
-})->name('password.reset');
+})->name('web.password.reset');
 
 Route::post('/reset-password', [ResetPasswordController::class, 'reset']);
 // Accept Invite

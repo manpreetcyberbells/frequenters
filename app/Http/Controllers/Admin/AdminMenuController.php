@@ -52,20 +52,16 @@ class AdminMenuController extends Controller
         ]);
     
         try{
-            // Handle Image Upload
-            $menuImage = '';
-            if ($request->hasFile('photo')) {
-                $menuImage = $request->file('photo')->store('menus', 'public');
-            }
-            
             $businessId = $request->business_id;
             $validated['business_id'] = $businessId;
-            $validated['photo'] = asset('storage/' . $menuImage);
-        
-            // echo"<pre>"; print_r($validated);  die;
-
+            // Handle Image Upload
+            $menuImage = '';
+            $validated['photo'] = null;
+            if ($request->hasFile('photo')) {
+                $menuImage = $request->file('photo')->store('menus', 'public');
+                $validated['photo'] = asset('storage/' . $menuImage);
+            }
             $menu = Menu::create($validated);
-
             return redirect()->route('menus.index')->with('success', 'Menu created successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating Menu');

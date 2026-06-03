@@ -7,7 +7,7 @@ use App\Http\Controllers\API\{
     ContestController, CustomerController, CustomerProfileController, EventController, FaqController, 
     InviteController, MessageController, NotificationController, OfferController, MenuController,
     PrivacyPolicyController, ReviewController, RewardController, SearchHistoryController, ServiceController,
-    SuggestionController, TermsAndConditionController, TransactionController, UserController, WishlistController
+    SuggestionController, TermsAndConditionController, TransactionController, UserController, WishlistController, B2BCollabController
 };
 // use App\Http\Controllers\CityController;
 use App\Http\Controllers\CheckInController;
@@ -30,6 +30,10 @@ Route::post('/test-broadcast', function (\Illuminate\Http\Request $request) {
     broadcast(new MessageSent($message));
     return response()->json(['status' => 'Message broadcasted!', 'message' => $message]);
 });
+
+Route::post('/broadcasting/auth', function (Request $request) {
+    return Broadcast::auth($request);
+})->middleware('auth:api');
 
 // Public Routes
 Route::middleware(['api', EnsureFrontendRequestsAreStateful::class])->group(function () {
@@ -198,6 +202,21 @@ Route::middleware(['auth:api', SetUserTimezone::class, 'business.access:owner_on
     Route::get('/event-listing', [EventController::class, 'eventListing']);
     Route::get('/reward-listing', [RewardController::class, 'rewardListing']);
     Route::get('/contest-listing', [ContestController::class, 'contestListing']);
+
+    Route::prefix('b2b')->group(function () {
+        // Posts
+        Route::post('/posts',             [B2BCollabController::class, 'createPost']);
+        Route::get('/posts',              [B2BCollabController::class, 'listNearbyPosts']);
+        Route::get('/posts/mine',         [B2BCollabController::class, 'myPosts']);
+        Route::get('/posts/{id}',         [B2BCollabController::class, 'showPost']);
+        Route::delete('/posts/{id}',      [B2BCollabController::class, 'deletePost']);
+        Route::post('/posts/{id}/respond',[B2BCollabController::class, 'respondToPost']);
+
+        // Messaging
+        Route::get('/conversations',              [B2BCollabController::class, 'conversationList']);
+        Route::get('/conversations/{id}',         [B2BCollabController::class, 'getConversation']);
+        Route::post('/conversations/{id}/messages',[B2BCollabController::class, 'sendMessage']);
+    });
 });
 
 // Protected Routes (Require Authentication)

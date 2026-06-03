@@ -52,7 +52,7 @@
                   <!-- <div class="card-header"><div class="card-title">Customer Edit</div></div> -->
                   <!--end::Header-->
                   <!--begin::Form-->
-                  <form action="{{route('customers.update', $customer->id)}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                  <form action="{{route('customer.update', $customer->id)}}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
                   @csrf
                   @method('PUT')
                     <!--begin::Body-->
@@ -137,7 +137,7 @@
                                 type="tel" 
                                 class="form-control" 
                                 id="mobileNumber" 
-                                name="phone_number" 
+                                name="mobile" 
                                 pattern="^\d{10,15}$" 
                                 placeholder="Enter your mobile number"
                                 value="{{ $customer->phone }}"

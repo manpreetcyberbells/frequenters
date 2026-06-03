@@ -9,7 +9,7 @@
         "php": "^8.2",
         "google/auth": "^1.47",
         "laravel/framework": "^13.0",
-        "laravel/reverb": "^1.5",
+        "laravel/reverb": "^1.10",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "laravolt/avatar": "^6.1",
