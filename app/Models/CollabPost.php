@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Admin\Category;
 
 class CollabPost extends Model
 {
@@ -16,7 +17,7 @@ class CollabPost extends Model
         'post_type',
         'headline',
         'description',
-        'target_industries',
+        'category_ids',
         'duration_days',
         'expires_at',
         'contact_type',
@@ -29,13 +30,18 @@ class CollabPost extends Model
     ];
 
     protected $casts = [
-        'target_industries' => 'array',
-        'expires_at'        => 'datetime',
-        'is_active'         => 'boolean',
-        'duration_days'     => 'integer',
+        'category_ids'  => 'array',
+        'expires_at'    => 'datetime',
+        'is_active'     => 'boolean',
+        'duration_days' => 'integer',
     ];
 
     // Relationships
+    public function categories()
+    {
+        return Category::whereIn('id', $this->category_ids ?? [])->get();
+    }
+
     public function business()
     {
         return $this->belongsTo(User::class, 'business_id');

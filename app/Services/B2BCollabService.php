@@ -26,7 +26,7 @@ class B2BCollabService
             'post_type'         => $data['post_type'],
             'headline'          => $data['headline'],
             'description'       => $data['description'],
-            'target_industries' => $data['target_industries'],
+            'category_ids'      => $data['category_ids'],
             'duration_days'     => $data['duration_days'] ?? 7,
             'expires_at'        => $expiresAt,
             'contact_type'      => $data['contact_type'],
@@ -63,12 +63,45 @@ class B2BCollabService
             $query->where('post_type', $filters['post_type']);
         }
 
-        // Optional: filter by industry
-        if (!empty($filters['industry'])) {
-            $query->whereJsonContains('target_industries', $filters['industry']);
+        // Optional: filter by category (single ID match inside JSON array)
+        if (!empty($filters['category_id'])) {
+            $query->whereJsonContains('category_ids', (int) $filters['category_id']);
         }
 
-        return $query->paginate(15);
+        $paginator = $query->paginate(15);
+
+        $postIds = collect($paginator->items())->pluck('id')->all();
+
+        // 1 query: which posts has the current business already responded to?
+        $respondedPostIds = CollabPostResponse::whereIn('collab_post_id', $postIds)
+            ->where('responder_business_id', $businessId)
+            ->pluck('collab_post_id')
+            ->flip()
+            ->all();
+
+        // 1 query: resolve all category IDs on this page to names
+        $allCategoryIds = collect($paginator->items())
+            ->flatMap(fn($post) => $post->category_ids ?? [])
+            ->filter(fn($id) => is_int($id) || ctype_digit((string) $id))
+            ->unique()
+            ->values()
+            ->all();
+
+        $categoryMap = \App\Models\Admin\Category::whereIn('id', $allCategoryIds)
+            ->pluck('name', 'id');
+
+        // Attach has_responded + category_names to every post (zero extra queries)
+        $paginator->through(function ($post) use ($categoryMap, $respondedPostIds) {
+            $post->has_responded   = array_key_exists($post->id, $respondedPostIds);
+            $post->category_names  = collect($post->category_ids ?? [])
+                ->map(fn($id) => $categoryMap->get((int) $id))
+                ->filter()
+                ->values()
+                ->all();
+            return $post;
+        });
+
+        return $paginator;
     }
 
     // Respond to Post → creates conversation + first message
@@ -162,19 +195,39 @@ class B2BCollabService
     // Get conversation list
     public function getConversationList(int $businessId): \Illuminate\Support\Collection
     {
-        return B2BConversation::with([
+        $conversations = B2BConversation::with([
             'latestMessage',
             'businessA:id,name,profile_image',
             'businessB:id,name,profile_image',
-            'collabPost:id,headline,post_type,is_active,expires_at',
+            'collabPost:id,headline,post_type,is_active,expires_at,business_id',
         ])
         ->where('business_a_id', $businessId)
         ->orWhere('business_b_id', $businessId)
         ->orderByDesc('updated_at')
-        ->get()
-        ->map(function (B2BConversation $conv) use ($businessId) {
+        ->get();
+
+        $convIds = $conversations->pluck('id')->all();
+
+        // 1 query: unread counts per conversation
+        $unreadCounts = B2BMessage::whereIn('conversation_id', $convIds)
+            ->where('sender_id', '!=', $businessId)
+            ->whereNull('read_at')
+            ->selectRaw('conversation_id, COUNT(*) as cnt')
+            ->groupBy('conversation_id')
+            ->pluck('cnt', 'conversation_id');
+
+        // 1 query: chat_enabled check
+        // Chat sirf tab enable hoga jab business_a (post creator) ne us conversation me message bheja ho
+        $chatEnabledConvIds = B2BMessage::whereIn('conversation_id', $convIds)
+            ->whereColumn('sender_id', DB::raw('(SELECT business_a_id FROM b2b_conversations WHERE id = b2b_messages.conversation_id)'))
+            ->distinct()
+            ->pluck('conversation_id')
+            ->flip()
+            ->all();
+
+        return $conversations
+        ->map(function (B2BConversation $conv) use ($businessId, $unreadCounts, $chatEnabledConvIds) {
             $otherParty = $conv->otherParty($businessId);
-            $unread = B2BMessage::where('conversation_id', $conv->id)->where('sender_id', '!=', $businessId)->whereNull('read_at')->count();
             return [
                 'conversation_id'   => $conv->id,
                 'title'             => $conv->collabPost?->headline ?? 'B2B Conversation',
@@ -187,13 +240,62 @@ class B2BCollabService
                     'profile_image' => $otherParty->profile_image,
                 ],
                 'last_message'      => $conv->latestMessage?->body ? \Str::limit($conv->latestMessage->body, 50) : 'No messages yet',
-                'last_message_time' => $conv->latestMessage?->created_at ?->diffForHumans() ?? '',
+                'last_message_time' => $conv->latestMessage?->created_at?->diffForHumans() ?? '',
                 'last_message_at'   => $conv->latestMessage?->created_at,
-                'unread_count'      => $unread,
+                'unread_count'      => (int) ($unreadCounts[$conv->id] ?? 0),
+                'chat_enabled'      => array_key_exists($conv->id, $chatEnabledConvIds),
             ];
         })
         ->sortByDesc('last_message_at')
         ->values();
+    }
+
+    // GET my-posts with responders detail
+    public function getMyPosts(int $businessId): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $posts = CollabPost::where('business_id', $businessId)
+            ->withCount('responses')
+            ->with([
+                'responses.responderBusiness:id,name,profile_image',
+                'responses.responderProfile:business_id,business_name,logo',
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(15);
+
+        // 1 query: fetch all conversations for posts on this page
+        $postIds = collect($posts->items())->pluck('id')->all();
+
+        $conversations = B2BConversation::whereIn('collab_post_id', $postIds)
+            ->get(['id', 'collab_post_id', 'business_b_id']);
+
+        // Lookup map: "post_id:responder_business_id" => conversation_id
+        $convMap = $conversations->keyBy(
+            fn($c) => $c->collab_post_id . ':' . $c->business_b_id
+        )->map(fn($c) => $c->id);
+
+        $posts->through(function ($post) use ($convMap) {
+            $post->responders = $post->responses->map(function ($response) use ($post, $convMap) {
+                $convKey = $post->id . ':' . $response->responder_business_id;
+                return [
+                    'responder' => [
+                        'id'            => $response->responderBusiness->id,
+                        'name'          => $response->responderBusiness->name,
+                        'profile_image' => $response->responderBusiness->profile_image,
+                        'business_name' => $response->responderProfile?->business_name,
+                        'logo'          => $response->responderProfile?->logo,
+                    ],
+                    'message'         => $response->message,
+                    'status'          => $response->status,
+                    'responded_at'    => $response->created_at,
+                    'conversation_id' => $convMap->get($convKey),
+                ];
+            })->values()->all();
+
+            unset($post->responses);
+            return $post;
+        });
+
+        return $posts;
     }
 
     // Private Helpers

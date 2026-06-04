@@ -43,15 +43,15 @@ class B2BCollabController extends Controller
     public function listNearbyPosts(Request $request): JsonResponse
     {
         $request->validate([
-            'radius'     => 'nullable|numeric|min:1|max:50',
-            'post_type'  => 'nullable|in:request,offer',
-            'industry'   => 'nullable|string|max:100',
+            'radius'      => 'nullable|numeric|min:1|max:50',
+            'post_type'   => 'nullable|in:request,offer',
+            'category_id' => 'nullable|integer|exists:categories,id',
         ]);
 
         $posts = $this->service->getNearbyPosts(
             businessId:  Auth::user()->effectiveBusinessId(),
             radiusMiles: $request->float('radius', 5.0),
-            filters:     $request->only(['post_type', 'industry'])
+            filters:     $request->only(['post_type', 'category_id'])
         );
 
         return response()->json($posts);
@@ -81,13 +81,12 @@ class B2BCollabController extends Controller
         return response()->json($data);
     }
 
-    // GET /business/b2b/my-posts — own posts
+    // GET /business/b2b/my-posts — own posts with responder details
     public function myPosts(): JsonResponse
     {
-        $posts = CollabPost::where('business_id', Auth::user()->effectiveBusinessId())
-            ->withCount('responses')
-            ->orderByDesc('created_at')
-            ->paginate(15);
+        $posts = $this->service->getMyPosts(
+            Auth::user()->effectiveBusinessId()
+        );
 
         return response()->json($posts);
     }

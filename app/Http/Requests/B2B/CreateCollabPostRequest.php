@@ -17,8 +17,8 @@ class CreateCollabPostRequest extends FormRequest
             'post_type'          => 'required|in:request,offer',
             'headline'           => 'required|string|max:255',
             'description'        => 'required|string|max:2000',
-            'target_industries'  => 'required|array|min:1',
-            'target_industries.*'=> 'string|max:100',
+            'category_ids'       => 'required|array|min:1',
+            'category_ids.*'     => 'integer|exists:categories,id',
             'duration_days'      => 'required|in:3,7,15',
             'contact_type'       => 'required|in:in_app,direct',
             // Contact fields required only if contact_type = direct
@@ -31,6 +31,10 @@ class CreateCollabPostRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'category_ids.required'   => 'Please select at least one category.',
+            'category_ids.min'        => 'Please select at least one category.',
+            'category_ids.*.integer'  => 'Each category must be a valid ID.',
+            'category_ids.*.exists'   => 'One or more selected categories do not exist.',
             'contact_name.required_if'  => 'Contact name is required when sharing direct contact info.',
             'contact_email.required_if' => 'Contact email is required when sharing direct contact info.',
         ];

@@ -14,7 +14,7 @@ return new class extends Migration
             $table->enum('post_type', ['request', 'offer']);
             $table->string('headline', 255);
             $table->text('description');
-            $table->json('target_industries'); // multiple industries allowed
+            $table->json('category_ids'); // multiple categories allowed
             $table->unsignedTinyInteger('duration_days')->default(7);
             $table->timestamp('expires_at');
             $table->enum('contact_type', ['in_app', 'direct'])->default('in_app');
