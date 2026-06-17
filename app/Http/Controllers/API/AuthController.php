@@ -41,7 +41,19 @@ class AuthController extends Controller
                 'providers' => 'email',
             ]);
 
-            $customer = $this->createCustomerProfile($user->id, $request->dob ?? null);
+            $customer = $this->createCustomerProfile(
+                $user->id,
+                $request->dob ?? null,
+                [
+                    'address'   => $request->address,
+                    'city'      => $request->city,
+                    'state'     => $request->state,
+                    'country'   => $request->country,
+                    'zip_code'  => $request->zip_code,
+                    'latitude'  => $request->latitude,
+                    'longitude' => $request->longitude,
+                ]
+            );
             $this->handleInviteReward($request->email, 'customer', $user->id);
 
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -258,7 +270,7 @@ class AuthController extends Controller
     }
 
     // Private Helpers
-    private function createCustomerProfile(int $userId, ?string $birthday = null): CustomerProfile
+    private function createCustomerProfile(int $userId, ?string $birthday = null, array $addressData = []): CustomerProfile
     {
         $anonymousName  = $this->generateAnonymousName();
         $anonymousImage = $this->generateAnonymousImage($anonymousName);
@@ -269,7 +281,18 @@ class AuthController extends Controller
             'customer_uid'=> $customerId,
         ], 'qrcodes/customers');
 
-        CustomerAddress::firstOrCreate(['customer_id' => $userId]);
+        CustomerAddress::updateOrCreate(
+            ['customer_id' => $userId],
+            [
+                'address_line1' => $addressData['address'] ?? null,
+                'city'          => $addressData['city'] ?? null,
+                'state'         => $addressData['state'] ?? null,
+                'country'       => $addressData['country'] ?? null,
+                'zip_code'      => $addressData['zip_code'] ?? null,
+                'latitude'      => $addressData['latitude'] ?? null,
+                'longitude'     => $addressData['longitude'] ?? null,
+            ]
+        );
 
         return CustomerProfile::create([
             'customer_id'    => $userId,

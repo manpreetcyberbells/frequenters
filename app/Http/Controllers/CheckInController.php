@@ -173,6 +173,13 @@ class CheckInController extends Controller
                 return response()->json(['error' => 'Business not found.'], 404);
             }
 
+            $alreadyCheckedIn = CheckIn::where('customer_id', $customerId)->where('business_id', $businessId)->whereDate('check_in_time', today())->exists();
+            if ($alreadyCheckedIn) {
+                return response()->json([
+                    'error' => 'You have already checked in today. Please come back tomorrow!',
+                ], 429);
+            }
+
             if ($business->points_per_checkin <= 0) {
                 return response()->json(['error' => 'This business has not configured check-in points yet.'], 400);
             }

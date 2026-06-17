@@ -90,10 +90,23 @@ class B2BCollabService
         $categoryMap = \App\Models\Admin\Category::whereIn('id', $allCategoryIds)
             ->pluck('name', 'id');
 
-        // Attach has_responded + category_names to every post (zero extra queries)
-        $paginator->through(function ($post) use ($categoryMap, $respondedPostIds) {
-            $post->has_responded   = array_key_exists($post->id, $respondedPostIds);
-            $post->category_names  = collect($post->category_ids ?? [])
+        // 1 query: chat_enabled check (JOIN)
+        // chat_enabled = true jab Business A (post owner) ne is post ki conversation me reply kiya ho
+        $chatEnabledPostIds = DB::table('b2b_messages')
+            ->join('b2b_conversations', 'b2b_conversations.id', '=', 'b2b_messages.conversation_id')
+            ->whereIn('b2b_conversations.collab_post_id', $postIds)
+            ->where('b2b_conversations.business_b_id', $businessId)
+            ->whereColumn('b2b_messages.sender_id', 'b2b_conversations.business_a_id')
+            ->distinct()
+            ->pluck('b2b_conversations.collab_post_id')
+            ->flip()
+            ->all();
+
+        // Attach has_responded + chat_enabled + category_names to every post
+        $paginator->through(function ($post) use ($categoryMap, $respondedPostIds, $chatEnabledPostIds) {
+            $post->has_responded  = array_key_exists($post->id, $respondedPostIds);
+            $post->chat_enabled   = array_key_exists($post->id, $chatEnabledPostIds);
+            $post->category_names = collect($post->category_ids ?? [])
                 ->map(fn($id) => $categoryMap->get((int) $id))
                 ->filter()
                 ->values()
@@ -204,8 +217,15 @@ class B2BCollabService
         ->where('business_a_id', $businessId)
         ->orWhere('business_b_id', $businessId)
         ->orderByDesc('updated_at')
-        ->get();
+        ->get()
+        ->filter(function (B2BConversation $conv) use ($businessId) {
+            $isBusinessA = $conv->business_a_id === $businessId;
+            if ($isBusinessA) {
+                return B2BMessage::where('conversation_id', $conv->id)->exists();
+            }
 
+            return B2BMessage::where('conversation_id', $conv->id)->where('sender_id', $conv->business_a_id)->exists();
+        });
         $convIds = $conversations->pluck('id')->all();
 
         // 1 query: unread counts per conversation
@@ -216,12 +236,14 @@ class B2BCollabService
             ->groupBy('conversation_id')
             ->pluck('cnt', 'conversation_id');
 
-        // 1 query: chat_enabled check
-        // Chat sirf tab enable hoga jab business_a (post creator) ne us conversation me message bheja ho
-        $chatEnabledConvIds = B2BMessage::whereIn('conversation_id', $convIds)
-            ->whereColumn('sender_id', DB::raw('(SELECT business_a_id FROM b2b_conversations WHERE id = b2b_messages.conversation_id)'))
+        // 1 query: chat_enabled check (JOIN - reliable on all MySQL versions)
+        // chat_enabled = true jab Business A (post creator) ne reply kiya ho
+        $chatEnabledConvIds = DB::table('b2b_messages')
+            ->join('b2b_conversations', 'b2b_conversations.id', '=', 'b2b_messages.conversation_id')
+            ->whereIn('b2b_messages.conversation_id', $convIds)
+            ->whereColumn('b2b_messages.sender_id', 'b2b_conversations.business_a_id')
             ->distinct()
-            ->pluck('conversation_id')
+            ->pluck('b2b_messages.conversation_id')
             ->flip()
             ->all();
 
@@ -262,20 +284,40 @@ class B2BCollabService
             ->orderByDesc('created_at')
             ->paginate(15);
 
-        // 1 query: fetch all conversations for posts on this page
         $postIds = collect($posts->items())->pluck('id')->all();
 
+        // 1 query: conversations for these posts
         $conversations = B2BConversation::whereIn('collab_post_id', $postIds)
             ->get(['id', 'collab_post_id', 'business_b_id']);
 
-        // Lookup map: "post_id:responder_business_id" => conversation_id
+        // Lookup map: "post_id:responder_business_id" => { conversation_id, name }
         $convMap = $conversations->keyBy(
             fn($c) => $c->collab_post_id . ':' . $c->business_b_id
-        )->map(fn($c) => $c->id);
+        );
 
-        $posts->through(function ($post) use ($convMap) {
+        // 1 query: resolve category_ids => names for all posts on this page
+        $allCategoryIds = collect($posts->items())
+            ->flatMap(fn($post) => $post->category_ids ?? [])
+            ->filter(fn($id) => is_int($id) || ctype_digit((string) $id))
+            ->unique()
+            ->values()
+            ->all();
+
+        $categoryMap = \App\Models\Admin\Category::whereIn('id', $allCategoryIds)
+            ->pluck('name', 'id');
+
+        $posts->through(function ($post) use ($convMap, $categoryMap) {
+            // category_names
+            $post->category_names = collect($post->category_ids ?? [])
+                ->map(fn($id) => $categoryMap->get((int) $id))
+                ->filter()
+                ->values()
+                ->all();
+
+            // responders with conversation_id + conversation_with name
             $post->responders = $post->responses->map(function ($response) use ($post, $convMap) {
-                $convKey = $post->id . ':' . $response->responder_business_id;
+                $convKey  = $post->id . ':' . $response->responder_business_id;
+                $conv     = $convMap->get($convKey);
                 return [
                     'responder' => [
                         'id'            => $response->responderBusiness->id,
@@ -284,10 +326,11 @@ class B2BCollabService
                         'business_name' => $response->responderProfile?->business_name,
                         'logo'          => $response->responderProfile?->logo,
                     ],
-                    'message'         => $response->message,
-                    'status'          => $response->status,
-                    'responded_at'    => $response->created_at,
-                    'conversation_id' => $convMap->get($convKey),
+                    'message'           => $response->message,
+                    'status'            => $response->status,
+                    'responded_at'      => $response->created_at,
+                    'conversation_id'   => $conv?->id,
+                    'conversation_title' => $post->headline,
                 ];
             })->values()->all();
 

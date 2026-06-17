@@ -297,6 +297,13 @@
                   </a>
               </li>
 
+              <li class="nav-item {{ request()->routeIs('connect.admin.index') ? 'menu-open' : '' }}">
+                  <a href="{{ route('connect.admin.index') }}" class="nav-link {{ request()->routeIs('connect.admin.index') ? 'active' : '' }}">
+                      <i class="nav-icon fas fa-th"></i>
+                      <p>Connect Businesses</p>
+                  </a>
+              </li>
+
           
             <li class="nav-item">
               <a href="pages/kanban.html" class="nav-link">

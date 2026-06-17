@@ -516,11 +516,10 @@ class BusinessController extends Controller
         };
 
         $customers = $query->orderByDesc('last_visit')->paginate(20);
-        $customers->getCollection()->transform(function ($c) use ($regularMin, $dailyMin) {
+        $customers->getCollection()->transform(function ($c) use ($regularMin, $dailyMin, $business) {
             $c->tier = $business->tierFor($c->checkin_count);
             return $c;
         });
-
         return response()->json($customers);
     }
 

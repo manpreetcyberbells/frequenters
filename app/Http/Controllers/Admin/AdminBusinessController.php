@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class AdminBusinessController extends Controller
 {
@@ -115,21 +116,31 @@ class AdminBusinessController extends Controller
     public function edit(User $business)
     {
         $business->load(['businessProfile', 'businessAddress', 'businessImage', 'businessHours']);
-        $cityName = City::where('id', $business->businessAddress->city)->value('city_name');
+        $cityValue = optional($business->businessAddress)->city;
+        $cityName = City::where('id', $cityValue)->value('city_name');
+        if (!$cityName) {
+            $cityName = $cityValue;
+        }
+
         return view('admin.businesses.edit', compact('business', 'cityName'));
     }
 
     public function update(Request $request, string $id)
     {
+        $profileId = BusinessProfile::where('business_id', $id)->value('id');
         $request->validate([
-            'name'          => 'required',
-            'email'         => 'required|email|unique:users,email,' . $id,
-            'website'       => ['required', 'url'],
-            'images.*'      => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'business_hours'=> 'required|array',
-            'owner_name'    => 'required|string',
-            'owner_email'   => 'required|email|unique:business_profiles,owner_email,NULL,id,business_id,' . $id,
-            'owner_phone'   => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
+            'name'           => 'required',
+            'email'          => 'required|email|unique:users,email,' . $id,
+            'website'        => ['required', 'url'],
+            'images.*'       => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_hours' => 'required|array',
+            'owner_name'     => 'required|string',
+            'owner_phone'    => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
+            'owner_email' => [
+                'required',
+                'email',
+                Rule::unique('business_profiles', 'owner_email')->ignore($profileId)
+            ],
         ]);
 
         $user = User::findOrFail($id);
