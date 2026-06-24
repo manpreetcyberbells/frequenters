@@ -40,18 +40,13 @@ class B2BCollabController extends Controller
     }
 
     // GET /business/b2b/posts — nearby feed
-    public function listNearbyPosts(Request $request): JsonResponse
+    public function listNearbyPosts(): JsonResponse
     {
-        $request->validate([
-            'radius'      => 'nullable|numeric|min:1|max:50',
-            'post_type'   => 'nullable|in:request,offer',
-            'category_id' => 'nullable|integer|exists:categories,id',
-        ]);
-
+        $businessId = Auth::user()->effectiveBusinessId();
+        $businessCategoryIds = \App\Models\BusinessProfile::where('business_id', $businessId)->pluck('category_id')->unique()->filter()->values()->all();
         $posts = $this->service->getNearbyPosts(
-            businessId:  Auth::user()->effectiveBusinessId(),
-            radiusMiles: $request->float('radius', 5.0),
-            filters:     $request->only(['post_type', 'category_id'])
+            businessId: $businessId,
+            filters:    ['category_ids' => $businessCategoryIds]
         );
 
         return response()->json($posts);

@@ -20,15 +20,16 @@ class NotifyNearbyBusinessesJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $backoff = 60; // retry after 60s
+    public int $backoff = 60;
 
     public function __construct(
         private readonly int $collabPostId,
-        private readonly float $radiusMiles = 5.0
+        private readonly float $radiusMiles = 150.0
     ) {}
 
     public function handle(FCMService $fcmService): void
     {
+        Log::info("NotifyNearbyBusinessesJob: STARTED for post {$this->collabPostId}");
         $post = CollabPost::with('business')->find($this->collabPostId);
 
         if (!$post || !$post->latitude || !$post->longitude) {
@@ -41,7 +42,7 @@ class NotifyNearbyBusinessesJob implements ShouldQueue
             ->join('users as u', 'u.id', '=', 'ba.business_id')
             ->join('business_profiles as bp', 'bp.business_id', '=', 'u.id')
             ->where('u.role', 'business')
-            ->where('u.id', '!=', $post->business_id) // Exclude self
+            ->where('u.id', '!=', $post->business_id)
             ->whereNotNull('ba.latitude')
             ->whereNotNull('ba.longitude')
             ->selectRaw("
@@ -56,10 +57,14 @@ class NotifyNearbyBusinessesJob implements ShouldQueue
             ->having('distance_miles', '<=', $this->radiusMiles)
             ->get();
 
-        $image = asset('storage/notifications/notification.png');
+        // $image = asset('storage/notifications/notification.png');
+        $image = url('storage/notifications/notification.png');
+
+        Log::info("Nearby businesses count: " . $nearbyBusinessIds->count());
+        Log::info("Nearby businesses data: " . json_encode($nearbyBusinessIds->toArray()));
 
         foreach ($nearbyBusinessIds as $business) {
-            // In-DB notification
+            Log::info("Processing business: {$business->id}, FCM Token: " . ($business->fcm_token ?? 'NULL'));
             createNotification(
                 $business->id,
                 "New B2B {$post->post_type}: {$post->headline}",
@@ -71,12 +76,13 @@ class NotifyNearbyBusinessesJob implements ShouldQueue
             // FCM push notification
             if (!empty($business->fcm_token)) {
                 try {
-                    $fcmService->sendNotificationToDevice(
+                    $response = $fcmService->sendToBusinessApp(
                         $business->fcm_token,
                         "New B2B Collaboration — {$post->post_type}",
                         $post->headline,
                         $image
                     );
+                    Log::info("FCM Response for business {$business->id}: " . json_encode($response));
                 } catch (\Throwable $e) {
                     Log::error("FCM failed for business {$business->id}: " . $e->getMessage());
                 }

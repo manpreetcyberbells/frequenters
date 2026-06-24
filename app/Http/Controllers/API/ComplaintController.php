@@ -36,17 +36,18 @@ class ComplaintController extends Controller
             'attachment'  => $attachmentPath,
         ]);
 
-        $fcmToken = DB::table('business_profiles')
-            ->where('business_id', $validated['business_id'])
-            ->value('fcm_token');
-
-        if ($fcmToken) {
-            $this->fcmService->sendNotificationToDevice(
-                $fcmToken,
-                "You've Got a New Complaint",
-                'A customer just raised a concern. Tap to check and respond.',
-                asset('storage/notifications/notification.png')
-            );
+        $fcmToken = DB::table('business_profiles')->where('business_id', $validated['business_id'])->value('fcm_token');
+        if (!empty($fcmToken)) {
+            try {
+                $this->fcmService->sendToBusinessApp(
+                    $fcmToken,
+                    "You've Got a New Complaint",
+                    'A customer just raised a concern. Tap to check and respond.',
+                    url('storage/notifications/notification.png')
+                );
+            } catch (\Throwable $e) {
+                \Log::error("Complaint FCM failed for business {$validated['business_id']}: " . $e->getMessage());
+            }
         }
         createNotification($validated['business_id'], 'A customer raised a complaint.', 'push', null, true);
 

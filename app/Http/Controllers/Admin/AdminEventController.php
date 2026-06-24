@@ -74,13 +74,23 @@ class AdminEventController extends Controller
                 'longitude'         => $cityData->longitude,
             ]);
 
-            $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds($event->latitude, $event->longitude, 10);
+            $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds(
+                $event->latitude,
+                $event->longitude,
+                10
+            );
+
             if (!empty($nearbyIds)) {
                 $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-                $body   = "There's an event close by you might love. Check it out!";
-                $image  = asset('storage/notifications/notification.png');
+                $title = "Something's Happening Near You!";
+                $body  = "There's an event close by you might love. Check it out!";
+                $image = url('storage/notifications/notification.png');
                 foreach ($tokens as $customerId => $token) {
-                    $this->fcmService->sendNotificationToDevice($token, "Something's Happening Near You!", $body, $image);
+                    try {
+                        $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+                    } catch (\Throwable $e) {
+                        \Log::error("Nearby event FCM failed for customer {$customerId}: " . $e->getMessage());
+                    }
                     customerNotification($customerId, $body, 'push', null, true);
                 }
             }

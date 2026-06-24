@@ -136,6 +136,9 @@ class UpdateContestStatus extends Command
                 $title = 'You Did It! Our Champion Shines Bright!';
                 $body = 'A huge shoutout to YOU for being part of this amazing journey';
                 if(count($voterList) > 0){
+                    $fcmService = new FCMService();
+                    // $image = asset('storage/notifications/notification.png');
+                    $image = url('storage/notifications/notification.png');
                     foreach ($voters as $voter) {
                         $customerId = $voter['user_id'];
                         if($contest->reward_type === "points"){
@@ -145,15 +148,21 @@ class UpdateContestStatus extends Command
                         customerNotification($customerId, $body, "push", null, true);
 
                         // Push Notification on Device
-                        $fcmService = new FCMService();
-                        $image = asset('storage/notifications/notification.png');
-                        $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                        $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->value('fcm_token');
                         // Sending Notification on Device
-                        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+                        if (!empty($fcmToken)) {
+                            try {
+                                $fcmService->sendToCustomerApp($fcmToken, $title, $body, $image);
+                            } catch (\Throwable $e) {
+                                \Log::error("Customer FCM failed for {$customerId}: " . $e->getMessage());
+                            }
+                        }
                     }
                 }
 
                 if(count($pointCrew) > 0){
+                    $fcmService = new FCMService();
+                    $image = url('storage/notifications/notification.png');
                     foreach ($pointCrew as $participant) {
                         $customerId = $participant['user_id'];
                         if($contest->reward_type === "points"){
@@ -163,11 +172,15 @@ class UpdateContestStatus extends Command
                         customerNotification($customerId, $body, "push", null, true);
 
                         // Push Notification on Device
-                        $fcmService = new FCMService();
-                        $image = asset('storage/notifications/notification.png');
-                        $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                        $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->value('fcm_token');
                         // Sending Notification on Device
-                        $fcmService->sendNotificationToDevice($fcmToken, $title, $body, $image);
+                        if (!empty($fcmToken)) {
+                            try {
+                                $fcmService->sendToCustomerApp($fcmToken, $title, $body, $image);
+                            } catch (\Throwable $e) {
+                                \Log::error("Customer FCM failed for {$customerId}: " . $e->getMessage());
+                            }
+                        }
                     }
                 }
 
@@ -184,9 +197,16 @@ class UpdateContestStatus extends Command
                     // Push Notification on Device
                     $fcmService = new FCMService();
                     $image = asset('storage/notifications/notification.png');
-                    $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->pluck('fcm_token')->first();
+                    // Push Notification on Device
+                    $fcmToken = DB::table('customer_profiles')->where('customer_id',$customerId)->value('fcm_token');
                     // Sending Notification on Device
-                    $fcmService->sendNotificationToDevice($fcmToken, $winner_title, $body, $image);
+                    if (!empty($fcmToken)) {
+                        try {
+                            $fcmService->sendToCustomerApp($fcmToken, $winner_title, $winner_body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Customer FCM failed for {$customerId}: " . $e->getMessage());
+                        }
+                    }
                 }
             }
         }

@@ -53,7 +53,7 @@
                     <!-- <div class="card-header"><div class="card-title">Edit Content</div></div> -->
                     <!--end::Header-->
                     <!--begin::Form-->
-                    <form id="contestEditForm" method="post" action="{{ route('contests.update', $content->id) }}" enctype="multipart/form-data" class="needs-validation">
+                    <form id="contestEditForm" method="post" action="{{ route('contests.update', $content->id) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                     @csrf
                     @method('PUT')    
                     <input type="hidden" name="question_type" value="{{ $questionType }}">
@@ -91,15 +91,15 @@
 
                             <div class="col-md-3 form-group">
                                 <label for="name" class="form-label">Contest Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required value="{{ $content->name }}"/>
+                                <input type="text" class="form-control" id="name" name="name" required value="{{ old('name', $content->name) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Status</label>
                                 <select id="status" name="status" class="form-control" required>
-                                <option value="open" {{ $content->status == "open" ? 'selected' : '' }} >Open</option>
-                                <option value="close" {{ $content->status == "close" ? 'selected' : '' }} >Close</option>
-                                <option value="completed" {{ $content->status == "completed" ? 'selected' : '' }} >Completed</option>
+                                <option value="open"      {{ old('status', $content->status) == 'open'      ? 'selected' : '' }}>Open</option>
+                                <option value="close"     {{ old('status', $content->status) == 'close'     ? 'selected' : '' }}>Close</option>
+                                <option value="completed" {{ old('status', $content->status) == 'completed' ? 'selected' : '' }}>Completed</option>
                                 </select>
                             </div>
                         </div>
@@ -107,36 +107,36 @@
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24" value="{{ $content->start_date }}"/>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24" value="{{ old('start_date', $content->start_date) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="start_time" class="form-label">Start Time</label>
-                                <input type="time" class="form-control" id="start_time" name="start_time" required placeholder="10:00:00" value="{{ $content->start_time }}"/>
+                                <input type="time" class="form-control" id="start_time" name="start_time" required placeholder="10:00:00" value="{{ old('start_time', $content->start_time) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26" value="{{ $content->end_date }}"/>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26" value="{{ old('end_date', $content->end_date) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="end_time" class="form-label">End Time</label>
-                                <input type="time" class="form-control" id="end_time" name="end_time" required placeholder="20:00:00" value="{{ $content->end_time }}"/>
+                                <input type="time" class="form-control" id="end_time" name="end_time" required placeholder="20:00:00" value="{{ old('end_time', $content->end_time) }}"/>
                             </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="max_participants" class="form-label">Capacity</label>
-                                <input type="number" class="form-control" id="max_participants" name="max_participants" required min="1" max="99999" value="{{ $content->max_participants }}"/>
+                                <input type="number" class="form-control" id="max_participants" name="max_participants" required min="1" max="99999" value="{{ old('max_participants',$content->max_participants) }}"/>
                             </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-12 form-group">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter Contest description...">{{ $content->description }}</textarea>
+                                <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter Contest description...">{{ old('description', $content->description) }}</textarea>
                             </div>
                         </div>
 
@@ -145,29 +145,29 @@
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="close_start_date" class="form-label">Close Contest Start Date</label>
-                                <input type="date" class="form-control" id="close_start_date" name="close_start_date" required placeholder="2025-04-24" value="{{ $content->close_start_date }}"/>
+                                <input type="date" class="form-control" id="close_start_date" name="close_start_date" required placeholder="2025-04-24" value="{{ old('close_start_date',$content->close_start_date) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="close_start_time" class="form-label">Close Contest Start Time</label>
-                                <input type="time" class="form-control" id="close_start_time" name="close_start_time" required placeholder="10:00:00" value="{{ $content->close_start_time }}"/>
+                                <input type="time" class="form-control" id="close_start_time" name="close_start_time" required placeholder="10:00:00" value="{{ old('close_start_time',$content->close_start_time) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="close_end_date" class="form-label">Close Contest End Date</label>
-                                <input type="date" class="form-control" id="close_end_date" name="close_end_date" required placeholder="2025-04-26" value="{{ $content->close_end_date }}"/>
+                                <input type="date" class="form-control" id="close_end_date" name="close_end_date" required placeholder="2025-04-26" value="{{ old('close_end_date',  $content->close_end_date) }}"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="close_end_time" class="form-label">End Contest Time</label>
-                                <input type="time" class="form-control" id="close_end_time" name="close_end_time" required placeholder="20:00:00" value="{{ $content->close_end_time }}"/>
+                                <input type="time" class="form-control" id="close_end_time" name="close_end_time" required placeholder="20:00:00" value="{{ old('close_end_time',  $content->close_end_time) }}"/>
                             </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-12 form-group">
                                 <label for="close_description" class="form-label">Close Description</label>
-                                <textarea class="form-control" id="close_description" name="close_description" rows="4" placeholder="Enter Close Contest description...">{{ $content->close_description }}</textarea>
+                                <textarea class="form-control" id="close_description" name="close_description" rows="4" placeholder="Enter Close Contest description...">{{ old('close_description', $content->close_description) }}</textarea>
                             </div>
                         </div>
 

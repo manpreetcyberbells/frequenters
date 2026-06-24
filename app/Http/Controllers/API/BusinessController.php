@@ -171,7 +171,47 @@ class BusinessController extends Controller
         }
     }
 
-    public function dashboardBusinessData()
+    // public function dashboardBusinessData()
+    // {
+    //     $user = Auth::user();
+    //     if (!$user->canActAsBusiness()) {
+    //         return response()->json(['message' => 'Business access required.'], 403);
+    //     }
+
+    //     $businessId = $user->effectiveBusinessId();
+
+    //     try {
+    //         $today        = Carbon::today();
+    //         $now          = Carbon::now();
+    //         $startOfWeek  = Carbon::now()->startOfWeek();
+    //         $startOfMonth = Carbon::now()->startOfMonth();
+
+    //         return response()->json([
+    //             'today_checkins'      => DB::table('checkins')->where('business_id', $businessId)->whereDate('check_in_time', $today)->count(),
+    //             'today_reward_claims' => DB::table('reward_redemptions')->where('business_id', $businessId)->where('status', 'success')->whereDate('redeemed_at', $today)->count(),
+    //             'active_customers'    => [
+    //                 'weekly'  => DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$startOfWeek, $now])->distinct('customer_id')->count('customer_id'),
+    //                 'monthly' => DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$startOfMonth, $now])->distinct('customer_id')->count('customer_id'),
+    //             ],
+    //             'recent_active_customers' => DB::table('checkins as c')
+    //                 ->join('users as u', 'u.id', '=', 'c.customer_id')
+    //                 ->select('u.id as customer_id', 'u.name', 'u.profile_image', 'c.check_in_time')
+    //                 ->where('c.business_id', $businessId)
+    //                 ->orderByDesc('c.check_in_time')
+    //                 ->limit(5)
+    //                 ->get(),
+    //             'open_complaints_last_30_days' => DB::table('complaints')
+    //                 ->where('business_id', $businessId)
+    //                 ->whereIn('status', ['pending', 'in_progress'])
+    //                 ->whereDate('created_at', '>=', Carbon::now()->subDays(30))
+    //                 ->count(),
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+    //     }
+    // }
+
+    public function dashboardBusinessData(Request $request)
     {
         $user = Auth::user();
         if (!$user->canActAsBusiness()) {
@@ -179,12 +219,17 @@ class BusinessController extends Controller
         }
 
         $businessId = $user->effectiveBusinessId();
-
         try {
-            $today        = Carbon::today();
-            $now          = Carbon::now();
+            $today = Carbon::today();
+            $now = Carbon::now();
             $startOfWeek  = Carbon::now()->startOfWeek();
             $startOfMonth = Carbon::now()->startOfMonth();
+            $filter = $request->input('graph_filter', 'this_week');
+            $graphData = match ($filter) {
+                'last_week'  => $this->getWeeklyGraphData($businessId, Carbon::now()->subWeek()->startOfWeek(), Carbon::now()->subWeek()->endOfWeek()),
+                'this_month' => $this->getMonthlyGraphData($businessId, $startOfMonth, $now),
+                default      => $this->getWeeklyGraphData($businessId, $startOfWeek, $now),
+            };
 
             return response()->json([
                 'today_checkins'      => DB::table('checkins')->where('business_id', $businessId)->whereDate('check_in_time', $today)->count(),
@@ -205,10 +250,57 @@ class BusinessController extends Controller
                     ->whereIn('status', ['pending', 'in_progress'])
                     ->whereDate('created_at', '>=', Carbon::now()->subDays(30))
                     ->count(),
+
+                // Graph Data
+                'checkin_graph' => [
+                    'filter' => $filter,
+                    'data'   => $graphData,
+                ],
             ]);
+
         } catch (\Exception $e) {
             return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
         }
+    }
+
+    // This Week / Last Week — Mon to Sun, per day count
+    private function getWeeklyGraphData(int $businessId, Carbon $start, Carbon $end): array
+    {
+        $rows = DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$start->startOfDay(), $end->endOfDay()])->selectRaw('DATE(check_in_time) as date, COUNT(*) as count')->groupByRaw('DATE(check_in_time)')->pluck('count', 'date');
+        $days   = [];
+        $cursor = $start->copy()->startOfDay();
+        $endDay = $end->copy()->startOfDay();
+        while ($cursor->lte($endDay)) {
+            $dateKey = $cursor->toDateString();
+            $days[]  = [
+                'date'  => $dateKey,
+                'label' => $cursor->format('D'), // Mon, Tue, Wed...
+                'count' => (int) ($rows[$dateKey] ?? 0),
+            ];
+            $cursor->addDay();
+        }
+
+        return $days;
+    }
+
+    // This Month — per day count for entire month
+    private function getMonthlyGraphData(int $businessId, Carbon $start, Carbon $end): array
+    {
+        $rows = DB::table('checkins')->where('business_id', $businessId)->whereBetween('check_in_time', [$start->startOfDay(), $end->endOfDay()])->selectRaw('DATE(check_in_time) as date, COUNT(*) as count')->groupByRaw('DATE(check_in_time)')->pluck('count', 'date');
+        $days   = [];
+        $cursor = $start->copy()->startOfDay();
+        $endDay = $end->copy()->startOfDay();
+        while ($cursor->lte($endDay)) {
+            $dateKey = $cursor->toDateString();
+            $days[]  = [
+                'date'  => $dateKey,
+                'label' => $cursor->format('d'),
+                'count' => (int) ($rows[$dateKey] ?? 0),
+            ];
+            $cursor->addDay();
+        }
+
+        return $days;
     }
 
     public function updateBusinessProfile(Request $request)
@@ -383,14 +475,17 @@ class BusinessController extends Controller
 
     public function pushNotificationUpdate(Request $request)
     {
-        $request->validate(['enabled' => 'required|boolean']);
+        $request->validate([
+            'enabled'   => 'required|boolean',
+            'fcm_token' => 'required|string|max:255',
+        ]);
         $profile = BusinessProfile::where('business_id', Auth::id())->firstOrFail();
-        $profile->update(['push_notification' => $request->boolean('enabled') ? '1' : '0']);
+        $profile->update(['fcm_token' => $request->fcm_token, 'push_notification' => $request->boolean('enabled') ? '1' : '0']);
 
         return response()->json(['message' => 'Push notification setting updated successfully.', 'push_notification' => $profile->push_notification]);
     }
 
-    // ─── Staff ──
+    // Staff
     public function createStaff(Request $request)
     {
         $business = Auth::user();

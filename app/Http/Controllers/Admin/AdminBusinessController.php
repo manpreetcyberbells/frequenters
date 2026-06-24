@@ -30,15 +30,19 @@ class AdminBusinessController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name'         => 'required',
-            'email'        => 'required|email|unique:users,email',
-            'images.*'     => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'business_hours'=> 'required|array',
-            'owner_name'   => 'required|string',
-            'owner_email'  => 'required|email|unique:business_profiles,owner_email',
-            'owner_phone'  => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
+        $validator = \Validator::make($request->all(), [
+            'name'          => 'required',
+            'email'         => 'required|email|unique:users,email',
+            'images.*'      => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'business_hours' => 'required|array',
+            'owner_name'    => 'required|string',
+            'owner_email'   => 'required|email|unique:business_profiles,owner_email',
+            'owner_phone'   => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $user = User::create([
             'name'     => $request->name,
@@ -128,7 +132,7 @@ class AdminBusinessController extends Controller
     public function update(Request $request, string $id)
     {
         $profileId = BusinessProfile::where('business_id', $id)->value('id');
-        $request->validate([
+        $validator = \Validator::make($request->all(), [
             'name'           => 'required',
             'email'          => 'required|email|unique:users,email,' . $id,
             'website'        => ['required', 'url'],
@@ -136,12 +140,16 @@ class AdminBusinessController extends Controller
             'business_hours' => 'required|array',
             'owner_name'     => 'required|string',
             'owner_phone'    => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
-            'owner_email' => [
+            'owner_email'    => [
                 'required',
                 'email',
                 Rule::unique('business_profiles', 'owner_email')->ignore($profileId)
             ],
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $user = User::findOrFail($id);
         $user->update(['name' => $request->name, 'email' => $request->email, 'phone' => $request->mobile, 'status' => $request->status]);

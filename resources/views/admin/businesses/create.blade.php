@@ -79,9 +79,9 @@
                     class="form-control"
                     id="name"
                     name="name"
-                    value=""
                     required
                     placeholder="Enter Business name"
+                    value="{{ old('name') }}"
                   />
                 </div>
                 <!--end::Col-->
@@ -98,6 +98,7 @@
                       aria-describedby="email"
                       required
                       placeholder="Enter valid email address"
+                       value="{{ old('email') }}"
                     />
                     @error('email')
                       <div class="invalid-feedback">{{ $message }}</div>
@@ -131,6 +132,7 @@
                         name="mobile" 
                         pattern="^\d{10,15}$" 
                         placeholder="Enter valid mobile number"
+                        value="{{ old('mobile') }}"
                         required 
                     />
                     <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
@@ -143,7 +145,7 @@
                     class="form-control"
                     id="website"
                     name="website"
-                    value=""
+                    value="{{ old('website') }}"
                     placeholder="https://www.example.com/"
                   />
                   @error('website')
@@ -155,10 +157,10 @@
                   <label for="status" class="form-label">Change Status</label>
                     <select id="status" name="status" class="form-control" required>
                       <option value="">Select status</option>
-                      <option value="active">Active</option>
-                      <option value="pending">Pending</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
+                      <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
+                      <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                      <option value="suspended" {{ old('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                  </select>
                 </div>
 
                 <div class="col-md-4 form-group">
@@ -186,6 +188,7 @@
                     min="1"
                     max="50"
                     placeholder="Points Per Checkin"
+                    value="{{ old('points_per_checkin') }}"
                   />
                 </div>
 
@@ -193,15 +196,15 @@
 
                 <div class="col-md-4 form-group">
                   <label for="owner_name" class="form-label">Owner Name</label>
-                  <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" />
+                  <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" value="{{ old('owner_name') }}"/>
                 </div>
                 <div class="col-md-4 form-group">
                   <label for="owner_email" class="form-label">Owner Email</label>
-                  <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" />
+                  <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" value="{{ old('owner_email') }}"/>
                 </div>
                 <div class="col-md-4 form-group">
                   <label for="owner_phone" class="form-label">Owner Phone</label>
-                  <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" />
+                  <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" value="{{ old('owner_phone') }}"/>
                 </div>
                 
                 
@@ -211,20 +214,20 @@
                 <!--end::Col-->
                 <div class="col-md-12 mb-3">
                   <label for="description" class="form-label">Description</label>
-                  <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                  <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
                 </div>
                 <div class="col-12 form-group">
                     <label for="inputAddress" class="form-label">Address</label>
-                    <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" required>
+                    <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ old('address1') }}" required>
                 </div>
                 <div class="col-12 form-group">
                     <label for="inputAddress2" class="form-label">Address 2</label>
-                    <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
+                    <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ old('address2') }}">
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="zip-code" class="form-label">Zip</label>
-                  <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" required>
+                  <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ old('zip_code') }}" required>
                 </div>
 
                 <div class="col-md-3 form-group">
@@ -236,22 +239,22 @@
 
                 <div class="col-md-3 form-group">
                   <label for="state" class="form-label">State</label>
-                  <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly required>
+                  <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly required value="{{ old('state') }}">
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="country" class="form-label">Country</label>
-                  <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly required>
+                  <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly required value="{{ old('country') }}">
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="latitude" class="form-label">Latitude</label>
-                  <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly required>
+                  <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" value="{{ old('latitude') }}" readonly required>
                 </div>
 
                 <div class="col-md-3 form-group">
                   <label for="longitude" class="form-label">Longitude</label>
-                  <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly required>
+                  <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" value="{{ old('longitude') }}" readonly required>
                 </div>
                 <!--end::Col-->
               </div>
@@ -278,13 +281,13 @@
                         <tr>
                             <td>{{ $day }}</td>
                             <td>
-                                <input type="time" name="business_hours[{{ $key }}][open_time]" class="form-control open-time" required>
+                                <input type="time" name="business_hours[{{ $key }}][open_time]" class="form-control open-time" value="{{ old('business_hours.' . $key . '.open_time') }}" required>
                             </td>
                             <td>
-                                <input type="time" name="business_hours[{{ $key }}][close_time]" class="form-control close-time" required>
+                                <input type="time" name="business_hours[{{ $key }}][close_time]" class="form-control close-time" value="{{ old('business_hours.' . $key . '.close_time') }}" required>
                             </td>
                             <td class="text-center">
-                                <input type="checkbox" name="business_hours[{{ $key }}][is_closed]" class="closed-checkbox" value="1">
+                                <input type="checkbox" name="business_hours[{{ $key }}][is_closed]" class="closed-checkbox" value="1" {{ old('business_hours.' . $key . '.is_closed') ? 'checked' : '' }}>
                             </td>
                             <input type="hidden" name="business_hours[{{ $key }}][day_of_week]" value="{{ strtolower($day) }}">
                         </tr>
@@ -344,11 +347,12 @@
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
-  <script>
-    var selectedState;
-    var selectedCity;
-    var selectedCountry;
-    var selectedParent;
-    var selectedChild;
-  </script>
+<script>
+  var selectedState = "{{ old('state') }}";
+  var selectedCity = "{{ old('city') }}";
+  var selectedCountry = "{{ old('country') }}";
+  var selectedParent = "{{ old('category') }}";
+  var selectedChild = "{{ old('child_category') }}";
+  var selectedZip = "{{ old('zip_code') }}";
+</script>
 @endsection

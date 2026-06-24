@@ -26,50 +26,57 @@ class ResetPasswordController extends Controller
     */
     public function reset(Request $request)
     {
-        // die('HELLo');
         $request->validate([
-            'token' => 'required',
-            'email' => 'required|email|exists:users,email',
+            'token'    => 'required',
+            'email'    => 'required|email|exists:users,email',
             'password' => 'required|min:6|confirmed',
         ]);
-    
+
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->save();
-                
+
                 $userId = $user->id;
-                $role = $user->role;
-                $fcm_token = DB::table('customer_profiles')->where('customer_id',$userId)->pluck('fcm_token')->first();
-                $user->tokens()->delete(); // Delete old tokens
+                $role   = $user->role;
+                $title  = 'Password Reset Successful';
+                $body   = 'Your password has been changed successfully.';
+                $image  = url('storage/notifications/notification.png');
+                $user->tokens()->delete();
 
-                if ($fcm_token) {
-                    $fcmService = new FCMService();
-                    $title = "Password Reset Successful";
-                    $body = "Your password has been changed successfully.";
-                    $image = asset('storage/notifications/notification.png');
-    
-                    $fcmService->sendNotificationToDevice($fcm_token, $title, $body, $image);
-
-                    if($role == "customer"){
-                        customerNotification($userId, $body, "push", null, true);
-                    }else{
-                        createNotification($userId, $body, "push", null, true);
+                $fcmService = new FCMService();
+                if ($role === 'customer') {
+                    $fcmToken = DB::table('customer_profiles')->where('customer_id', $userId)->value('fcm_token');
+                    if (!empty($fcmToken)) {
+                        try {
+                            $fcmService->sendToCustomerApp($fcmToken, $title, $body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Password reset FCM failed for customer {$userId}: " . $e->getMessage());
+                        }
                     }
+                    customerNotification($userId, $body, 'push', null, true);
+
+                } else {
+                    $fcmToken = DB::table('business_profiles')->where('business_id', $userId)->value('fcm_token');
+                    if (!empty($fcmToken)) {
+                        try {
+                            $fcmService->sendToBusinessApp($fcmToken, $title, $body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Password reset FCM failed for business {$userId}: " . $e->getMessage());
+                        }
+                    }
+                    createNotification($userId, $body, 'push', null, true);
                 }
             }
         );
-    
+
         if ($status !== Password::PASSWORD_RESET) {
-            return response()->json([
-                'error' => 'Password reset failed'
-            ], 400);
+            return response()->json(['error' => 'Password reset failed'], 400);
         }
-    
+
         return response()->json(['message' => 'Password has been reset successfully.'], 200);
-    
     }
 }
 

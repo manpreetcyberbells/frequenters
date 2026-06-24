@@ -25,7 +25,8 @@ class AdminCustomerController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        // echo"<pre>"; print_r($request->all()); die;
+        $validator = \Validator::make($request->all(), [
             'name'      => 'required',
             'email'     => 'required|email|unique:users,email',
             'mobile'    => 'nullable|string|max:15|unique:users,phone',
@@ -37,6 +38,10 @@ class AdminCustomerController extends Controller
             'latitude'  => 'required',
             'longitude' => 'required',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $imageUrl = null;
         if ($request->hasFile('profile_image')) {
@@ -118,7 +123,7 @@ class AdminCustomerController extends Controller
     public function update(Request $request, User $customer)
     {
         try {
-            $request->validate([
+            $validator = \Validator::make($request->all(), [
                 'name'          => 'required|string|max:255',
                 'email'         => 'required|email|unique:users,email,' . $customer->id,
                 'mobile'        => 'nullable|string|max:15|unique:users,phone,' . $customer->id,
@@ -134,6 +139,12 @@ class AdminCustomerController extends Controller
                 'latitude'      => 'required',
                 'longitude'     => 'required',
             ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
 
             if ($request->hasFile('profile_image')) {
                 $image     = $request->file('profile_image');
@@ -160,7 +171,7 @@ class AdminCustomerController extends Controller
 
             return redirect()->route('customer.index')->with('success', 'Customer updated successfully.');
 
-        } catch (\Exception $e) { // ✅ Fixed: was unqualified Exception — never caught
+        } catch (\Exception $e) {
             Log::error('Customer update failed', ['error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Something went wrong while updating the customer.');
         }

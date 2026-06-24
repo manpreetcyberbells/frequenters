@@ -58,7 +58,10 @@ class AdminContestController extends Controller
                 $validator->addRules(['options' => 'required|array|min:2', 'options.*' => 'required|string|max:255']);
             }
 
-            $validatedData = $validator->validate();
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+            $validatedData = $validator->validated();
             $validatedData['banner_image'] = $request->hasFile('banner_image') ? asset('storage/' . $request->file('banner_image')->store('contest/banners', 'public')) : null;
             $validatedData['business_id'] = $businessId;
 
@@ -68,9 +71,15 @@ class AdminContestController extends Controller
                 'discount'  => ['winner_discount', 'participant_discount', 'voter_discount'],
                 'free_item' => ['winner_free_item', 'participant_free_item', 'voter_free_item'],
             ];
-            $rewardFields = $request->validate(array_fill_keys($rewardMap[$request->reward_type], 'required'));
+            // $rewardFields = $request->validate(array_fill_keys($rewardMap[$request->reward_type], 'required'));
+            $rewardValidator = \Validator::make($request->all(),
+                array_fill_keys($rewardMap[$request->reward_type], 'required')
+            );
+            if ($rewardValidator->fails()) {
+                return redirect()->back()->withErrors($rewardValidator)->withInput();
+            }
+            $rewardFields = $rewardValidator->validated();
             $validatedData = array_merge($validatedData, $rewardFields);
-
             $contest  = Contest::create($validatedData);
             $question = ContestQuestion::create([
                 'contest_id'    => $contest->id,
@@ -89,10 +98,15 @@ class AdminContestController extends Controller
                 $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds($address->latitude, $address->longitude, 10);
                 if (!empty($nearbyIds)) {
                     $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-                    $body   = "Jump in, earn points. It's local, it's live!";
-                    $image  = asset('storage/notifications/notification.png');
+                    $title = 'A Contest Just Landed Nearby!';
+                    $body  = "Jump in, earn points. It's local, it's live!";
+                    $image = url('storage/notifications/notification.png');
                     foreach ($tokens as $customerId => $token) {
-                        $this->fcmService->sendNotificationToDevice($token, 'A Contest Just Landed Nearby!', $body, $image);
+                        try {
+                            $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Nearby contest FCM failed for customer {$customerId}: " . $e->getMessage());
+                        }
                         customerNotification($customerId, $body, 'push', null, true);
                     }
                 }
@@ -122,7 +136,7 @@ class AdminContestController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $validated = $request->validate([
+            $validator = \Validator::make($request->all(), [
                 'name'              => 'required|string|max:255',
                 'description'       => 'nullable|string',
                 'banner_image'      => 'nullable|file|mimes:jpg,jpeg,png,gif,webp',
@@ -137,8 +151,12 @@ class AdminContestController extends Controller
                 'max_participants'  => 'nullable|integer|min:1',
             ]);
 
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+            $validated = $validator->validated();
+            
             $contest = Contest::findOrFail($id);
-
             if ($request->hasFile('banner_image')) {
                 $validated['banner_image'] = asset('storage/' . $request->file('banner_image')->store('contest/banners', 'public'));
             }

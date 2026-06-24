@@ -12,32 +12,31 @@ class NotificationController extends Controller
     {
         $query = Notification::query();
 
-        // Get notifications for a specific user
-        if ($request->has('user_id')) {
-            $query->where('user_id', $request->user_id);
-        }
-
-        // Get notifications for a specific business
+        // Business
         if ($request->has('business_id')) {
             $query->where('business_id', $request->business_id);
         }
 
-        // Get only broadcast notifications
+        // Customer
+        if ($request->has('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Broadcast
         if ($request->has('is_broadcast')) {
             $query->where('is_broadcast', 1);
         }
 
-        // Filter by status (pending, sent, delivered, failed)
+        // Status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Order by latest notifications
         $notifications = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return response()->json([
-            'success' => true,
-            'notifications' => $notifications
+            'success'       => true,
+            'notifications' => $notifications,
         ]);
     }
 }

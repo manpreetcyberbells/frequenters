@@ -49,49 +49,29 @@ class B2BCollabService
     public function getNearbyPosts(int $businessId, float $radiusMiles = 5.0, array $filters = []): LengthAwarePaginator
     {
         $address = BusinessAddress::where('business_id', $businessId)->first();
-        $query = CollabPost::with(['business:id,name,profile_image', 'businessProfile:business_id,business_name,logo,industry_type'])
-            ->active()
-            ->where('business_id', '!=', $businessId); // Don't show own posts
+        $query = CollabPost::with(['business:id,name,profile_image', 'businessProfile:business_id,business_name,logo,industry_type'])->active()->where('business_id', '!=', $businessId);
 
-        // Location filter
+
         if ($address?->latitude && $address?->longitude) {
+            $radiusMiles = 150.0;
             $query->withinRadius($address->latitude, $address->longitude, $radiusMiles);
         }
 
-        // Optional: filter by post_type
-        if (!empty($filters['post_type'])) {
-            $query->where('post_type', $filters['post_type']);
-        }
-
-        // Optional: filter by category (single ID match inside JSON array)
-        if (!empty($filters['category_id'])) {
-            $query->whereJsonContains('category_ids', (int) $filters['category_id']);
+        if (!empty($filters['category_ids'])) {
+            $query->where(function ($q) use ($filters) {
+                foreach ($filters['category_ids'] as $categoryId) {
+                    $q->orWhereJsonContains('category_ids', (int) $categoryId);
+                }
+            });
         }
 
         $paginator = $query->paginate(15);
-
         $postIds = collect($paginator->items())->pluck('id')->all();
+        $respondedPostIds = CollabPostResponse::whereIn('collab_post_id', $postIds)->where('responder_business_id', $businessId)->pluck('collab_post_id')->flip()->all();
+        $allCategoryIds = collect($paginator->items())->flatMap(fn($post) => $post->category_ids ?? [])->filter(fn($id) => is_int($id) || ctype_digit((string) $id))->unique()->values()->all();
+        $categoryMap = \App\Models\Admin\Category::whereIn('id', $allCategoryIds)->pluck('name', 'id');
 
-        // 1 query: which posts has the current business already responded to?
-        $respondedPostIds = CollabPostResponse::whereIn('collab_post_id', $postIds)
-            ->where('responder_business_id', $businessId)
-            ->pluck('collab_post_id')
-            ->flip()
-            ->all();
-
-        // 1 query: resolve all category IDs on this page to names
-        $allCategoryIds = collect($paginator->items())
-            ->flatMap(fn($post) => $post->category_ids ?? [])
-            ->filter(fn($id) => is_int($id) || ctype_digit((string) $id))
-            ->unique()
-            ->values()
-            ->all();
-
-        $categoryMap = \App\Models\Admin\Category::whereIn('id', $allCategoryIds)
-            ->pluck('name', 'id');
-
-        // 1 query: chat_enabled check (JOIN)
-        // chat_enabled = true jab Business A (post owner) ne is post ki conversation me reply kiya ho
+        // chat_enabled check (JOIN)
         $chatEnabledPostIds = DB::table('b2b_messages')
             ->join('b2b_conversations', 'b2b_conversations.id', '=', 'b2b_messages.conversation_id')
             ->whereIn('b2b_conversations.collab_post_id', $postIds)
@@ -341,18 +321,21 @@ class B2BCollabService
         return $posts;
     }
 
-    // Private Helpers
     private function notifyPostOwner(CollabPost $post, int $responderBusinessId, string $message): void
     {
         $fcmToken = DB::table('business_profiles')->where('business_id', $post->business_id)->value('fcm_token');
         $responderName = DB::table('users')->where('id', $responderBusinessId)->value('name');
-        if ($fcmToken) {
-            app(FCMService::class)->sendNotificationToDevice(
-                $fcmToken,
-                "New response from {$responderName}",
-                $message,
-                asset('storage/notifications/notification.png')
-            );
+        if (!empty($fcmToken)) {
+            try {
+                app(FCMService::class)->sendToBusinessApp(
+                    $fcmToken,
+                    "New response from {$responderName}",
+                    $message,
+                    url('storage/notifications/notification.png')
+                );
+            } catch (\Throwable $e) {
+                Log::error("B2B notifyPostOwner FCM failed for business {$post->business_id}: " . $e->getMessage());
+            }
         }
 
         createNotification($post->business_id, "New response to your B2B post: {$post->headline}", 'push', null, true);
@@ -361,16 +344,16 @@ class B2BCollabService
     private function sendFcmToBusiness(int $businessId, string $senderName, string $message): void
     {
         $fcmToken = DB::table('business_profiles')->where('business_id', $businessId)->value('fcm_token');
-        if ($fcmToken) {
+        if (!empty($fcmToken)) {
             try {
-                app(FCMService::class)->sendNotificationToDevice(
+                app(FCMService::class)->sendToBusinessApp(
                     $fcmToken,
                     $senderName,
                     $message,
-                    asset('storage/notifications/notification.png')
+                    url('storage/notifications/notification.png')
                 );
             } catch (\Throwable $e) {
-                Log::error("B2B FCM failed: " . $e->getMessage());
+                Log::error("B2B FCM failed for business {$businessId}: " . $e->getMessage());
             }
         }
     }

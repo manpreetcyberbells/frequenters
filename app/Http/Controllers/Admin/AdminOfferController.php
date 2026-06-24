@@ -28,7 +28,7 @@ class AdminOfferController extends Controller
     {
         try {
             $businessId = $request->business_id;
-            $bannerPath = $request->hasFile('banner') ? asset('storage/' . $request->file('banner')->store('offers/banners', 'public')) : null;
+            $bannerPath = $request->hasFile('banner') ? url('storage/' . $request->file('banner')->store('offers/banners', 'public')) : null;
             Offer::create(array_merge($request->validated(), ['banner_image' => $bannerPath]));
 
             $address = DB::table('business_addresses')->where('business_id', $businessId)->first();
@@ -36,16 +36,21 @@ class AdminOfferController extends Controller
                 $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds($address->latitude, $address->longitude, 10);
                 if (!empty($nearbyIds)) {
                     $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-                    $image  = asset('storage/notifications/notification.png');
+                    $title = 'New Offer Near You!';
+                    $body  = 'Offer available for you';
+                    $image = url('storage/notifications/notification.png');
                     foreach ($tokens as $customerId => $token) {
-                        $this->fcmService->sendNotificationToDevice($token, 'New Offer', 'Offer available for you', $image);
-                        customerNotification($customerId, 'Offer available for you', 'push', null, true);
+                        try {
+                            $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Offer FCM failed for customer {$customerId}: " . $e->getMessage());
+                        }
+                        customerNotification($customerId, $body, 'push', null, true);
                     }
                 }
             }
 
             return redirect()->route('admin.businesses.offer.index')->with('success', 'Offer created successfully!');
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating offer');
         }

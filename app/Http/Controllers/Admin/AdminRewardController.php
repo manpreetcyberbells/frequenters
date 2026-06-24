@@ -62,13 +62,18 @@ class AdminRewardController extends Controller
             $reward->update(['qr_code_payload' => json_encode($qrPayload)]);
             $address = DB::table('business_addresses')->where('business_id', $businessId)->first();
             if ($address?->latitude && $address?->longitude) {
-                $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds($address->latitude, $address->longitude, 10);
+                $nearbyIds = $this->nearbyCustomerService->getNearbyCustomerIds($address->latitude,$address->longitude,10);
                 if (!empty($nearbyIds)) {
                     $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-                    $body   = 'New reward near you, please redeem it';
-                    $image  = asset('storage/notifications/notification.png');
+                    $title = 'Reward Near You!';
+                    $body  = 'New reward near you, please redeem it';
+                    $image = url('storage/notifications/notification.png');
                     foreach ($tokens as $customerId => $token) {
-                        $this->fcmService->sendNotificationToDevice($token, 'Reward', $body, $image);
+                        try {
+                            $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+                        } catch (\Throwable $e) {
+                            \Log::error("Reward FCM failed for customer {$customerId}: " . $e->getMessage());
+                        }
                         customerNotification($customerId, $body, 'push', null, true);
                     }
                 }

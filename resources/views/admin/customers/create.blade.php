@@ -61,11 +61,10 @@
                             <input type="file" class="custom-file-input form-control" id="profile_image" name="profile_image" multiple accept="image/*" required>
                             <label class="custom-file-label" for="customFile">Upload Profile Image</label>
                           </div>
-                            
                         </div>
                         </div>
 
-                         <div class="row g-3">
+                        <div class="row g-3">
 
 
                         <!--begin::Col-->
@@ -76,7 +75,7 @@
                             class="form-control"
                             id="name"
                             name="name"
-                            value=""
+                            value="{{ old('name') }}"
                             required
                             placeholder="Enter customer name"
                           />
@@ -95,6 +94,7 @@
                               aria-describedby="email"
                               required
                               placeholder="Enter valid email address"
+                              value="{{ old('email') }}"
                             />
                             @error('email')
                               <div class="invalid-feedback">{{ $message }}</div>
@@ -128,6 +128,7 @@
                                 name="mobile" 
                                 pattern="^\d{10,15}$" 
                                 placeholder="Enter valid mobile number"
+                                value="{{ old('mobile') }}"
                                 required 
                             />
                             <div class="invalid-feedback">Please enter a valid mobile number (10-15 digits).</div>
@@ -140,7 +141,7 @@
                                 class="form-control" 
                                 id="birthday" 
                                 name="birthday"
-                                value="{{ isset($user) ? \Carbon\Carbon::parse($user->birthday)->format('Y-m-d') : '' }}"
+                                value="{{ old('birthday') }}"
                                 max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
                         </div>
@@ -152,7 +153,7 @@
                                 class="form-control" 
                                 id="anniversary" 
                                 name="anniversary"
-                                value="{{ isset($user) ? \Carbon\Carbon::parse($user->anniversary)->format('Y-m-d') : '' }}"
+                                value="{{ old('anniversary') }}"
                                 max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
                         </div>
@@ -163,9 +164,9 @@
                             <label for="gender" class="form-label">Gender</label>
                             <select id="gender" name="gender" class="form-control">
                               <option value="">Select Gender</option>
-                              <option value="male" selected>Male</option>
-                              <option value="female">Female</option>
-                              <option value="other">Other</option>
+                              <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                              <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                              <option value="other" {{ old('gender') == 'other' ? 'selected' : '' }}>Other</option>
                             </select>
                         </div>
 
@@ -173,25 +174,25 @@
                             <label for="status" class="form-label">Status</label>
                             <select id="status" name="status" class="form-control">
                               <option value="">Select State</option>
-                              <option value="active" selected>Active</option>
-                              <option value="pending">Pending</option>
-                              <option value="suspended">Suspended</option>
+                              <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
+                              <option value="pending" {{ old('status', 'active') == 'pending' ? 'selected' : '' }}>Pending</option>
+                              <option value="suspended" {{ old('status', 'active') == 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                         </div>
                         
                         <div class="col-12 form-group">
                             <label for="inputAddress" class="form-label">Address</label>
-                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" required>
+                            <input type="text" name="address1" class="form-control" id="inputAddress" value="{{ old('address1') }}" placeholder="1234 Main St" required>
                         </div>
 
                         <div class="col-12 form-group">
                             <label for="inputAddress2" class="form-label">Address 2</label>
-                            <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
+                            <input type="text" name="address2" class="form-control" id="inputAddress2" value="{{ old('address2') }}" placeholder="Apartment, studio, or floor">
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="zip-code" class="form-label">Zip</label>
-                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" required>
+                          <input type="text" id="zip-code" name="zip_code" class="form-control" value="{{ old('zip_code') }}" placeholder="Enter Zip Code" required>
                         </div>
 
                         <div class="col-md-3 form-group">
@@ -203,22 +204,22 @@
 
                         <div class="col-md-3 form-group">
                           <label for="state" class="form-label">State</label>
-                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly>
+                          <input type="text" id="state" name="state" value="{{ old('state') }}" class="form-control" placeholder="State" readonly>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="country" class="form-label">Country</label>
-                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly>
+                          <input type="text" id="country" name="country" value="{{ old('country') }}" class="form-control" placeholder="Country" readonly>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="latitude" class="form-label">Latitude</label>
-                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly>
+                          <input type="text" id="latitude" name="latitude" value="{{ old('latitude') }}" class="form-control" placeholder="Latitude" readonly>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="longitude" class="form-label">Longitude</label>
-                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly>
+                          <input type="text" id="longitude" name="longitude" value="{{ old('longitude') }}" class="form-control" placeholder="Longitude" readonly>
                         </div>
 
                         <!--end::Col-->
@@ -274,4 +275,10 @@
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
+   <script>
+      var selectedZip     = "{{ old('zip_code') }}";
+      var selectedCity    = "{{ old('city') }}";
+      var selectedState   = "{{ old('state') }}";
+      var selectedCountry = "{{ old('country') }}";
+  </script>
 @endsection

@@ -42,25 +42,33 @@ class CollaborationController extends Controller
         try {
             $validated['creator_business_id'] = Auth::id();
             $collab = Collaboration::create($validated);
-
-            $fcmToken = DB::table('business_profiles')
-                ->where('business_id', $validated['partner_business_id'])
-                ->value('fcm_token');
-
-            if ($fcmToken) {
-                $this->fcmService->sendNotificationToDevice(
-                    $fcmToken,
-                    Auth::user()->name,
-                    $validated['description'],
-                    asset('storage/notifications/notification.png')
-                );
+            $fcmToken = DB::table('business_profiles')->where('business_id', $validated['partner_business_id'])->value('fcm_token');
+            if (!empty($fcmToken)) {
+                try {
+                    $this->fcmService->sendToBusinessApp(
+                        $fcmToken,
+                        Auth::user()->name,
+                        $validated['description'],
+                        url('storage/notifications/notification.png')
+                    );
+                } catch (\Throwable $e) {
+                    \Log::error("Collaboration FCM failed for business {$validated['partner_business_id']}: " . $e->getMessage());
+                }
             }
+
             createNotification($validated['partner_business_id'], $validated['description'], 'push', null, true);
 
-            return response()->json(['message' => 'Collaboration request created successfully', 'data' => $collab], 201);
+            return response()->json([
+                'message' => 'Collaboration request created successfully',
+                'data'    => $collab,
+            ], 201);
 
         } catch (\Exception $e) {
-            return response()->json(['status' => false, 'message' => 'Something went wrong.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], 500);
         }
     }
 

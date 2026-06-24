@@ -40,6 +40,7 @@ class BusinessProfile extends Model
         'business_uid',
         'tier_regular_min',
         'tier_daily_min',
+        'fcm_token',
     ];
     
     protected $casts = [

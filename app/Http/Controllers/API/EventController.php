@@ -244,11 +244,11 @@ class EventController extends Controller
         if (empty($nearbyIds)) return;
 
         $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-        $image = asset('storage/notifications/notification.png');
+        $image = url('storage/notifications/notification.png');
         $body  = "There's an event close by you might love. Check it out!";
 
         foreach ($tokens as $customerId => $token) {
-            $this->fcmService->sendNotificationToDevice($token, "Something's Happening Near You!", $body, $image);
+            $this->fcmService->sendToCustomerApp($token, "Something's Happening Near You!", $body, $image);
             customerNotification($customerId, $body, 'push', null, true);
         }
     }

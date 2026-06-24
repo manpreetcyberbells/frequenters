@@ -84,7 +84,7 @@
                       <div class="row g-3">
                          <div class="col-md-4 mb-3 form-group">
                             <div class="custom-file">
-                            <input type="file" class="custom-file-input form-control"  id="images" name="images[]" multiple="" accept="image/*" required="">
+                            <input type="file" class="custom-file-input form-control"  id="images" name="images[]" multiple="" accept="image/*">
                             <label class="custom-file-label" for="customFile">Upload Images</label>
                           </div>                            
                         </div>
@@ -97,15 +97,7 @@
                         <!--begin::Col-->
                         <div class="col-md-4 form-group">
                           <label for="name" class="form-label">Name</label>
-                          <input
-                            type="text"
-                            class="form-control"
-                            id="name"
-                            name="name"
-                            value="{{ $business->name }}"
-                            required
-                            placeholder="Enter Business name"
-                          />
+                          <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $business->name) }}" required placeholder="Enter Business name" />
                         </div>
                         <!--end::Col-->
                         <!--begin::Col-->
@@ -119,7 +111,7 @@
                               class="form-control"
                               id="validationCustomUsername"
                               aria-describedby="email"
-                              value="{{ $business->email }}"
+                              value="{{ old('email', $business->email) }}"
                               required
                               placeholder="Enter valid email address"
                             />
@@ -138,9 +130,8 @@
                                 class="form-control" 
                                 id="mobileNumber" 
                                 name="mobile" 
-                                pattern="^\d{10,15}$" 
-                                placeholder="Enter your mobile number"
-                                value="{{ $business->phone }}"
+                                pattern="^\d{10,15}$"
+                                value="{{ old('mobile', $business->phone) }}"
                                 required 
                                 placeholder="Enter valid mobile number"
                             />
@@ -154,7 +145,7 @@
                             class="form-control"
                             id="website"
                             name="website"
-                            value="{{ $business->businessProfile->website }}"
+                            value="{{ old('website', $business->businessProfile->website) }}"
                             placeholder="https://www.example.com/"
                           />
                           @error('website')
@@ -179,9 +170,9 @@
                           <label for="status" class="form-label">Change Status</label>
                             <select id="status" name="status" class="form-control" required>
                               <option value="">Select status</option>
-                              <option value="active" {{ $business->status == 'active' ? 'selected' : '' }}>Active</option>
-                              <option value="pending" {{ $business->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                              <option value="suspended" {{ $business->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                              <option value="active" {{ old('status', $business->status) == 'active'    ? 'selected' : '' }}>Active</option>
+                              <option value="pending" {{ old('status', $business->status) == 'pending'   ? 'selected' : '' }}>Pending</option>
+                              <option value="suspended" {{ old('status', $business->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                         </div>
 
@@ -209,22 +200,22 @@
                             required
                             min="1"
                             max="50"
-                            value="{{ $business->businessProfile->points_per_checkin }}"
+                            value="{{ old('points_per_checkin', $business->businessProfile->points_per_checkin) }}"
                             placeholder="points Per Checkin"
                           />
                         </div>
 
                         <div class="col-md-4 form-group">
                           <label for="owner_name" class="form-label">Owner Name</label>
-                          <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" value="{{ $business->businessProfile->owner_name }}" />
+                          <input type="text" class="form-control" id="owner_name" name="owner_name" required placeholder="Enter Owner Name" value="{{ old('owner_name', $business->businessProfile->owner_name) }}" />
                         </div>
                         <div class="col-md-4 form-group">
                           <label for="owner_email" class="form-label">Owner Email</label>
-                          <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" value="{{ $business->businessProfile->owner_email }}" />
+                          <input type="email" class="form-control" id="owner_email" name="owner_email" required placeholder="Enter Owner Email address" value="{{ old('owner_email', $business->businessProfile->owner_email) }}" />
                         </div>
                         <div class="col-md-4 form-group">
                           <label for="owner_phone" class="form-label">Owner Phone</label>
-                          <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" value="{{ $business->businessProfile->owner_phone }}" />
+                          <input type="tel" class="form-control" id="owner_phone" name="owner_phone" pattern="^\d{10,15}$"  required placeholder="Enter valid Owner Phone number" value="{{ old('owner_phone', $business->businessProfile->owner_phone) }}" />
                         </div>
 
                         <!--end::Col-->
@@ -241,16 +232,16 @@
                         
                         <div class="col-12 form-group">
                             <label for="inputAddress" class="form-label">Address</label>
-                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ $business->businessAddress->address_line1 }}" required>
+                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ old('address1', $business->businessAddress->address_line1) }}" required>
                         </div>
                         <div class="col-12 form-group">
                             <label for="inputAddress2" class="form-label">Address 2</label>
-                            <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ $business->businessAddress->address_line2 }}">
+                            <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ old('address2', $business->businessAddress->address_line2) }}">
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="zip-code" class="form-label">Zip</label>
-                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ $business->businessAddress->zip_code }}" required>
+                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ old('zip_code', $business->businessAddress->zip_code) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
@@ -262,22 +253,22 @@
 
                         <div class="col-md-3 form-group">
                           <label for="state" class="form-label">State</label>
-                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ $business->businessAddress->state }}" required>
+                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ old('state', $business->businessAddress->state) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="country" class="form-label">Country</label>
-                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ $business->businessAddress->country }}" required>
+                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ old('country', $business->businessAddress->country) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="latitude" class="form-label">Latitude</label>
-                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ $business->businessAddress->latitude }}" required>
+                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ old('latitude', $business->businessAddress->latitude) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="longitude" class="form-label">Longitude</label>
-                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ $business->businessAddress->longitude }}" required>
+                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ old('longitude', $business->businessAddress->longitude) }}" required>
                         </div>
 
                         <!--end::Col-->
@@ -336,7 +327,7 @@
                     <!--end::Body-->
                     <!--begin::Footer-->
                     <div class="card-footer">
-                      <button class="btn btn-info" ype="submit">Update Business</button>
+                      <button class="btn btn-info" type="submit">Update Business</button>
                     </div>
                     <!--end::Footer-->
                   </form>
@@ -354,8 +345,8 @@
                           'submit',
                           (event) => {
                             if (!form.checkValidity()) {
-                     t         event.preventDefault();
-                               event.stopPropagation();
+                                event.preventDefault();
+                                event.stopPropagation();
                             }
                             form.classList.add('was-validated');
                           },
@@ -377,13 +368,11 @@
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
-    <script>
-      var selectedState = @json($business->businessAddress->state);
-      var selectedCity = @json($business->businessAddress->city);
-      var selectedCountry = @json($business->businessAddress->country);
-
-      var selectedParent = "{{ $business->businessProfile->category_id }}";
-      var selectedChild = "{{ $business->businessProfile->child_category_id }}";
-
-    </script>
+  <script>
+    var selectedState = "{{ old('state', $business->businessAddress->state) }}";
+    var selectedCity = "{{ old('city', $business->businessAddress->city) }}";
+    var selectedCountry = "{{ old('country', $business->businessAddress->country) }}";
+    var selectedParent = "{{ old('category', $business->businessProfile->category_id) }}";
+    var selectedChild = "{{ old('child_category',  $business->businessProfile->child_category_id) }}";
+  </script>
 @endsection

@@ -13,19 +13,23 @@ class OfferService
         private readonly NearbyCustomerService $nearbyCustomerService,
     ) {}
 
-    // Nearby Notification
     public function sendNearbyNotifications(int $businessId, ?float $lat, ?float $lng): void
     {
         if (!$lat || !$lng) return;
-
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
         if (empty($nearbyCustomerIds->toArray())) return;
 
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-        $image = asset('storage/notifications/notification.png');
+        $title = 'New Offer Near You!';
+        $body  = 'Offer available for you';
+        $image = url('storage/notifications/notification.png');
         foreach ($fcmTokens as $customerId => $token) {
-            $this->fcmService->sendNotificationToDevice($token, 'New Offer', 'Offer available for you', $image);
-            customerNotification($customerId, 'Offer available for you', 'push', null, true);
+            try {
+                $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+            } catch (\Throwable $e) {
+                \Log::error("Nearby offer FCM failed for customer {$customerId}: " . $e->getMessage());
+            }
+            customerNotification($customerId, $body, 'push', null, true);
         }
     }
 

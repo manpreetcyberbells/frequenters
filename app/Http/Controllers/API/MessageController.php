@@ -58,7 +58,7 @@ class MessageController extends Controller
             ->whereNotNull('fcm_token')
             ->pluck('fcm_token', 'customer_id');
 
-        $image = asset('storage/notifications/notification.png');
+        $image = url('storage/notifications/notification.png');
 
         foreach ($eligibleCustomers as $customerId) {
             $messageData = (object)[
@@ -71,7 +71,7 @@ class MessageController extends Controller
             broadcast(new MessageSent($messageData))->toOthers();
 
             if (isset($fcmTokens[$customerId])) {
-                $this->fcmService->sendNotificationToDevice($fcmTokens[$customerId], $businessName, $messageText, $image);
+                $this->fcmService->sendToCustomerApp($fcmTokens[$customerId], $businessName, $messageText, $image);
             }
 
             customerNotification($customerId, $messageText, 'push', null, true);
@@ -129,16 +129,16 @@ class MessageController extends Controller
             'message_text' => 'required|string|max:500',
         ]);
 
-        $sender     = Auth::user();
-        $receiverId = $validated['receiver_id'];
-        $messageText= $validated['message_text'];
+        $sender      = Auth::user();
+        $receiverId  = $validated['receiver_id'];
+        $messageText = $validated['message_text'];
 
         $message = Message::create([
-            'sender_id'    => $sender->id,
-            'receiver_id'  => $receiverId,
-            'message_text' => $messageText,
+            'sender_id'        => $sender->id,
+            'receiver_id'      => $receiverId,
+            'message_text'     => $messageText,
             'is_group_message' => false,
-            'chat_enabled' => true,
+            'chat_enabled'     => true,
         ]);
 
         broadcast(new MessageSent((object)[
@@ -148,28 +148,37 @@ class MessageController extends Controller
             'timestamp'   => now(),
         ]));
 
-        $image = asset('storage/notifications/notification.png');
-
+        $image = url('storage/notifications/notification.png');
         if ($sender->role === 'customer') {
             $fcmToken = DB::table('business_profiles')->where('business_id', $receiverId)->value('fcm_token');
-        } else {
-            $fcmToken = DB::table('customer_profiles')->where('customer_id', $receiverId)->value('fcm_token');
-        }
+            if (!empty($fcmToken)) {
+                try {
+                    $this->fcmService->sendToBusinessApp($fcmToken, $sender->name, $messageText, $image);
+                } catch (\Throwable $e) {
+                    \Log::error("Chat FCM failed for business {$receiverId}: " . $e->getMessage());
+                }
+            }
 
-        if ($fcmToken) {
-            $this->fcmService->sendNotificationToDevice($fcmToken, $sender->name, $messageText, $image);
-        }
-
-        // Notification in DB for receiver
-        if ($sender->role === 'customer') {
             createNotification($receiverId, $messageText, 'push', null, true);
         } else {
+            $fcmToken = DB::table('customer_profiles')->where('customer_id', $receiverId)->value('fcm_token');
+            if (!empty($fcmToken)) {
+                try {
+                    $this->fcmService->sendToCustomerApp($fcmToken, $sender->name, $messageText, $image);
+                } catch (\Throwable $e) {
+                    \Log::error("Chat FCM failed for customer {$receiverId}: " . $e->getMessage());
+                }
+            }
+
             customerNotification($receiverId, $messageText, 'push', null, true);
         }
 
         $this->markMessageAsReadInternal($message->id, $sender->id);
 
-        return response()->json(['message' => 'Message sent successfully', 'message_id' => $message->id]);
+        return response()->json([
+            'message'    => 'Message sent successfully',
+            'message_id' => $message->id,
+        ]);
     }
 
     // Chat History

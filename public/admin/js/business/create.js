@@ -81,22 +81,47 @@
     });
 
     // Fetch Cities when Zip Code is Entered
-    $('#zip-code').on('blur', function () {
-      var zipCode = $(this).val();
-      $('#city').empty().append('<option value="">Select City</option>');
+    // $('#zip-code').on('blur', function () {
+    //   var zipCode = $(this).val();
+    //   $('#city').empty().append('<option value="">Select City</option>');
 
-        if (zipCode) {
-            $.get(`/api/zip/${zipCode}/cities`, function (data) {
-                $('#city').append(data.map(city =>
-                    `<option value="${city.id}">${city.name}</option>`
-                ));
-            }).fail(function () {
-                //alert('No cities found for this zip code.');
-                $('#zip-code').addClass('is-invalid');
-                $('#zip-code').after('<div class="invalid-feedback">Invalid Zip-code, Failed to fetch cities. Please try again.</div>');
-            });
-        }
+    //     if (zipCode) {
+    //         $.get(`/api/zip/${zipCode}/cities`, function (data) {
+    //             $('#city').append(data.map(city =>
+    //                 `<option value="${city.id}">${city.name}</option>`
+    //             ));
+    //         }).fail(function () {
+    //             //alert('No cities found for this zip code.');
+    //             $('#zip-code').addClass('is-invalid');
+    //             $('#zip-code').after('<div class="invalid-feedback">Invalid Zip-code, Failed to fetch cities. Please try again.</div>');
+    //         });
+    //     }
+    // });
+
+    $('#zip-code').on('blur', function () {
+        var zipCode = $(this).val();
+        fetchCitiesForZip(zipCode);
     });
+
+    function fetchCitiesForZip(zipCode, preselectCityId) {
+        $('#city').empty().append('<option value="">Select City</option>');
+        if (!zipCode) return;
+
+        $.get(`/api/zip/${zipCode}/cities`, function (data) {
+            $('#city').append(data.map(city =>
+                `<option value="${city.id}">${city.name}</option>`
+            ));
+
+            // If we have a city to preselect, select it and trigger details fetch
+            if (preselectCityId) {
+                $('#city').val(preselectCityId).trigger('change');
+            }
+
+        }).fail(function () {
+            $('#zip-code').addClass('is-invalid');
+            $('#zip-code').after('<div class="invalid-feedback">Invalid Zip-code, Failed to fetch cities. Please try again.</div>');
+        });
+    }
 
     // Fetch State, Latitude, and Longitude when City is Selected
     $('#city').on('change', function () {
@@ -112,5 +137,33 @@
             });
         }
     });
+
+    // Restore zip → cities → city details on validation error
+    if (typeof selectedZip !== 'undefined' && selectedZip !== '') {
+        $('#zip-code').val(selectedZip);
+        fetchCitiesForZip(selectedZip, selectedCity);
+    }
+
+    // Restore state, country, lat, lng
+    if (typeof selectedState !== 'undefined' && selectedState !== '') {
+        $('#state').val(selectedState);
+        $('#country').val(selectedCountry);
+    }
+
+    // Restore parent category, then load and select child
+    if (typeof selectedParent !== 'undefined' && selectedParent !== '') {
+        $('#parent-category').val(selectedParent);
+
+        // Re-fetch children and preselect the old child
+        $.get(`/api/categories/${selectedParent}/children`, function (data) {
+            $('#child-category').empty().append('<option value="">Select Child Category</option>');
+            $('#child-category').append(data.map(category =>
+                `<option value="${category.id}">${category.name}</option>`
+            ));
+            if (selectedChild) {
+                $('#child-category').val(selectedChild);
+            }
+        });
+    }
 
   });

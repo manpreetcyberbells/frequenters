@@ -87,7 +87,7 @@
                             class="form-control"
                             id="name"
                             name="name"
-                            value="{{ $customer->name }}"
+                            value="{{ old('name', $customer->name) }}"
                             required
                             placeholder="Enter customer name"
                           />
@@ -104,7 +104,7 @@
                               class="form-control"
                               id="validationCustomUsername"
                               aria-describedby="email"
-                              value="{{ $customer->email }}"
+                              value="{{ old('email', $customer->email) }}"
                               required
                               placeholder="Enter valid email address"
                             />
@@ -138,9 +138,8 @@
                                 class="form-control" 
                                 id="mobileNumber" 
                                 name="mobile" 
-                                pattern="^\d{10,15}$" 
-                                placeholder="Enter your mobile number"
-                                value="{{ $customer->phone }}"
+                                pattern="^\d{10,15}$"
+                                value="{{ old('mobile', $customer->phone) }}"
                                 required 
                                 placeholder="Enter valid mobile number"
                             />
@@ -154,7 +153,7 @@
                                 class="form-control" 
                                 id="birthday" 
                                 name="birthday"
-                                value="{{ isset($customer) && optional($customer->customerProfile)->birthday ? \Carbon\Carbon::parse($customer->customerProfile->birthday)->format('Y-m-d') : '' }}"
+                                value="{{ old('birthday', optional($customer->customerProfile)->birthday ? \Carbon\Carbon::parse($customer->customerProfile->birthday)->format('Y-m-d') : '') }}"
                                 max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
                         </div>
@@ -166,7 +165,7 @@
                                 class="form-control" 
                                 id="anniversary" 
                                 name="anniversary"
-                                value="{{ isset($customer) && optional($customer->customerProfile)->anniversary ? \Carbon\Carbon::parse($customer->customerProfile->anniversary)->format('Y-m-d') : '' }}"
+                                value="{{ old('anniversary', optional($customer->customerProfile)->anniversary ? \Carbon\Carbon::parse($customer->customerProfile->anniversary)->format('Y-m-d') : '') }}"
                                 max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             />
                         </div>
@@ -177,9 +176,9 @@
                             <label for="gender" class="form-label">Gender</label>
                             <select id="gender" name="gender" class="form-control">
                               <option value="">Select Gender</option>
-                              <option value="male" {{ $customer->gender == 'male' ? 'selected' : '' }}>Male</option>
-                              <option value="female" {{ $customer->gender == 'female' ? 'selected' : '' }}>Female</option>
-                              <option value="other" {{ $customer->gender == 'other' ? 'selected' : '' }}>Other</option>
+                              <option value="male" {{ old('gender', $customer->gender) == 'male' ? 'selected' : '' }}>Male</option>
+                              <option value="female" {{ old('gender', $customer->gender) == 'female' ? 'selected' : '' }}>Female</option>
+                              <option value="other" {{ old('gender', $customer->gender) == 'other' ? 'selected' : '' }}>Other</option>  
                             </select>
                         </div>
 
@@ -187,25 +186,25 @@
                           <label for="status" class="form-label">Status</label>
                           <select id="status" name="status" class="form-control">
                               <option value="">Select State</option>
-                              <option value="active" {{ $customer->status == 'active' ? 'selected' : '' }}>Active</option>
-                              <option value="pending" {{ $customer->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                              <option value="suspended" {{ $customer->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                              <option value="active" {{ old('status', $customer->status) == 'active' ? 'selected' : '' }}>Active</option>
+                              <option value="pending" {{ old('status', $customer->status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                              <option value="suspended" {{ old('status', $customer->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
                           </select>
                         </div>
                         
                         <div class="col-12 form-group">
                             <label for="inputAddress" class="form-label">Address</label>
-                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ $customer->customerAddress->address_line1 }}" required>
+                            <input type="text" name="address1" class="form-control" id="inputAddress" placeholder="1234 Main St" value="{{ old('address1', $customer->customerAddress->address_line1) }}" required>
                         </div>
 
                         <div class="col-12 form-group">
                             <label for="inputAddress2" class="form-label">Address 2</label>
-                            <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ $customer->customerAddress->address_line2 }}">
+                            <input type="text" name="address2" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor" value="{{ old('address2', $customer->customerAddress->address_line2) }}">
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="zip-code" class="form-label">Zip</label>
-                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ $customer->customerAddress->zip_code }}" required>
+                          <input type="text" id="zip-code" name="zip_code" class="form-control" placeholder="Enter Zip Code" value="{{ old('zip_code', $customer->customerAddress->zip_code) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
@@ -217,22 +216,22 @@
 
                         <div class="col-md-3 form-group">
                           <label for="state" class="form-label">State</label>
-                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ $customer->customerAddress->state }}" required>
+                          <input type="text" id="state" name="state" class="form-control" placeholder="State" readonly value="{{ old('state', $customer->customerAddress->state) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="country" class="form-label">Country</label>
-                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ $customer->customerAddress->country }}" required>
+                          <input type="text" id="country" name="country" class="form-control" placeholder="Country" readonly value="{{ old('country', $customer->customerAddress->country) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="latitude" class="form-label">Latitude</label>
-                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ $customer->customerAddress->latitude }}" required>
+                          <input type="text" id="latitude" name="latitude" class="form-control" placeholder="Latitude" readonly value="{{ old('latitude', $customer->customerAddress->latitude) }}" required>
                         </div>
 
                         <div class="col-md-3 form-group">
                           <label for="longitude" class="form-label">Longitude</label>
-                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ $customer->customerAddress->longitude }}" required>
+                          <input type="text" id="longitude" name="longitude" class="form-control" placeholder="Longitude" readonly value="{{ old('longitude', $customer->customerAddress->longitude) }}" required>
                         </div>
 
                         <!--end::Col-->
@@ -287,8 +286,9 @@
   </div>
   <!-- /.content-wrapper -->
     <script>
-      var selectedState = @json($customer->customerAddress->state);
-      var selectedCity = @json($customer->customerAddress->city);
-      var selectedCountry = @json($customer->customerAddress->country);
+      var selectedState = "{{ old('state', $customer->customerAddress->state) }}";
+      var selectedCity = "{{ old('city', $customer->customerAddress->city) }}";
+      var selectedCountry = "{{ old('country', $customer->customerAddress->country) }}";
+      var selectedZip = "{{ old('zip_code', $customer->customerAddress->zip_code) }}";
     </script>
 @endsection

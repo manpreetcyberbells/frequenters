@@ -226,11 +226,11 @@ class ContestController extends Controller
 
             $fcmToken = DB::table('business_profiles')->where('business_id', $contest->business_id)->value('fcm_token');
             if ($fcmToken) {
-                $this->fcmService->sendNotificationToDevice(
+                $this->fcmService->sendToBusinessApp(
                     $fcmToken,
                     'Your Question Got a Hit!',
                     'Someone just answered your contest question.',
-                    asset('storage/notifications/notification.png')
+                    url('storage/notifications/notification.png')
                 );
             }
 
@@ -431,11 +431,11 @@ class ContestController extends Controller
         if (empty($nearbyIds)) return;
         $tokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
 
-        $image = asset('storage/notifications/notification.png');
+        $image = url('storage/notifications/notification.png');
         $body  = "Jump in, earn points. It's local, it's live, and it's all yours";
 
         foreach ($tokens as $customerId => $token) {
-            $this->fcmService->sendNotificationToDevice($token, 'A Contest Just Landed Nearby!', $body, $image);
+            $this->fcmService->sendToCustomerApp($token, 'A Contest Just Landed Nearby!', $body, $image);
             customerNotification($customerId, $body, 'push', null, true);
         }
     }

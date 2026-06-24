@@ -115,35 +115,51 @@ class RewardService
     {
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
         if (empty($nearbyCustomerIds->toArray())) return;
-        // FCM tokens
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-        $image = asset('storage/notifications/notification.png');
+        $title = 'Reward Near You!';
         $body  = 'New reward near you, please redeem it';
+        $image = url('storage/notifications/notification.png');
         foreach ($fcmTokens as $customerId => $token) {
-            $this->fcmService->sendNotificationToDevice($token, 'Reward', $body, $image);
+            try {
+                $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+            } catch (\Throwable $e) {
+                \Log::error("Nearby reward FCM failed for customer {$customerId}: " . $e->getMessage());
+            }
             customerNotification($customerId, $body, 'push', null, true);
         }
     }
 
     private function sendRedemptionNotifications(int $customerId, int $businessUserId): void
     {
-        $image = asset('storage/notifications/notification.png');
+        $image = url('storage/notifications/notification.png');
         $customerInfo = DB::table('customer_profiles')->where('customer_id', $customerId)->first();
         $businessInfo = DB::table('business_profiles')->where('business_id', $businessUserId)->first();
         $customerFcmToken = $customerInfo?->fcm_token;
         $businessFcmToken = $businessInfo?->fcm_token;
-
-        if ($customerFcmToken) {
-            $this->fcmService->sendNotificationToDevice(
-                $customerFcmToken, 'Reward Claimed', 'Show this at the store to redeem.', $image
-            );
+        if (!empty($customerFcmToken)) {
+            try {
+                $this->fcmService->sendToCustomerApp(
+                    $customerFcmToken,
+                    'Reward Claimed',
+                    'Show this at the store to redeem.',
+                    $image
+                );
+            } catch (\Throwable $e) {
+                \Log::error("Redemption FCM failed for customer {$customerId}: " . $e->getMessage());
+            }
             customerNotification($customerId, 'Reward Claimed', 'push', null, true);
         }
-
-        if ($businessFcmToken) {
-            $this->fcmService->sendNotificationToDevice(
-                $businessFcmToken, 'Reward Redeemed', 'A customer has claimed their reward.', $image
-            );
+        if (!empty($businessFcmToken)) {
+            try {
+                $this->fcmService->sendToBusinessApp(
+                    $businessFcmToken,
+                    'Reward Redeemed',
+                    'A customer has claimed their reward.',
+                    $image
+                );
+            } catch (\Throwable $e) {
+                \Log::error("Redemption FCM failed for business {$businessUserId}: " . $e->getMessage());
+            }
             createNotification($businessUserId, 'Reward Redeemed', 'push', null, true);
         }
     }
