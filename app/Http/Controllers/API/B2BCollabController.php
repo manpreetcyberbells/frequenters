@@ -174,4 +174,5 @@ class B2BCollabController extends Controller
             return response()->json(['message' => 'Something went wrong.'], 500);
         }
     }
+    
 }
