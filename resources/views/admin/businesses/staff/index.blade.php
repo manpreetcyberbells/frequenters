@@ -44,7 +44,7 @@
                               <th>Business</th>
                               <th>Employee Name</th>
                               <th>Employee Email</th>
-                              <th>Employee Phone</th>
+                              <!-- <th>Employee Phone</th> -->
                               <th>Employee Status</th>
                               <th>Employee Role</th>
                               <th>Providers</th>
@@ -58,7 +58,7 @@
                                  <td>{{$staff->parent_business}}</td>
                                  <td> {{$staff->name}} </td>
                                  <td> {{$staff->email}} </td>
-                                 <td> {{$staff->phone}} </td>
+                                 <!-- <td> {{$staff->phone}} </td> -->
                                  <td class="text-center"> <span class="badge @if($staff->status == 'active') badge-success @elseif ($staff->status == 'pending') badge-success @else badge-danger @endif"> {{$staff->status}} </span></td>
                                  <td class="text-center"> <span class="badge @if($staff->role == 'manager') badge-primary @else badge-info @endif">{{$staff->role}} </span></td>
                                  <td class="text-center"> <span class="badge @if($staff->providers == 'email') bg-navy @elseif($staff->providers == 'facebook') badge-primary @elseif($staff->providers == 'google') badge-info @elseif($staff->providers == 'apple') badge-gray @else badge-lime @endif"> {{$staff->providers}} </td>
@@ -77,7 +77,7 @@
                               <th>Business</th>
                               <th>Name</th>
                               <th>Email</th>
-                              <th>Phone</th>
+                              <!-- <th>Phone</th> -->
                               <th>Status</th>
                               <th>Role</th>
                               <th>Providers</th>

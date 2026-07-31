@@ -26,7 +26,7 @@ class AdminStaffController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = \Validator::make($request->all(), [
             'business_id' => ['required', 'string', 'max:255', Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business'))],
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email',
@@ -34,19 +34,24 @@ class AdminStaffController extends Controller
             'role'        => 'required|in:manager,employee',
         ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
         $totalStaff = User::where('parent_business_id', $request->business_id)->whereIn('role', ['manager', 'employee'])->whereNull('deleted_at')->count();
         if ($totalStaff >= 5) {
             return redirect()->back()->with('error', 'You can only add up to 5 staff members.');
         }
 
         User::create([
-            'name'               => $validated['name'],
-            'email'              => $validated['email'],
-            'password'           => Hash::make($validated['password']),
-            'role'               => $validated['role'],
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
             'parent_business_id' => $request->business_id,
-            'providers'          => 'email',
-            'status'             => $request->status,
+            'providers' => 'email',
+            'status' => $request->status,
         ]);
 
         return redirect()->route('staff.index')->with('success', 'Staff created successfully!');
@@ -59,14 +64,19 @@ class AdminStaffController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
+        $validator = \Validator::make($request->all(), [
             'business_id' => ['required', 'string', 'max:255', Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business'))],
-            'name'        => 'required|string|max:255',
-            'email'       => ['required', 'email', Rule::unique('users', 'email')->ignore($id)],
-            'password'    => 'nullable|string|min:8|confirmed', // ✅ Fixed: was commented out
-            'role'        => 'required|in:manager,employee',
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'role' => 'required|in:manager,employee',
         ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
         $user = User::findOrFail($id);
         $user->fill([
             'name'               => $validated['name'],

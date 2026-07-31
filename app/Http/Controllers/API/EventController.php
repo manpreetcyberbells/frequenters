@@ -28,17 +28,28 @@ class EventController extends Controller
     {
         try {
             $perPage = $request->integer('per_page', 10);
-            $events  = Event::where('business_id', Auth::id())
-                ->where('status', 'published')
-                ->paginate($perPage);
-
+            $events  = Event::where('business_id', Auth::id())->where('status', 'published')->paginate($perPage);
+            $eventIds = $events->pluck('id')->toArray();
+            $confirmedCounts = EventReservation::where('status', 'confirmed')->whereIn('event_id', $eventIds)->selectRaw('event_id, COUNT(*) as count')->groupBy('event_id')->pluck('count', 'event_id');
             $transformed = $events->map(fn($e) => [
-                'id'           => $e->id,
-                'business_id'  => $e->business_id,
-                'event_name'   => $e->event_name,
-                'venue_name'   => $e->venue_name,
+                'id' => $e->id,
+                'business_id' => $e->business_id,
+                'event_name' => $e->event_name,
+                'event_description' => $e->event_description,
+                'venue_name' => $e->venue_name,
+                'venue_location'    => $e->venue_location,
+                'capacity' => $e->capacity,
+                'remaining_seats' => max(0, $e->capacity - ($confirmedCounts[$e->id] ?? 0)),
                 'event_banner' => $e->event_banner,
-                'createdAt'    => Carbon::parse($e->created_at)->diffForHumans(),
+                'start_date' => $e->start_date,
+                'end_date' => $e->end_date,
+                'start_time' => $e->start_time,
+                'end_time' => $e->end_time,
+                'status' => $e->status,
+                'created_at' => $e->created_at,
+                'updated_at' => $e->updated_at,
+                'date_time' => Carbon::parse($e->start_date . ' ' . $e->start_time)->format('D, M d • h:i A'),
+                'createdAt' => Carbon::parse($e->created_at)->diffForHumans(),
             ]);
 
             return response()->json([
@@ -57,8 +68,7 @@ class EventController extends Controller
         }
     }
 
-    // ─── Business: Create Event ───────────────────────────────────────────────
-
+    //  Create Event
     public function createBusinessEvent(CreateEventRequest $request)
     {
         if (Auth::user()->role !== 'business') {
@@ -67,10 +77,8 @@ class EventController extends Controller
 
         try {
             $businessId = Auth::id();
-
             $venueParts = explode(',', $request->venue_location);
             $zipCode    = trim(end($venueParts));
-
             $zipData  = Zip::where('zip_code', $zipCode)->first();
             if (!$zipData) {
                 return response()->json(['error' => 'Invalid ZIP code. City not found.'], 422);
@@ -81,26 +89,23 @@ class EventController extends Controller
                 return response()->json(['error' => 'City data not found for the given ZIP code.'], 422);
             }
 
-            $bannerPath = $request->hasFile('event_banner')
-                ? asset('storage/' . $request->file('event_banner')->store('events/banners', 'public'))
-                : null;
-
+            $bannerPath = $request->hasFile('event_banner') ? asset('storage/' . $request->file('event_banner')->store('events/banners', 'public')) : null;
             $event = Event::create([
-                'business_id'       => $businessId,
-                'event_name'        => $request->event_name,
+                'business_id' => $businessId,
+                'event_name' => $request->event_name,
                 'event_description' => $request->event_description,
-                'venue_name'        => $request->venue_name,
-                'venue_location'    => $request->venue_location,
-                'capacity'          => $request->capacity,
-                'event_banner'      => $bannerPath,
-                'start_date'        => $request->start_date,
-                'end_date'          => $request->end_date,
-                'start_time'        => $request->start_time,
-                'end_time'          => $request->end_time,
-                'status'            => $request->status,
-                'target_city_id'    => $zipData->city_id,
-                'latitude'          => $cityData->latitude,
-                'longitude'         => $cityData->longitude,
+                'venue_name' => $request->venue_name,
+                'venue_location' => $request->venue_location,
+                'capacity' => $request->capacity,
+                'event_banner' => $bannerPath,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'status' => $request->status,
+                'target_city_id' => $zipData->city_id,
+                'latitude' => $cityData->latitude,
+                'longitude' => $cityData->longitude,
             ]);
 
             $this->sendNearbyNotifications($event->latitude, $event->longitude);
@@ -113,13 +118,90 @@ class EventController extends Controller
     }
 
     // Customer: Fetch Events
+    // public function getEventsDetail(Request $request)
+    // {
+    //     try {
+    //         $customerId = Auth::id();
+    //         $search = $request->query('search');
+
+    //         $eventsQuery = Event::where('status', 'published')->with('business');
+
+    //         if (!empty($search)) {
+    //             $eventsQuery->where(fn($q) => $q
+    //                 ->where('event_name', 'like', "%$search%")
+    //                 ->orWhere('event_description', 'like', "%$search%")
+    //                 ->orWhere('venue_name', 'like', "%$search%")
+    //                 ->orWhere('venue_location', 'like', "%$search%")
+    //             );
+    //         }
+
+    //         $events = $eventsQuery->orderBy('start_date', 'asc')->paginate(10);
+    //         $eventIds = $events->pluck('id')->toArray();
+
+    //         $confirmedCounts = EventReservation::where('status', 'confirmed')
+    //             ->whereIn('event_id', $eventIds)
+    //             ->selectRaw('event_id, COUNT(*) as count')
+    //             ->groupBy('event_id')
+    //             ->pluck('count', 'event_id');
+
+    //         $joinedEventIds = $customerId
+    //             ? EventReservation::where('customer_id', $customerId)
+    //                 ->where('status', 'confirmed')
+    //                 ->whereIn('event_id', $eventIds)
+    //                 ->pluck('event_id')
+    //                 ->flip()
+    //             : collect();
+
+    //         $events->through(function ($event) use ($confirmedCounts, $joinedEventIds) {
+    //             $confirmed      = $confirmedCounts[$event->id] ?? 0;
+    //             $remainingSeats = max(0, $event->capacity - $confirmed);
+
+    //             return [
+    //                 'id'              => $event->id,
+    //                 'business_id'     => $event->business_id,
+    //                 'event_name'      => $event->event_name,
+    //                 'event_description'=> $event->event_description,
+    //                 'venue_name'      => $event->venue_name,
+    //                 'venue_location'  => $event->venue_location,
+    //                 'capacity'        => $event->capacity,
+    //                 'remaining_seats' => $remainingSeats,
+    //                 'event_banner'    => $event->event_banner,
+    //                 'start_date'      => $event->start_date,
+    //                 'end_date'        => $event->end_date,
+    //                 'start_time'      => $event->start_time,
+    //                 'end_time'        => $event->end_time,
+    //                 'status'          => $event->status,
+    //                 'created_at'      => $event->created_at,
+    //                 'updated_at'      => $event->updated_at,
+    //                 'date_time'       => Carbon::parse($event->start_date . ' ' . $event->start_time)->format('D, M d • h:i A'),
+    //                 'is_joined'       => isset($joinedEventIds[$event->id]),
+    //             ];
+    //         });
+
+    //         return response()->json(['message' => 'Events fetched successfully', 'events' => $events]);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json(['status' => false, 'message' => 'Something went wrong', 'error' => $e->getMessage()], 500);
+    //     }
+    // }
+
     public function getEventsDetail(Request $request)
     {
         try {
             $customerId = Auth::id();
             $search     = $request->query('search');
+            $today      = now()->toDateString();
 
-            $eventsQuery = Event::where('status', 'published')->with('business');
+            $eventsQuery = Event::where('status', 'published')
+                ->where('end_date', '>=', $today) 
+                ->with('business')
+                ->orderByRaw("
+                    CASE 
+                        WHEN start_date = CURDATE() THEN 0
+                        WHEN start_date > CURDATE() THEN 1
+                    END ASC
+                ")
+                ->orderBy('start_date', 'asc');
 
             if (!empty($search)) {
                 $eventsQuery->where(fn($q) => $q
@@ -130,15 +212,9 @@ class EventController extends Controller
                 );
             }
 
-            $events = $eventsQuery->orderBy('start_date', 'asc')->paginate(10);
+            $events = $eventsQuery->paginate(10);
             $eventIds = $events->pluck('id')->toArray();
-
-            $confirmedCounts = EventReservation::where('status', 'confirmed')
-                ->whereIn('event_id', $eventIds)
-                ->selectRaw('event_id, COUNT(*) as count')
-                ->groupBy('event_id')
-                ->pluck('count', 'event_id');
-
+            $confirmedCounts = EventReservation::where('status', 'confirmed')->whereIn('event_id', $eventIds)->selectRaw('event_id, COUNT(*) as count')->groupBy('event_id')->pluck('count', 'event_id');
             $joinedEventIds = $customerId
                 ? EventReservation::where('customer_id', $customerId)
                     ->where('status', 'confirmed')
@@ -152,24 +228,24 @@ class EventController extends Controller
                 $remainingSeats = max(0, $event->capacity - $confirmed);
 
                 return [
-                    'id'              => $event->id,
-                    'business_id'     => $event->business_id,
-                    'event_name'      => $event->event_name,
+                    'id' => $event->id,
+                    'business_id'=> $event->business_id,
+                    'event_name' => $event->event_name,
                     'event_description'=> $event->event_description,
-                    'venue_name'      => $event->venue_name,
-                    'venue_location'  => $event->venue_location,
-                    'capacity'        => $event->capacity,
-                    'remaining_seats' => $remainingSeats,
-                    'event_banner'    => $event->event_banner,
-                    'start_date'      => $event->start_date,
-                    'end_date'        => $event->end_date,
-                    'start_time'      => $event->start_time,
-                    'end_time'        => $event->end_time,
-                    'status'          => $event->status,
-                    'created_at'      => $event->created_at,
-                    'updated_at'      => $event->updated_at,
-                    'date_time'       => Carbon::parse($event->start_date . ' ' . $event->start_time)->format('D, M d • h:i A'),
-                    'is_joined'       => isset($joinedEventIds[$event->id]),
+                    'venue_name' => $event->venue_name,
+                    'venue_location'   => $event->venue_location,
+                    'capacity' => $event->capacity,
+                    'remaining_seats'  => $remainingSeats,
+                    'event_banner' => $event->event_banner,
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'status' => $event->status,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at,
+                    'date_time' => Carbon::parse($event->start_date . ' ' . $event->start_time)->format('D, M d • h:i A'),
+                    'is_joined' => isset($joinedEventIds[$event->id]),
                 ];
             });
 
@@ -235,7 +311,6 @@ class EventController extends Controller
         }
     }
 
-    // Helpers
     private function sendNearbyNotifications(?float $lat, ?float $lng): void
     {
         if (!$lat || !$lng) return;

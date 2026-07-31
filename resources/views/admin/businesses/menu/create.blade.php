@@ -38,8 +38,7 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <!-- <div class="card-header"><div class="card-title">Create Menu</div></div> -->
-                    <form id="menuForm" method="POST" action="{{ route('menus.store') }}" enctype="multipart/form-data" class="needs-validation">
+                    <form id="menuForm" method="POST" action="{{ route('menus.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                     @csrf
                         <div class="card-body">
                              <div class="row g-3">
@@ -61,15 +60,18 @@
                                 <div class="form-group col-md-6">
                                     <label for="status" class="form-label">Business</label>
                                     <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                        <option value="">Select Business</option>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                            <option value="{{ $business->id }}">{{ $business->name }}</option>
+                                            <option value="{{ $business->id }}" {{ old('business_id') == $business->id ? 'selected' : '' }}>
+                                                {{ $business->name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
 
                                 <div class="form-group col-md-6">
                                     <label for="name">Menu Name</label>
-                                    <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name">
+                                    <input type="text" name="name" class="form-control" id="name" value="{{ old('name') }}" placeholder="Enter Name">
                                 </div>
                             </div>
 
@@ -78,33 +80,36 @@
                                     <label for="availability_status" class="form-label">Availability Status</label>
                                     <select id="availability_status" name="availability_status" class="form-control" required>
                                         <option value="">Select Status</option>
-                                        <option value="0">N/A</option>
-                                        <option value="1">Available</option>
+                                        <option value="0" {{ old('availability_status') === '0' ? 'selected' : '' }}>N/A</option>
+                                        <option value="1" {{ old('availability_status') === '1' ? 'selected' : '' }}>Available</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group col-md-6">
                                     <label for="category_id" class="form-label">Category</label>
                                     <select id="category_id" name="category_id" class="form-control" required>
-                                        @foreach($categories as $index => $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        <option value="">Select Category</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
 
                             <div class="row g-3">
-                                
                                 <div class="form-group col-md-6">
                                     <label for="price">Price</label>
-                                    <input type="number" name="price" class="form-control" id="price">
+                                    <input type="number" name="price" class="form-control" value="{{ old('price') }}" id="price">
                                 </div>
                             </div>
 
                             <div class="row g-3">
                                 <div class="col-md-12 form-group">
                                     <label for="description" class="form-label">Description</label>
-                                    <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description..."></textarea>
+                                    <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description...">{{ old('description') }}</textarea>
                                 </div>
                             </div>
 

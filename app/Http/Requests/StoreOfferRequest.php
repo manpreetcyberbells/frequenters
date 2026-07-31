@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -8,22 +7,15 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreOfferRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules() {
+    public function rules(): array
+    {
         return [
-            // 'business_id' => 'required|exists:business_profiles,business_id',
+            'business_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
             'discount_percentage' => 'required|numeric|min:0|max:100',
             'discount_cap' => 'nullable|numeric|min:0',
@@ -34,19 +26,17 @@ class StoreOfferRequest extends FormRequest
             'campaign_start_time' => 'required|date_format:H:i:s',
             'campaign_end_time' => 'nullable|date_format:H:i:s|after:campaign_start_time',
             'applicable_days' => 'required|in:Entire Week,Mon-Thu,Fri-Sun',
-            'terms_and_conditions' => 'nullable|string',
+            'terms_and_conditions'=> 'nullable|string',
             'description' => 'nullable|string',
             'min_order_value' => 'required|numeric|min:0',
-            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ];
     }
 
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response()->json([
-            'message' => 'Validation failed',
-            'errors' => $validator->errors(),
-        ], 422));
+        throw new HttpResponseException(
+            redirect()->back()->withErrors($validator)->withInput()
+        );
     }
-    
 }

@@ -109,7 +109,8 @@ class OfferController extends Controller
             $this->offerService->sendNearbyNotifications(
                 $businessId,
                 $address?->latitude,
-                $address?->longitude
+                $address?->longitude,
+                $offer
             );
 
             return response()->json([
@@ -130,10 +131,25 @@ class OfferController extends Controller
     public function getOffersDetail(Request $request)
     {
         try {
-            $offers = Offer::where('is_active', true)->orderByDesc('discount_percentage')->paginate(10)
-                ->through(fn($offer) => array_merge($offer->toArray(), [
-                    'validity_status' => $offer->validity_status,
-                ]));
+            $today = now()->toDateString();
+            $offers = Offer::where('is_active', true)
+                ->where('campaign_end_date', '>=', $today)
+                ->orderByRaw("
+                    CASE 
+                        WHEN campaign_start_date = CURDATE() THEN 0
+                        WHEN campaign_start_date > CURDATE() THEN 1
+                    END ASC
+                ")
+                ->orderByDesc('campaign_start_date')
+                ->paginate(10)
+                ->through(function ($offer) {
+                    $end   = \Carbon\Carbon::parse($offer->campaign_end_date);
+                    $today = now()->toDateString();
+                    $validityStatus = ($offer->campaign_start_date === $today && $offer->campaign_end_date === $today) ? 'Valid Today Only' : 'Valid until ' . $end->format('d M y');
+                    return array_merge($offer->toArray(), [
+                        'validity_status' => $validityStatus,
+                    ]);
+                });
 
             return response()->json(['status' => true, 'offers' => $offers]);
 

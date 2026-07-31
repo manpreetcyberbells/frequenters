@@ -111,14 +111,32 @@ class RewardService
     }
 
     // Notifications
-    public function sendNearbyNotifications(int $businessId, float $lat, float $lng): void
+    // public function sendNearbyNotifications(int $businessId, float $lat, float $lng): void
+    // {
+    //     $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
+    //     if (empty($nearbyCustomerIds->toArray())) return;
+    //     $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
+    //     $title = 'Reward Near You!';
+    //     $body  = 'New reward near you, please redeem it';
+    //     $image = url('storage/notifications/notification.png');
+    //     foreach ($fcmTokens as $customerId => $token) {
+    //         try {
+    //             $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+    //         } catch (\Throwable $e) {
+    //             \Log::error("Nearby reward FCM failed for customer {$customerId}: " . $e->getMessage());
+    //         }
+    //         customerNotification($customerId, $body, 'push', null, true);
+    //     }
+    // }
+    public function sendNearbyNotifications(int $businessId, float $lat, float $lng, $reward = null): void
     {
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
         if (empty($nearbyCustomerIds->toArray())) return;
+        $businessName = DB::table('users')->where('id', $businessId)->value('name');
+        $title = $reward ? "New Reward from {$businessName}: {$reward->reward_name}" : 'Reward Near You!';
+        $body  = $reward ? (strlen($reward->description) > 50 ? substr($reward->description, 0, 50) . '...' : ($reward->description ?? 'New reward near you, please redeem it')) : 'New reward near you, please redeem it';
+        $image = isset($reward->banner_image) ? asset('storage/' . $reward->banner_image) : url('storage/notifications/notification.png');
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-        $title = 'Reward Near You!';
-        $body  = 'New reward near you, please redeem it';
-        $image = url('storage/notifications/notification.png');
         foreach ($fcmTokens as $customerId => $token) {
             try {
                 $this->fcmService->sendToCustomerApp($token, $title, $body, $image);

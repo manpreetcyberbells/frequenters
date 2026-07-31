@@ -34,44 +34,46 @@ class AdminServiceController extends Controller
      */
     public function store(Request $request)
     {
-        try{
-            $businessId = $request->business_id;
-            $validated = $request->validate([
-                'business_id' => [
-                'required',
-                'string',
-                'max:255',
-                    Rule::exists('users', 'id')->where(function ($query) {
-                        $query->where('role', 'business');
-                    }),
-                ],
-                'name' => 'required|string',
-                'category_id' => 'required|exists:categories,id',
-                'description' => 'nullable|string',
-                'duration' => 'nullable',
-                'price' => 'nullable|string',
-                'photo' => 'nullable|image',
-                'availability' => 'nullable|array',
-                'availability.*.day' => 'required|string',
-                'availability.*.start_time' => 'required|date_format:H:i',
-                'availability.*.end_time' => 'required|date_format:H:i',
-                'availability.*.is_open' => 'required|boolean',
-            ]);
+        $validator = \Validator::make($request->all(), [
+            'business_id' => [
+                'required', 'string', 'max:255',
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business')),
+            ],
+            'name'                       => 'required|string',
+            'category_id'                => 'required|exists:categories,id',
+            'description'                => 'nullable|string',
+            'duration'                   => 'nullable',
+            'price'                      => 'nullable|string',
+            'photo'                      => 'nullable|image',
+            'availability'               => 'nullable|array',
+            'availability.*.day'         => 'required|string',
+            'availability.*.start_time'  => 'required|date_format:H:i',
+            'availability.*.end_time'    => 'required|date_format:H:i',
+            'availability.*.is_open'     => 'required|boolean',
+        ]);
 
-            if (isset($validated['availability'])) {
-                unset($validated['availability']);
-            }
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
+        $validated  = $validator->validated();
+        $businessId = $request->business_id;
+        try {
             $serviceImage = '';
             if ($request->hasFile('photo')) {
                 $serviceImage = $request->file('photo')->store('services', 'public');
             }
-            
-            $validated['business_id'] = $businessId;
-            $validated['photo'] = $serviceImage ? asset('storage/' . $serviceImage) : null;
-            $service = Service::create($validated);
 
-            // Availability schedules
+            $service = Service::create([
+                'business_id' => $businessId,
+                'name'        => $validated['name'],
+                'category_id' => $validated['category_id'],
+                'description' => $validated['description'] ?? null,
+                'duration'    => $validated['duration']    ?? null,
+                'price'       => $validated['price']       ?? null,
+                'photo'       => $serviceImage ? asset('storage/' . $serviceImage) : null,
+            ]);
+
             if (!empty($request->availability)) {
                 foreach ($request->availability as $slot) {
                     $slot['service_id'] = $service->id;
@@ -80,8 +82,9 @@ class AdminServiceController extends Controller
             }
 
             return redirect()->route('services.index')->with('success', 'Service created successfully!');
+
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating Menu');
+            return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating Service');
         }
     }
 
@@ -109,58 +112,55 @@ class AdminServiceController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $validator = \Validator::make($request->all(), [
+            'business_id' => [
+                'required', 'string', 'max:255',
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business')),
+            ],
+            'name'                       => 'required|string',
+            'category_id'                => 'required|exists:categories,id',
+            'description'                => 'nullable|string',
+            'duration'                   => 'nullable',
+            'price'                      => 'nullable|string',
+            'photo'                      => 'nullable|image',
+            'availability'               => 'nullable|array',
+            'availability.*.day'         => 'required|string',
+            'availability.*.start_time'  => 'required',
+            'availability.*.end_time'    => 'required',
+            'availability.*.is_open'     => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated  = $validator->validated();
+        $businessId = $request->business_id;
+        
         try {
             $service = Service::findOrFail($id);
-            $businessId = $request->business_id;
 
-            $validated = $request->validate([
-                'business_id' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    Rule::exists('users', 'id')->where(function ($query) {
-                        $query->where('role', 'business');
-                    }),
-                ],
-                'name' => 'required|string',
-                'category_id' => 'required|exists:categories,id',
-                'description' => 'nullable|string',
-                'duration' => 'nullable',
-                'price' => 'nullable|string',
-                'photo' => 'nullable|image',
-                'availability' => 'nullable|array',
-                'availability.*.day' => 'required|string',
-                'availability.*.start_time' => 'required',
-                'availability.*.end_time' => 'required',
-                'availability.*.is_open' => 'required|boolean',
-            ]);
-
-            if (isset($validated['availability'])) {
-                unset($validated['availability']);
-            }
-
-            // Handle photo update
+            $photoUrl = $service->photo; // keep existing by default
             if ($request->hasFile('photo')) {
-                // Optional: delete old image
                 if ($service->photo && file_exists(public_path('storage/' . str_replace(asset('storage/'), '', $service->photo)))) {
                     @unlink(public_path('storage/' . str_replace(asset('storage/'), '', $service->photo)));
                 }
-
                 $serviceImage = $request->file('photo')->store('services', 'public');
-                $validated['photo'] = asset('storage/' . $serviceImage);
+                $photoUrl     = asset('storage/' . $serviceImage);
             }
 
-            $validated['business_id'] = $businessId;
+            $service->update([
+                'business_id' => $businessId,
+                'name'        => $validated['name'],
+                'category_id' => $validated['category_id'],
+                'description' => $validated['description'] ?? null,
+                'duration'    => $validated['duration']    ?? null,
+                'price'       => $validated['price']       ?? null,
+                'photo'       => $photoUrl,
+            ]);
 
-            // Update the service
-            $service->update($validated);
-
-            // Update availability
             if (!empty($request->availability)) {
-                // Delete existing schedule
                 $service->schedule()->delete();
-
-                // Recreate schedule
                 foreach ($request->availability as $slot) {
                     $slot['service_id'] = $service->id;
                     ServiceAvailabilitySchedule::create($slot);
@@ -168,6 +168,7 @@ class AdminServiceController extends Controller
             }
 
             return redirect()->route('services.index')->with('success', 'Service updated successfully!');
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage() ?? 'Error updating Service');
         }

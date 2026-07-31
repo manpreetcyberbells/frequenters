@@ -27,18 +27,22 @@ class AdminRewardController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validator = \Validator::make($request->all(), [
             'business_id'      => 'required|exists:users,id',
             'reward_name'      => 'required|string|max:255',
             'points_required'  => 'required|integer|min:1',
             'valid_from'       => 'nullable|date',
             'valid_until'      => 'nullable|date|after_or_equal:valid_from',
             'customer_tiers'   => 'nullable|array',
-            // 'customer_tiers.*' => 'in:new,regular,frequenter',
             'customer_tiers.*' => 'in:new,regular,daily',
         ]);
 
-        $businessId = $validated['business_id'];
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated   = $validator->validated();
+        $businessId  = $validated['business_id'];
 
         try {
             $reward = Reward::create([
@@ -94,14 +98,19 @@ class AdminRewardController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $validated = $request->validate([
-            'business_id'      => 'required|exists:users,id',
-            'reward_name'      => 'required|string|max:255',
-            'points_required'  => 'required|integer|min:1',
-            'valid_from'       => 'nullable|date',
-            'valid_until'      => 'nullable|date|after_or_equal:valid_from',
+        $validator = \Validator::make($request->all(), [
+            'business_id'     => 'required|exists:users,id',
+            'reward_name'     => 'required|string|max:255',
+            'points_required' => 'required|integer|min:1',
+            'valid_from'      => 'nullable|date',
+            'valid_until'     => 'nullable|date|after_or_equal:valid_from',
         ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
         try {
             Reward::findOrFail($id)->update($validated);
             return redirect()->route('rewards.index')->with('success', 'Reward updated successfully.');

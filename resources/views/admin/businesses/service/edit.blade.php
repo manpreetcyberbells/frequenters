@@ -39,12 +39,11 @@
                 @include('admin.layouts.notifications')
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                        <!-- <div class="card-header"><div class="card-title">Create Service</div></div> -->
-                        <form id="serviceForm" method="POST" action="{{ route('services.update', $service->id) }}" enctype="multipart/form-data" class="needs-validation">
+                        <form id="serviceForm" method="POST" action="{{ route('services.update', $service->id) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                             @csrf
                             @method('PUT')
                             <div class="card-body">
-                                 <div class="row g-3">
+                                <div class="row g-3">
                                     <!-- images upload -->
                                     <div class="col-md-4">
                                         <img src="{{$service->photo}}" alt="" class="mt-3 img-fluid contestImage border border-dark rounded">
@@ -65,20 +64,23 @@
                                     <div class="form-group col-md-4">
                                         <label for="business_id" class="form-label">Business</label>
                                         <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                            <option value="">Select Business</option>
                                             @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                                <option value="{{ $business->id }}" {{ $service->business_id == $business->id ? 'selected' : '' }}>{{ $business->name }}</option>
+                                                <option value="{{ $business->id }}" {{ old('business_id', $service->business_id) == $business->id ? 'selected' : '' }}>
+                                                    {{ $business->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
 
                                     <div class="form-group col-md-4">
                                         <label for="name">Service Name</label>
-                                        <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name" value="{{ $service->name }}" required>
+                                        <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name" value="{{ old('name', $service->name) }}" required>
                                     </div>
 
-                                     <div class="form-group col-md-4">
+                                    <div class="form-group col-md-4">
                                         <label for="price">Price</label>
-                                        <input type="number" name="price" class="form-control" id="price" min="1" max="99999" value="{{ $service->price }}" required>
+                                        <input type="number" name="price" class="form-control" id="price" min="1" max="99999" value="{{ old('price', $service->price) }}" required>
                                     </div>
 
                                 </div>
@@ -89,14 +91,16 @@
                                         <select id="category_id" name="category_id" class="form-control select2" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories as $category)
-                                                <option value="{{ $category->id }}" {{ $service->category_id == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                                <option value="{{ $category->id }}" {{ old('category_id', $service->category_id) == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
 
                                     <div class="form-group col-md-4">
                                         <label for="duration">Duration (HH:MM:SS)</label>
-                                        <input type="time" step="1" name="duration" class="form-control" id="duration" value="{{ $service->duration }}" required>
+                                        <input type="time" step="1" name="duration" class="form-control" id="duration" value="{{ old('duration', $service->duration) }}" required>
                                     </div>
 
                                 </div>
@@ -106,7 +110,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-12 form-group">
                                         <label for="description" class="form-label">Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description...">{{ $service->description }}</textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description...">{{ old('description', $service->description) }}</textarea>
                                     </div>
                                 </div>
 
@@ -125,22 +129,19 @@
                                             <label>{{ $day }}</label>
                                             <input type="hidden" name="availability[{{ $index }}][day]" value="{{ $day }}">
                                             <div class="form-check form-switch mt-2">
-                                                <input class="form-check-input" type="checkbox" name="availability[{{ $index }}][is_open]" value="1"
-                                                    {{ old("availability.$index.is_open", $dayData?->is_open) ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="checkbox" name="availability[{{ $index }}][is_open]" value="1" {{ old("availability.$index.is_open", $dayData?->is_open) ? 'checked' : '' }}>
                                                 <label class="form-check-label">Open</label>
                                             </div>
                                         </div>
 
                                         <div class="form-group col-md-5">
                                             <label>Start Time</label>
-                                            <input type="time" name="availability[{{ $index }}][start_time]" class="form-control"
-                                                value="{{ old("availability.$index.start_time", $dayData?->start_time) }}">
+                                            <input type="time" name="availability[{{ $index }}][start_time]" class="form-control" value="{{ old("availability.$index.start_time", $dayData?->start_time) }}">
                                         </div>
 
                                         <div class="form-group col-md-5">
                                             <label>End Time</label>
-                                            <input type="time" name="availability[{{ $index }}][end_time]" class="form-control"
-                                                value="{{ old("availability.$index.end_time", $dayData?->end_time) }}">
+                                            <input type="time" name="availability[{{ $index }}][end_time]" class="form-control" value="{{ old("availability.$index.end_time", $dayData?->end_time) }}">
                                         </div>
                                     </div>
                                 @endforeach

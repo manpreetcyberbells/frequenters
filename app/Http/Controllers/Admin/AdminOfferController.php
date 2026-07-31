@@ -26,7 +26,8 @@ class AdminOfferController extends Controller
 
     public function store(StoreOfferRequest $request)
     {
-        try {
+        // echo"<pre>"; print_r($request->all());   die;
+        // try {
             $businessId = $request->business_id;
             $bannerPath = $request->hasFile('banner') ? url('storage/' . $request->file('banner')->store('offers/banners', 'public')) : null;
             Offer::create(array_merge($request->validated(), ['banner_image' => $bannerPath]));
@@ -50,9 +51,9 @@ class AdminOfferController extends Controller
                 }
             }
 
-            return redirect()->route('admin.businesses.offer.index')->with('success', 'Offer created successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating offer');
-        }
+            return redirect()->route('admin.business.offer.index')->with('success', 'Offer created successfully!');
+        // } catch (\Exception $e) {
+        //     return redirect()->back()->with('error', $e->getMessage() ?? 'Error creating offer');
+        // }
     }
 }

@@ -46,8 +46,9 @@
                     <!-- <div class="card-header"><div class="card-title">Create Event</div></div> -->
                     <!--end::Header-->
                     <!--begin::Form-->
-                    <form id="eventForm" method="POST" action="{{ route('events.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <form id="eventForm" method="POST" action="{{ route('events.update', $event->id) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                     @csrf    
+                    @method('PUT')
                     <!--begin::Body-->
                         <div class="card-body">
                             <div class="row g-3 mb-3">
@@ -71,23 +72,26 @@
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Business</label>
                                 <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                    <option value="">Select Business</option>
                                     @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                        <option value="{{ $business->id }}">{{ $business->name }}</option>
+                                        <option value="{{ $business->id }}" {{ old('business_id', $event->business_id) == $business->id ? 'selected' : '' }}>
+                                            {{ $business->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="event_name" class="form-label">Event Name</label>
-                                <input type="text" class="form-control" id="event_name" name="event_name" required />
+                                <input type="text" class="form-control" id="event_name" name="event_name" value="{{ old('event_name', $event->event_name) }}" required />
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Status</label>
                                 <select id="status" name="status" class="form-control" required>
-                                <option value="">Select Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="published">Published</option>
+                                    <option value="">Select Status</option>
+                                    <option value="draft" {{ old('status', $event->status) == 'draft' ? 'selected' : '' }}>Draft</option>
+                                    <option value="published" {{ old('status', $event->status) == 'published' ? 'selected' : '' }}>Published</option>
                                 </select>
                             </div>
                         </div>
@@ -95,44 +99,44 @@
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date', $event->start_date) }}" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="start_time" class="form-label">Start Time</label>
-                                <input type="time" class="form-control" id="start_time" name="start_time" required placeholder="10:00:00"/>
+                                <input type="time" class="form-control" id="start_time" name="start_time" value="{{ old('start_time', \Carbon\Carbon::parse($event->start_time)->format('H:i')) }}" required placeholder="10:00:00"/>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date', $event->end_date) }}" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="end_time" class="form-label">End Time</label>
-                                <input type="time" class="form-control" id="end_time" name="end_time" required placeholder="20:00:00"/>
+                                <input type="time" class="form-control" id="end_time" name="end_time" value="{{ old('end_time', \Carbon\Carbon::parse($event->end_time)->format('H:i')) }}" required placeholder="20:00:00"/>
                             </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-2 form-group">
                                 <label for="capacity" class="form-label">Capacity</label>
-                                <input type="number" class="form-control" id="capacity" name="capacity" required min="1" max="99999" />
+                                <input type="number" class="form-control" id="capacity" name="capacity" value="{{ old('capacity', $event->capacity) }}" required min="1" max="99999" />
                             </div>
                             <div class="col-md-4 form-group">
                                 <label for="venue_name" class="form-label">Venue Name</label>
-                                <input type="text" class="form-control" id="venue_name" name="venue_name" required />
+                                <input type="text" class="form-control" id="venue_name" name="venue_name" value="{{ old('venue_name', $event->venue_name) }}" required />
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="venue_location" class="form-label">Venue Location</label>
-                                <input type="text" class="form-control" id="venue_location" name="venue_location" required />
+                                <input type="text" class="form-control" id="venue_location" name="venue_location" value="{{ old('venue_location', $event->venue_location) }}" required />
                             </div>
                         </div>
                         
                         <div class="row g-3">
                             <div class="col-md-12 form-group">
                                 <label for="event_description" class="form-label">Description</label>
-                                <textarea class="form-control" id="event_description" name="event_description" rows="4" placeholder="Enter Event description..."></textarea>
+                                <textarea class="form-control" id="event_description" name="event_description" rows="4" placeholder="Enter Event description...">{{ old('event_description', $event->event_description) }}</textarea>
                             </div>
                         </div>
 
@@ -142,7 +146,7 @@
                         <!--end::Body-->
                         <!--begin::Footer-->
                         <div class="card-footer">
-                            <button class="btn btn-info" type="submit">Create Event</button>
+                            <button class="btn btn-info" type="submit">Update Event</button>
                         </div>
                         <!--end::Footer-->
                     </form>

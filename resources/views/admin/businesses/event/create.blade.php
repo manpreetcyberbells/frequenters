@@ -51,13 +51,17 @@
                     <!--begin::Body-->
                         <div class="card-body">
                             <div class="row g-3">
-                                 <div class="col-md-3 mb-3">
-                                <label for="event_banner" class="form-label">Upload Banner</label>
-                                <div class="custom-file">
-                                    <input type="file" class="custom-file-input" id="event_banner" name="event_banner" accept="image/*">
-                                    <label class="custom-file-label" for="customFile">Upload Banner</label>
+                                <div class="col-md-3 mb-3">
+                                    <!-- images upload -->
+                                    <div class="col-md-4 p-0">
+                                        <div id="image-preview" class="mt-3"></div>
+                                    </div>
+                                    <label for="event_banner" class="form-label">Upload Banner</label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="event_banner" name="event_banner" accept="image/*">
+                                        <label class="custom-file-label" for="customFile">Upload Banner</label>
+                                    </div>
                                 </div>
-                            </div>
                             </div>
 
                         <div class="row g-3">
@@ -66,23 +70,26 @@
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Business</label>
                                 <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                    <option value="">Select Business</option>
                                     @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                        <option value="{{ $business->id }}">{{ $business->name }}</option>
+                                        <option value="{{ $business->id }}" {{ old('business_id') == $business->id ? 'selected' : '' }}>
+                                            {{ $business->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="event_name" class="form-label">Event Name</label>
-                                <input type="text" class="form-control" id="event_name" name="event_name" required />
+                                <input type="text" class="form-control" id="event_name" name="event_name" value="{{ old('event_name') }}" required />
                             </div>
 
                             <div class="col-md-3 form-group">
                                 <label for="status" class="form-label">Status</label>
                                 <select id="status" name="status" class="form-control" required>
-                                <option value="">Select Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="published">Published</option>
+                                    <option value="">Select Status</option>
+                                    <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                    <option value="published" {{ old('status') == 'published' ? 'selected' : '' }}>Published</option>
                                 </select>
                             </div>
                         </div>
@@ -90,7 +97,7 @@
                         <div class="row g-3">
                             <div class="col-md-3 form-group">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ old('start_date') }}" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">
@@ -100,7 +107,7 @@
 
                             <div class="col-md-3 form-group">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ old('end_date') }}" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" />
                             </div>
 
                             <div class="col-md-3 form-group">
@@ -112,22 +119,22 @@
                         <div class="row g-3">
                             <div class="col-md-2 form-group">
                                 <label for="capacity" class="form-label">Capacity</label>
-                                <input type="number" class="form-control" id="capacity" name="capacity" required min="1" max="99999" />
+                                <input type="number" class="form-control" id="capacity" name="capacity" value="{{ old('capacity') }}" required min="1" max="99999" />
                             </div>
                             <div class="col-md-4 form-group">
                                 <label for="venue_name" class="form-label">Venue Name</label>
-                                <input type="text" class="form-control" id="venue_name" name="venue_name" required />
+                                <input type="text" class="form-control" id="venue_name" name="venue_name" value="{{ old('venue_name') }}" required />
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="venue_location" class="form-label">Venue Location</label>
-                                <input type="text" class="form-control" id="venue_location" name="venue_location" required />
+                                <input type="text" class="form-control" id="venue_location" name="venue_location" value="{{ old('venue_location') }}" required />
                             </div>
                         </div>
                         
                         <div class="row g-3">
                             <div class="col-md-12 form-group">
                                 <label for="event_description" class="form-label">Description</label>
-                                <textarea class="form-control" id="event_description" name="event_description" rows="4" placeholder="Enter Event description..."></textarea>
+                                <textarea class="form-control" id="event_description" name="event_description" rows="4" placeholder="Enter Event description...">{{ old('event_description') }}</textarea>
                             </div>
                         </div>
 
@@ -181,4 +188,26 @@
     <!-- /.content -->
 </div>
 <!-- /.content-wrapper -->
+<script>
+    document.querySelectorAll('#event_banner').forEach(function(element) {
+        element.addEventListener('change', function(event) {
+            console.log(event.target.id + ' changed!');
+            let previewContainer = document.getElementById('image-preview');
+            previewContainer.innerHTML = ""; // Clear previous images
+            Array.from(event.target.files).forEach(file => {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let imgElement = document.createElement("img");
+                    imgElement.className = 'preview-image border border-dark rounded';
+                    imgElement.src = e.target.result;
+                    imgElement.style.width = "100px";
+                    imgElement.style.height = "100px";
+                    imgElement.style.margin = "5px";
+                    previewContainer.appendChild(imgElement);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    });
+</script>
 @endsection

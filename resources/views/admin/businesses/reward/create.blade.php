@@ -37,37 +37,39 @@
                 @endif
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                    <!-- <div class="card-header"><div class="card-title">Create Reward</div></div> -->
-                    <form id="rewardForm" method="POST" action="{{ route('rewards.store') }}" enctype="multipart/form-data" class="needs-validation">
+                    <form id="rewardForm" method="POST" action="{{ route('rewards.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                     @csrf
                         <div class="card-body">
                             <div class="row g-4">
                                 <div class="form-group col-md-4">
                                     <label for="business" class="form-label">Business</label>
                                     <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                        <option value="">Select Business</option>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                            <option value="{{ $business->id }}">{{ $business->name }}</option>
+                                            <option value="{{ $business->id }}" {{ old('business_id') == $business->id ? 'selected' : '' }}>
+                                                {{ $business->name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="form-group col-md-4">
                                     <label for="reward_name">Name</label>
-                                    <input type="text" name="reward_name" class="form-control" id="reward_name" placeholder="Free Coffee">
+                                    <input type="text" name="reward_name" class="form-control" id="reward_name" value="{{ old('reward_name') }}" placeholder="Free Coffee">
                                 </div>
                                 <div class="form-group col-md-4">
                                     <label for="points_required">Points Required</label>
-                                    <input type="number" name="points_required" class="form-control" id="points_required" placeholder="50" min="1" max="999">
+                                    <input type="number" name="points_required" class="form-control" id="points_required" value="{{ old('points_required') }}" placeholder="50" min="1" max="999">
                                 </div>
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-4 form-group">
                                     <label for="valid_from" class="form-label">Valid From</label>
-                                    <input type="date" class="form-control" id="valid_from" name="valid_from" required placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
+                                    <input type="date" class="form-control" id="valid_from" name="valid_from" required value="{{ old('valid_from') }}" placeholder="2025-04-24" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
                                 </div>
 
                                 <div class="col-md-4 form-group">
                                     <label for="valid_until" class="form-label">Valid Until</label>
-                                    <input type="date" class="form-control" id="valid_until" name="valid_until" required placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
+                                    <input type="date" class="form-control" id="valid_until" name="valid_until" required value="{{ old('valid_until') }}" placeholder="2025-04-26" min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"/>
                                 </div>
                             </div>
                         </div>

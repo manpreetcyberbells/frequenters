@@ -39,7 +39,7 @@
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
                     <!-- <div class="card-header"><div class="card-title">Edit Staff member</div></div> -->
-                    <form id="staffForm" method="POST" action="{{ route('staff.update', $staff->id) }}" enctype="multipart/form-data" class="needs-validation">
+                    <form id="staffForm" method="POST" action="{{ route('staff.update', $staff->id) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                     @csrf
                     @method('PUT')
                         <div class="card-body">
@@ -48,16 +48,19 @@
                                     <label for="role" class="form-label">Role</label>
                                     <select id="role" name="role" class="form-control" required>
                                         <option value="">Select Role</option>
-                                        <option value="employee"  {{ $staff->role == 'employee' ? 'selected' : '' }}>Employee</option>
-                                        <option value="manager"  {{ $staff->role == 'manager' ? 'selected' : '' }}>Manager</option>
+                                        <option value="employee" {{ old('role', $staff->role) == 'employee' ? 'selected' : '' }}>Employee</option>
+                                        <option value="manager"  {{ old('role', $staff->role) == 'manager'  ? 'selected' : '' }}>Manager</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group col-md-6">
                                     <label for="business" class="form-label">Business</label>
                                     <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                        <option value="">Select Business</option>
                                         @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                            <option value="{{ $business->id }}" {{ $staff->business_id == $business->business_id ? 'selected' : '' }}>{{ $business->name }}</option>
+                                            <option value="{{ $business->id }}" {{ old('business_id', $staff->parent_business_id) == $business->id ? 'selected' : '' }}>
+                                                {{ $business->name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -66,11 +69,11 @@
                             <div class="row g-3">
                                 <div class="form-group col-md-6">
                                     <label for="name">Name</label>
-                                    <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name" value="{{ $staff->name }}">
+                                    <input type="text" name="name" class="form-control" id="name" placeholder="Enter Name" value="{{ old('name', $staff->name) }}">
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="email">Email address</label>
-                                    <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" value="{{ $staff->email }}">
+                                    <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" value="{{ old('email', $staff->email) }}">
                                 </div>
                             </div>
                             <div class="row g-3">
@@ -88,9 +91,9 @@
                                     <label for="status" class="form-label">Change Status</label>
                                     <select id="status" name="status" class="form-control" required>
                                         <option value="">Select status</option>
-                                        <option value="active" {{ $staff->status == 'active' ? 'selected' : '' }}>Active</option>
-                                        <option value="pending" {{ $staff->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="suspended" {{ $staff->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                        <option value="active"    {{ old('status', $staff->status) == 'active'    ? 'selected' : '' }}>Active</option>
+                                        <option value="pending"   {{ old('status', $staff->status) == 'pending'   ? 'selected' : '' }}>Pending</option>
+                                        <option value="suspended" {{ old('status', $staff->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
                                     </select>
                                 </div>
                             </div>

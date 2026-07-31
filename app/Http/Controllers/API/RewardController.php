@@ -91,7 +91,8 @@ class RewardController extends Controller
                 $this->rewardService->sendNearbyNotifications(
                     $businessId,
                     $address->latitude,
-                    $address->longitude
+                    $address->longitude,
+                    $reward
                 );
             }
 

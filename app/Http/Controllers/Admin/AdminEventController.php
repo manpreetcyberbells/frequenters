@@ -32,23 +32,45 @@ class AdminEventController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        // $request->validate([
+        //     'business_id'       => 'required|exists:business_profiles,business_id',
+        //     'event_name'        => 'required|string|max:255',
+        //     'event_description' => 'nullable|string',
+        //     'venue_name'        => 'required|string|max:255',
+        //     'venue_location'    => 'required|string|max:255',
+        //     'capacity'          => 'required|integer|min:1',
+        //     'start_time'        => 'required|date_format:H:i',
+        //     'end_time'          => 'required|date_format:H:i|after:start_time',
+        //     'start_date'        => 'required|date|after_or_equal:today',
+        //     'end_date'          => 'required|date|after_or_equal:start_date',
+        //     'status'            => 'required|in:draft,published',
+        //     'event_banner'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        // ]);
+
+        // echo"<pre>"; print_r($request->all()); die;
+
+        $validator = \Validator::make($request->all(), [
             'business_id'       => 'required|exists:business_profiles,business_id',
             'event_name'        => 'required|string|max:255',
             'event_description' => 'nullable|string',
             'venue_name'        => 'required|string|max:255',
             'venue_location'    => 'required|string|max:255',
             'capacity'          => 'required|integer|min:1',
-            'start_time'        => 'required|date_format:H:i',
-            'end_time'          => 'required|date_format:H:i|after:start_time',
+            'start_time'        => 'required|date_format:H:i:s',
+            'end_time'          => 'required|date_format:H:i:s|after:start_time',
             'start_date'        => 'required|date|after_or_equal:today',
             'end_date'          => 'required|date|after_or_equal:start_date',
             'status'            => 'required|in:draft,published',
             'event_banner'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         try {
-            $zipCode = trim(end(explode(',', $request->venue_location)));
+            $parts = explode(',', $request->venue_location);
+            $zipCode = trim(end($parts));
             $zipData = Zip::where('zip_code', $zipCode)->first();
             if (!$zipData) return redirect()->back()->with('error', 'Invalid ZIP code.');
 
@@ -66,8 +88,8 @@ class AdminEventController extends Controller
                 'event_banner'      => $bannerPath,
                 'start_date'        => $request->start_date,
                 'end_date'          => $request->end_date,
-                'start_time'        => $request->start_time . ':00',
-                'end_time'          => $request->end_time . ':00',
+                'start_time'        => $request->start_time,
+                'end_time'          => $request->end_time,
                 'status'            => $request->status,
                 'target_city_id'    => $zipData->city_id,
                 'latitude'          => $cityData->latitude,
@@ -116,16 +138,22 @@ class AdminEventController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'event_name'    => 'required|string|max:255',
-            'venue_name'    => 'required|string|max:255',
-            'venue_location'=> 'required|string|max:255',
-            'capacity'      => 'required|integer|min:1',
-            'start_date'    => 'required|date',
-            'end_date'      => 'required|date|after_or_equal:start_date',
-            'status'        => 'required|in:draft,published',
-            'event_banner'  => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        $validator = \Validator::make($request->all(), [
+            'event_name'        => 'required|string|max:255',
+            'venue_name'        => 'required|string|max:255',
+            'venue_location'    => 'required|string|max:255',
+            'capacity'          => 'required|integer|min:1',
+            'start_date'        => 'required|date',
+            'end_date'          => 'required|date|after_or_equal:start_date',
+            'status'            => 'required|in:draft,published',
+            'event_banner'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         $event = Event::findOrFail($id);
         $data = $request->only(['event_name', 'event_description', 'venue_name', 'venue_location', 'capacity', 'start_date', 'end_date', 'start_time', 'end_time', 'status']);

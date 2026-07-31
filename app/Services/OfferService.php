@@ -13,16 +13,36 @@ class OfferService
         private readonly NearbyCustomerService $nearbyCustomerService,
     ) {}
 
-    public function sendNearbyNotifications(int $businessId, ?float $lat, ?float $lng): void
+    // public function sendNearbyNotifications(int $businessId, ?float $lat, ?float $lng): void
+    // {
+    //     if (!$lat || !$lng) return;
+    //     $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
+    //     if (empty($nearbyCustomerIds->toArray())) return;
+
+    //     $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
+    //     $title = 'Special Offer Near You!';
+    //     $body  = 'Exclusive savings are waiting for you at a nearby store.';
+    //     $image = url('storage/notifications/notification.png');
+    //     foreach ($fcmTokens as $customerId => $token) {
+    //         try {
+    //             $this->fcmService->sendToCustomerApp($token, $title, $body, $image);
+    //         } catch (\Throwable $e) {
+    //             \Log::error("Nearby offer FCM failed for customer {$customerId}: " . $e->getMessage());
+    //         }
+    //         customerNotification($customerId, $body, 'push', null, true);
+    //     }
+    // }
+
+    public function sendNearbyNotifications(int $businessId, ?float $lat, ?float $lng, $offer = null): void
     {
         if (!$lat || !$lng) return;
         $nearbyCustomerIds = $this->nearbyCustomerService->getNearbyCustomerIds($lat, $lng, 10);
         if (empty($nearbyCustomerIds->toArray())) return;
-
+        $businessName = DB::table('users')->where('id', $businessId)->value('name');
+        $title = $offer ? "New Offer from {$businessName}: {$offer->title}" : 'Special Offer Near You!';
+        $body  = $offer ? (strlen($offer->description) > 50 ? substr($offer->description, 0, 50) . '...' : $offer->description) : 'Exclusive savings are waiting for you at a nearby store.';
+        $image = $offer?->banner_image ?? url('storage/notifications/notification.png');
         $fcmTokens = DB::table('customer_profiles')->whereIn('customer_id', $nearbyCustomerIds)->whereNotNull('fcm_token')->pluck('fcm_token', 'customer_id');
-        $title = 'New Offer Near You!';
-        $body  = 'Offer available for you';
-        $image = url('storage/notifications/notification.png');
         foreach ($fcmTokens as $customerId => $token) {
             try {
                 $this->fcmService->sendToCustomerApp($token, $title, $body, $image);

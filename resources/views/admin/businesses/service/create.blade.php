@@ -39,8 +39,7 @@
                 @include('admin.layouts.notifications')
                 <div class="container-fluid">
                     <div class="card card-info card-outline mb-4">
-                        <!-- <div class="card-header"><div class="card-title">Create Service</div></div> -->
-                        <form id="serviceForm" method="POST" action="{{ route('services.store') }}" enctype="multipart/form-data" class="needs-validation">
+                        <form id="serviceForm" method="POST" action="{{ route('services.store') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
                             @csrf
                             <div class="card-body">
                                 <div class="row g-3">
@@ -53,7 +52,7 @@
                                     <div class="form-group col-md-4">
                                         <label for="photo" class="form-label">Upload Images</label>
                                         <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" accept="image/*">
+                                            <input type="file" class="custom-file-input" id="menuPhoto" name="photo" value="{{ old('name') }}" accept="image/*">
                                             <label class="custom-file-label" for="customFile">Upload Images</label>
                                         </div>
                                     </div>
@@ -64,8 +63,11 @@
                                     <div class="form-group col-md-4">
                                         <label for="business_id" class="form-label">Business</label>
                                         <select id="business_id" name="business_id" class="form-control select2bs4" required>
+                                            <option value="">Select Business</option>
                                             @foreach(\App\Models\User::where('role', 'business')->get() as $business)
-                                                <option value="{{ $business->id }}">{{ $business->name }}</option>
+                                                <option value="{{ $business->id }}" {{ old('business_id') == $business->id ? 'selected' : '' }}>
+                                                    {{ $business->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -77,7 +79,7 @@
 
                                      <div class="form-group col-md-4">
                                         <label for="price">Price</label>
-                                        <input type="number" name="price" class="form-control" id="price" min="1" max="99999" required>
+                                        <input type="number" name="price" class="form-control" id="price" value="{{ old('price') }}" min="1" max="99999" required>
                                     </div>
 
                                 </div>
@@ -88,14 +90,16 @@
                                         <select id="category_id" name="category_id" class="form-control" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories as $category)
-                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
 
                                     <div class="form-group col-md-4">
                                         <label for="duration">Duration (HH:MM:SS)</label>
-                                        <input type="time" name="duration" class="form-control" id="duration" required>
+                                        <input type="time" name="duration" class="form-control" id="duration" value="{{ old('duration') }}" required>
                                     </div>
                                 </div>
 
@@ -104,7 +108,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-12 form-group">
                                         <label for="description" class="form-label">Description</label>
-                                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description..."></textarea>
+                                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter menu description...">{{ old('description') }}</textarea>
                                     </div>
                                 </div>
 
@@ -116,27 +120,25 @@
                                 @endphp
 
                                 @foreach($days as $index => $day)
-                                    <div class="row g-3 align-items-end">
-                                        <div class="form-group col-md-2">
-                                            <label>{{ $day }}</label>
-                                            <input type="hidden" name="availability[{{ $index }}][day]" value="{{ $day }}">
-                                            <div class="form-check form-switch mt-2">
-                                                <input class="form-check-input" type="checkbox" name="availability[{{ $index }}][is_open]" value="1" checked>
-                                                <label class="form-check-label">Open</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group col-md-5">
-                                            <label>Start Time</label>
-                                            <input type="time" name="availability[{{ $index }}][start_time]" class="form-control" required>
-                                        </div>
-
-                                        <div class="form-group col-md-5">
-                                            <label>End Time</label>
-                                            <input type="time" name="availability[{{ $index }}][end_time]" class="form-control" required>
+                                <div class="row g-3 align-items-end">
+                                    <div class="form-group col-md-2">
+                                        <label>{{ $day }}</label>
+                                        <input type="hidden" name="availability[{{ $index }}][day]" value="{{ $day }}">
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" name="availability[{{ $index }}][is_open]" value="1" {{ old("availability.$index.is_open", 1) ? 'checked' : '' }}>
+                                            <label class="form-check-label">Open</label>
                                         </div>
                                     </div>
-                                @endforeach
+                                    <div class="form-group col-md-5">
+                                        <label>Start Time</label>
+                                        <input type="time" name="availability[{{ $index }}][start_time]" class="form-control" value="{{ old("availability.$index.start_time") }}" required />
+                                    </div>
+                                    <div class="form-group col-md-5">
+                                        <label>End Time</label>
+                                        <input type="time" name="availability[{{ $index }}][end_time]" class="form-control" value="{{ old("availability.$index.end_time") }}" required />
+                                    </div>
+                                </div>
+                            @endforeach
 
                             </div>
                             <div class="card-footer">

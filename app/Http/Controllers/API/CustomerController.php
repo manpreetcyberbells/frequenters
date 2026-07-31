@@ -68,59 +68,6 @@ class CustomerController extends Controller
     }
 
     // Customer Home (API)
-    public function getHomeBusinessesOLDV1(Request $request)
-    {
-        $customerId = Auth::id();
-        $profile    = Auth::user()->customerProfile;
-        $listType   = $request->input('listType');
-        $categoryId = $request->input('category_id');
-
-        $customerAddress = CustomerAddress::where('customer_id', $customerId)
-            ->where('is_current', '1')
-            ->first()
-            ?? CustomerAddress::where('customer_id', $customerId)->first();
-
-        if (!$customerAddress) {
-            return response()->json(['error' => 'Customer address not found'], 404);
-        }
-
-        $lat = $customerAddress->latitude;
-        $lng = $customerAddress->longitude;
-        // echo"<pre>"; print_r($lat);  echo"<br>";
-        // echo"<pre>"; print_r($lng);  echo"<br>";
-        // die('Hell');
-        $nearby          = $this->businessQuery->nearbyBusinesses($customerId, $lat, $lng, $categoryId);
-        $highestRewards  = $this->businessQuery->highestRewardBusinesses($customerId, $lat, $lng, $categoryId);
-        $frequent        = $this->businessQuery->frequentlyVisited($customerId, $lat, $lng, $categoryId);
-
-        $businessIds = BusinessProfile::pluck('business_id')->toArray();
-        $offers      = Offer::where('is_active', true)->orderByDesc('discount_percentage')->limit(3)->get();
-        $reviews     = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderByDesc('created_at')->get();
-        $addresses   = CustomerAddress::where('customer_id', $customerId)->get();
-
-        $data = [
-            'name'            => Auth::user()->name,
-            'title'           => 'Good Morning Bestie',
-            'subtitle'        => "Yo, you just snagged {$profile->points_balance} exclusive points!",
-            'reward_points'   => $profile->points_balance ?? 0,
-            'frequent'        => $frequent,
-            'highest_rewards' => $highestRewards,
-            'nearby'          => $nearby,
-            'reviews'         => $reviews,
-            'offers'          => $offers,
-            'address'         => $addresses,
-        ];
-
-        if ($listType) {
-            if (!array_key_exists($listType, $data)) {
-                return response()->json(['error' => 'Invalid listType parameter'], 400);
-            }
-            return response()->json([$listType => $data[$listType]]);
-        }
-
-        return response()->json($data);
-    }
-
     public function getHomeBusinesses(Request $request)
     {
         $customerId = Auth::id();
@@ -137,37 +84,29 @@ class CustomerController extends Controller
             $customerAddress = CustomerAddress::where('customer_id', $customerId)->where('is_current', '1')->first() ?? CustomerAddress::where('customer_id', $customerId)->first();
             $lat = $customerAddress->latitude ?? null;
             $lng = $customerAddress->longitude ?? null;
-        } else {
-            CustomerAddress::updateOrCreate(
-                ['customer_id' => $customerId, 'is_current' => '1'],
-                ['latitude' => $lat, 'longitude' => $lng]
-            );
         }
 
         $hasLocation = $lat && $lng;
-
-        // Location-dependent lists
-        $nearby         = $hasLocation ? $this->businessQuery->nearbyBusinesses($customerId, $lat, $lng, $categoryId) : [];
+        $nearby = $hasLocation ? $this->businessQuery->nearbyBusinesses($customerId, $lat, $lng, $categoryId) : [];
         $highestRewards = $hasLocation ? $this->businessQuery->highestRewardBusinesses($customerId, $lat, $lng, $categoryId) : [];
-        $frequent       = $hasLocation ? $this->businessQuery->frequentlyVisited($customerId, $lat, $lng, $categoryId) : [];
+        $frequent = $hasLocation ? $this->businessQuery->frequentlyVisited($customerId, $lat, $lng, $categoryId) : [];
+        $offers = $this->getNearbyOffers($lat, $lng);
 
         $businessIds = BusinessProfile::pluck('business_id')->toArray();
-        $offers      = Offer::where('is_active', true)->orderByDesc('discount_percentage')->limit(3)->get();
-        $reviews     = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderByDesc('created_at')->get();
+        $reviews = Review::whereIn('business_id', $businessIds)->with(['customer:id,name,profile_image'])->orderByDesc('created_at')->get();
         $addresses   = CustomerAddress::where('customer_id', $customerId)->get();
-
         $data = [
-            'name'            => Auth::user()->name,
-            'title'           => 'Good Morning Bestie',
-            'subtitle'        => "Yo, you just snagged {$profile->points_balance} exclusive points!",
-            'reward_points'   => $profile->points_balance ?? 0,
-            'needs_location'  => !$hasLocation,
-            'frequent'        => $frequent,
+            'name' => Auth::user()->name,
+            'title' => 'Good Morning Bestie',
+            'subtitle' => "Yo, you just snagged {$profile->points_balance} exclusive points!",
+            'reward_points' => $profile->points_balance ?? 0,
+            'needs_location' => !$hasLocation,
+            'frequent' => $frequent,
             'highest_rewards' => $highestRewards,
-            'nearby'          => $nearby,
-            'reviews'         => $reviews,
-            'offers'          => $offers,
-            'address'         => $addresses,
+            'nearby' => $nearby,
+            'reviews' => $reviews,
+            'offers' => $offers,
+            'address' => $addresses,
         ];
 
         if ($listType) {
@@ -178,6 +117,47 @@ class CustomerController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /**
+     * Get active offers ordered by distance from customer location.
+     * Falls back to discount_percentage order if no location provided.
+     */
+    private function getNearbyOffers(?float $lat, ?float $lng, int $limit = 5)
+    {
+        $query = Offer::query()
+            ->where('offers.is_active', true)
+            ->join('business_addresses', 'business_addresses.business_id', '=', 'offers.business_id')
+            ->whereNull('business_addresses.deleted_at')
+            ->whereNotNull('business_addresses.latitude')
+            ->whereNotNull('business_addresses.longitude')
+            ->select('offers.*')
+            ->selectRaw("
+                ROUND(
+                    6371 * acos(
+                        cos(radians(?)) * cos(radians(business_addresses.latitude))
+                        * cos(radians(business_addresses.longitude) - radians(?))
+                        + sin(radians(?)) * sin(radians(business_addresses.latitude))
+                    ), 2
+                ) AS distance
+            ", [$lat, $lng, $lat]);
+
+        if ($lat && $lng) {
+            $query->orderByRaw("
+                (
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(business_addresses.latitude))
+                        * cos(radians(business_addresses.longitude) - radians(?))
+                        + sin(radians(?)) * sin(radians(business_addresses.latitude))
+                    )) * 0.5
+                    + (DATEDIFF(NOW(), offers.created_at) * 0.3)
+                ) ASC
+            ", [$lat, $lng, $lat]);
+        } else {
+            $query->orderByDesc('offers.discount_percentage');
+        }
+
+        return $query->limit($limit)->get();
     }
 
     // Web helpers

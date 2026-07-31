@@ -29,24 +29,31 @@ class ContestController extends Controller
     {
         try {
             $perPage  = $request->integer('per_page', 10);
-            $contests = Contest::where('business_id', Auth::id())->paginate($perPage);
+            $contests = Contest::where('business_id', Auth::id())->withCount('participants')->with(['participants.user:id,name,profile_image'])->paginate($perPage);
 
             $transformed = $contests->map(fn($c) => [
-                'id'           => $c->id,
-                'business_id'  => $c->business_id,
-                'name'         => $c->name,
+                'id' => $c->id,
+                'business_id' => $c->business_id,
+                'name' => $c->name,
                 'banner_image' => $c->banner_image,
-                'createdAt'    => $c->created_at->diffForHumans(),
+                'createdAt' => $c->created_at->diffForHumans(),
+                'participants_count' => $c->participants_count,
+                'participants' => $c->participants->map(fn($p) => [
+                    'id' => $p->id,
+                    'name' => $p->user?->name,
+                    'profile_image' => $p->user?->profile_image,
+                    'joined_at' => $p->created_at->diffForHumans(),
+                ]),
             ]);
 
             return response()->json([
                 'message' => 'Contests retrieved successfully',
                 'data'    => [
                     'current_page' => $contests->currentPage(),
-                    'last_page'    => $contests->lastPage(),
-                    'per_page'     => $contests->perPage(),
-                    'total'        => $contests->total(),
-                    'contests'     => $transformed,
+                    'last_page' => $contests->lastPage(),
+                    'per_page' => $contests->perPage(),
+                    'total' => $contests->total(),
+                    'contests' => $transformed,
                 ],
             ]);
 

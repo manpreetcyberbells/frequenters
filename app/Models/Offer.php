@@ -51,4 +51,9 @@ class Offer extends Model
             default                            => 'Valid until ' . $endDateTime->format('M d, Y'),
         };
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)->where('campaign_end_date', '>=', now()->toDateString());
+    }
 }

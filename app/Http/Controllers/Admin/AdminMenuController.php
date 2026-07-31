@@ -33,24 +33,24 @@ class AdminMenuController extends Controller
      */
     public function store(Request $request)
     {
-        // echo"<pre>"; print_r($request->all());  die;
-        $validated = $request->validate([
+        $validator = \Validator::make($request->all(), [
             'business_id' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', 'business');
-                }),
+                'required', 'string', 'max:255',
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business')),
             ],
-            'name' => 'required|string',
-            'category_id' => 'nullable|exists:categories,id',
-            'description' => 'nullable|string',
-            'price' => 'nullable|string',
-            'photo' => 'nullable|image',
+            'name'                => 'required|string',
+            'category_id'         => 'nullable|exists:categories,id',
+            'description'         => 'nullable|string',
+            'price'               => 'nullable|string',
+            'photo'               => 'nullable|image',
             'availability_status' => 'nullable|boolean',
         ]);
-    
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
         try{
             $businessId = $request->business_id;
             $validated['business_id'] = $businessId;
@@ -93,24 +93,24 @@ class AdminMenuController extends Controller
     {
         // echo"<pre>"; print_r($request->all());  die;
         $menu = Menu::findOrFail($id);
-
-        $validated = $request->validate([
+        $validator = \Validator::make($request->all(), [
             'business_id' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', 'business');
-                }),
+                'required', 'string', 'max:255',
+                Rule::exists('users', 'id')->where(fn($q) => $q->where('role', 'business')),
             ],
-            'name' => 'required|string',
-            'category_id' => 'nullable|exists:categories,id',
-            'description' => 'nullable|string',
-            'price' => 'nullable|string',
-            'photo' => 'nullable|image',
+            'name'                => 'required|string',
+            'category_id'         => 'nullable|exists:categories,id',
+            'description'         => 'nullable|string',
+            'price'               => 'nullable|string',
+            'photo'               => 'nullable|image',
             'availability_status' => 'nullable|boolean',
         ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
         try {
             if ($request->hasFile('photo')) {
                 $menuImage = $request->file('photo')->store('menus', 'public');

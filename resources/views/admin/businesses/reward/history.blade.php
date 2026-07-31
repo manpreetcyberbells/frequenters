@@ -26,7 +26,7 @@
         <div class="row">
           <div class="col-md-12">
             <div class="timeline">
-                @if($reward->reedemtionHistory->isNotEmpty())
+                @if($reward->reedemtionHistory && $reward->reedemtionHistory->isNotEmpty())
                     @foreach($reward->reedemtionHistory as $index => $history)
                         <div>
                             <img class="rounded-circle bg-green" 
